@@ -1,3 +1,4 @@
+basehaz.gbm             Baseline hazard function
 calibrate.plot          Calibration plot
 gbm                     Generalized Boosted Regression Modeling
 gbm.object              Generalized Boosted Regression Model Object

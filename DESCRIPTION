@@ -1,6 +1,6 @@
 Package: gbm
-Version: 1.3-3
-Date: 2004-11-3
+Version: 1.3-5
+Date: 2004-11-8
 Title: Generalized Boosted Regression Models
 Author: Greg Ridgeway <gregr@rand.org>
 Maintainer: Greg Ridgeway <gregr@rand.org>
@@ -12,4 +12,4 @@ Description: This package implements extensions
   partial likelihood, and AdaBoost exponential loss.
 License: GPL (version 2 or newer)
 URL: http://www.i-pensieri.com/gregr/gbm.shtml
-Packaged: Wed Nov  3 18:10:15 2004; gregr
+Packaged: Mon Nov  8 21:56:27 2004; gregr

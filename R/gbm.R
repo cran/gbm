@@ -707,6 +707,7 @@ gbm <- function(formula = formula(data),
    m$distribution <- m$offset <- m$var.monotone <- m$n.trees <- NULL
    m$interaction.depth <- m$n.minobsinnode <- m$shrinkage <- NULL
    m$bag.fraction <- m$train.fraction <- m$keep.data <- m$verbose <- NULL
+   m$cv.folds <- NULL
    m[[1]] <- as.name("model.frame")
    m$na.action <- na.pass
    m.keep <- m
@@ -743,7 +744,7 @@ gbm <- function(formula = formula(data),
          if(verbose) cat("CV:",i.cv,"\n")
          i <- order(cv.group==i.cv)
          gbm.obj <- gbm.fit(x[i.train,][i,], y[i.train][i],
-                            offset = ifelse(offset==NULL,NULL,offset[i.train][i]),
+                            offset = offset[i.train][i],
                             distribution = distribution,
                             w = ifelse(w==NULL,NULL,w[i.train][i]),
                             var.monotone = var.monotone,
@@ -817,7 +818,8 @@ gbm.perf <- function(object,
    
    if(method == "cv")
    {
-      if(is.null(cv.error)) stop("In order to use method=\"cv\" gbm must be called with cv.folds>1.")
+      if(is.null(object$cv.error)) 
+         stop("In order to use method=\"cv\" gbm must be called with cv.folds>1.")
       best.iter.cv <- which.min(object$cv.error)
       best.iter <- best.iter.cv
    }
@@ -1225,4 +1227,49 @@ shrink.gbm <- function(object,n.trees,
    names(result) <- c("predF","objective","gradient")
 
    return(result)   
+}
+
+
+# compute Breslow estimator of the baseline hazard function
+basehaz.gbm <- function(t,delta,f.x,
+                        t.eval=NULL,
+                        smooth=FALSE,
+                        cumulative=TRUE)
+{
+   t.unique <- sort(unique(t[delta==1]))
+   alpha <- length(t.unique)
+   for(i in 1:length(t.unique))
+   {
+      alpha[i] <- sum(t[delta==1]==t.unique[i])/
+                  sum(exp(f.x[t>=t.unique[i]]))
+   }
+
+   if(!smooth && !cumulative)   
+   {
+      if(!is.null(t.eval))
+      {
+         stop("Cannot evaluate unsmoothed baseline hazard at t.eval.")
+      }
+   } else
+   if(smooth && !cumulative)
+   {
+      lambda.smooth <- supsmu(t.unique,alpha)
+   } else
+   if(smooth && cumulative)
+   {
+      lambda.smooth <- supsmu(t.unique,cumsum(alpha))
+   } else # (!smooth && cumulative)
+   {
+      lambda.smooth <- list(x=t.unique,y=cumsum(alpha))
+   }
+   
+   if(!is.null(t.eval))
+   {
+      obj <- approx(lambda.smooth$x,lambda.smooth$y,xout=t.eval)$y
+   } else
+   {
+      obj <- approx(lambda.smooth$x,lambda.smooth$y,xout=t)$y
+   }
+   
+   return(obj)
 }

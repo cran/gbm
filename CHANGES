@@ -1,3 +1,7 @@
+Changes in version 1.4
+
+- Added basehaz.gbm that computes the Breslow estimate of the baseline hazard. At a later stage this will be substituted with a call to survfit, which is much more general handling not only left-censored data.
+
 Changes in version 1.3
 
 - All likelihood based loss functions are now in terms of Deviance (-2*log likelihood). As a result, gbm always minimizes the loss. Previous versions minimized losses for some choices of distribution and maximized a likelihood for other choices.
