@@ -18,12 +18,12 @@ CCARTTree::~CCARTTree()
 }
 
 
-HRESULT CCARTTree::Initialize
+GBMRESULT CCARTTree::Initialize
 (
     CNodeFactory *pNodeFactory
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     this->pNodeFactory = pNodeFactory;
 
@@ -31,16 +31,16 @@ HRESULT CCARTTree::Initialize
 }
 
     
-HRESULT CCARTTree::Reset()
+GBMRESULT CCARTTree::Reset()
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     if(pRootNode != NULL)
     {
         // delete the old tree and start over
         hr = pRootNode->RecycleSelf(pNodeFactory);
     }
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
@@ -67,7 +67,7 @@ Error:
 //------------------------------------------------------------------------------
 // Grows a regression tree
 //------------------------------------------------------------------------------
-HRESULT CCARTTree::grow
+GBMRESULT CCARTTree::grow
 (
     double *adZ, 
     CDataset *pData, 
@@ -84,7 +84,7 @@ HRESULT CCARTTree::grow
     VEC_P_NODETERMINAL &vecpTermNodes
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     #ifdef NOISY_DEBUG
     Rprintf("Growing tree\n");
@@ -93,8 +93,7 @@ HRESULT CCARTTree::grow
     if((adZ==NULL) || (pData==NULL) || (adW==NULL) || (adF==NULL) || 
        (cMaxDepth < 1))
     {
-        hr = E_INVALIDARG;
-        ErrorTrace(hr);
+        hr = GBM_INVALIDARG;
         goto Error;
     }
 
@@ -152,6 +151,10 @@ HRESULT CCARTTree::grow
                           adW,
                           iBestNode,
                           dBestNodeImprovement);
+        if(GBM_FAILED(hr))
+        {
+            goto Error;
+        }
 
         if(dBestNodeImprovement == 0.0)
         {
@@ -223,7 +226,7 @@ Error:
 }
 
 
-HRESULT CCARTTree::GetBestSplit
+GBMRESULT CCARTTree::GetBestSplit
 (
     CDataset *pData,
     unsigned long nTrain,
@@ -237,7 +240,7 @@ HRESULT CCARTTree::GetBestSplit
     double &dBestNodeImprovement
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     int iVar = 0;
     unsigned long iNode = 0;
@@ -268,6 +271,10 @@ HRESULT CCARTTree::GetBestSplit
                       adZ[iWhichObs],
                       adW[iWhichObs],
                       pData->alMonotoneVar[iVar]);
+                if(GBM_FAILED(hr))
+                {
+                    goto Error;
+                }
             }
         }
         for(iNode=0; iNode<cTerminalNodes; iNode++)
@@ -293,29 +300,32 @@ HRESULT CCARTTree::GetBestSplit
         }
     }
 
+Cleanup:
     return hr;
+Error:
+    goto Cleanup;
 }
 
 
-HRESULT CCARTTree::GetNodeCount
+GBMRESULT CCARTTree::GetNodeCount
 (
     int &cNodes
 )
 {
     cNodes = cTotalNodeCount;
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
-HRESULT CCARTTree::PredictValid
+GBMRESULT CCARTTree::PredictValid
 (
     CDataset *pData, 
     unsigned long nValid, 
     double *adFadj
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     int i=0;
 
     for(i=pData->cRows - nValid; i<pData->cRows; i++)
@@ -329,7 +339,7 @@ HRESULT CCARTTree::PredictValid
 
 
 
-HRESULT CCARTTree::Predict
+GBMRESULT CCARTTree::Predict
 (
     double *adX,
     unsigned long cRow, 
@@ -349,12 +359,12 @@ HRESULT CCARTTree::Predict
         dFadj = 0.0;
     }
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
-HRESULT CCARTTree::Adjust
+GBMRESULT CCARTTree::Adjust
 (
     unsigned long *aiNodeAssign,
     double *adFadj,
@@ -363,11 +373,11 @@ HRESULT CCARTTree::Adjust
     unsigned long cMinObsInNode
 )
 {
-    unsigned long hr = S_OK;
+    unsigned long hr = GBM_OK;
     unsigned long iObs = 0;
     
     hr = pRootNode->Adjust(cMinObsInNode);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
@@ -385,9 +395,9 @@ Error:
 }
 
 
-HRESULT CCARTTree::Print()
+GBMRESULT CCARTTree::Print()
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     if(pRootNode != NULL)
     {
@@ -401,19 +411,18 @@ HRESULT CCARTTree::Print()
 
 
 
-HRESULT CCARTTree::GetVarRelativeInfluence
+GBMRESULT CCARTTree::GetVarRelativeInfluence
 (
     double *adRelInf
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     if(pRootNode != NULL)
     {
         hr = pRootNode->GetVarRelativeInfluence(adRelInf);
-        if(FAILED(hr))
+        if(GBM_FAILED(hr))
         {
-            ErrorTrace(hr);
             goto Error;
         }
     }
@@ -427,7 +436,7 @@ Error:
 
 
 
-HRESULT CCARTTree::TransferTreeToRList
+GBMRESULT CCARTTree::TransferTreeToRList
 (
     CDataset *pData,
     int *aiSplitVar,
@@ -442,7 +451,7 @@ HRESULT CCARTTree::TransferTreeToRList
     double dShrinkage
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     int iNodeID = 0;
 
@@ -463,7 +472,7 @@ HRESULT CCARTTree::TransferTreeToRList
     }
     else
     {
-        hr = E_FAIL;
+        hr = GBM_FAIL;
     }
     return hr;
 }

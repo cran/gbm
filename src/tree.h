@@ -14,8 +14,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef TREE_H
-#define TREE_H
+#ifndef TREGBM_H
+#define TREGBM_H
 
 #include <cstdio>
 #include <cfloat>
@@ -32,8 +32,8 @@ public:
     CCARTTree();
     ~CCARTTree();
 
-    HRESULT Initialize(CNodeFactory *pNodeFactory);
-    HRESULT grow(double *adZ, 
+    GBMRESULT Initialize(CNodeFactory *pNodeFactory);
+    GBMRESULT grow(double *adZ, 
                  CDataset *pData, 
                  double *adAlgW,
                  double *adF,
@@ -46,9 +46,9 @@ public:
                  unsigned long *aiNodeAssign,
                  CNodeSearch *aNodeSearch,
                  VEC_P_NODETERMINAL &vecpTermNodes);
-    HRESULT Reset();
+    GBMRESULT Reset();
 
-    HRESULT TransferTreeToRList(CDataset *pData,
+    GBMRESULT TransferTreeToRList(CDataset *pData,
                                 int *aiSplitVar,
                                 double *adSplitPoint,
                                 int *aiLeftNode,
@@ -60,36 +60,36 @@ public:
                                 int cCatSplitsOld,
                                 double dShrinkage);
 
-    HRESULT PredictValid(CDataset *pData, 
+    GBMRESULT PredictValid(CDataset *pData, 
                          unsigned long nValid, 
                          double *adFadj);
 
-    HRESULT Predict(double *adX,
+    GBMRESULT Predict(double *adX,
                     unsigned long cRow, 
                     unsigned long cCol, 
                     unsigned long iRow, 
                     double &dFadj);
-    HRESULT Adjust(unsigned long *aiNodeAssign,
+    GBMRESULT Adjust(unsigned long *aiNodeAssign,
                    double *adFadj,
                    unsigned long cTrain,
                    VEC_P_NODETERMINAL &vecpTermNodes,
                    unsigned long cMinObsInNode);
 
-    HRESULT GetNodeCount(int &cNodes);
-    HRESULT SetShrinkage(double dShrink)
+    GBMRESULT GetNodeCount(int &cNodes);
+    GBMRESULT SetShrinkage(double dShrink)
     {
         this->dShrink = dShrink;
-        return S_OK;
+        return GBM_OK;
     }
     double GetShrinkage() {return dShrink;}
 
-    HRESULT Print();
-    HRESULT GetVarRelativeInfluence(double *adRelInf);
+    GBMRESULT Print();
+    GBMRESULT GetVarRelativeInfluence(double *adRelInf);
 
 
     double dError; // total squared error before carrying out the splits
 private:
-    HRESULT GetBestSplit(CDataset *pData,
+    GBMRESULT GetBestSplit(CDataset *pData,
                          unsigned long nTrain,
                          CNodeSearch *aNodeSearch,
                          unsigned long cTerminalNodes,
@@ -129,7 +129,7 @@ private:
 typedef CCARTTree *PCCARTTree;
 
 
-#endif // TREE_H
+#endif // TREGBM_H
 
 
 

@@ -15,15 +15,15 @@ CNodeFactory::~CNodeFactory()
 }
 
 
-HRESULT CNodeFactory::Initialize
+GBMRESULT CNodeFactory::Initialize
 (
     unsigned long cDepth
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     unsigned long i = 0;
 
-    for(i=0; i<NODEFACTORY_NODE_RESERVE; i++)
+    for(i=0; i<NODEFACTORY_NODGBM_RESERVE; i++)
     {
         TerminalStack.push(&(aBlockTerminal[i]));
         ContinuousStack.push(&(aBlockContinuous[i]));
@@ -109,7 +109,7 @@ CNodeCategorical* CNodeFactory::GetNewNodeCategorical()
 }
 
 
-HRESULT CNodeFactory::RecycleNode
+GBMRESULT CNodeFactory::RecycleNode
 (
     CNodeTerminal *pNode
 )
@@ -118,10 +118,10 @@ HRESULT CNodeFactory::RecycleNode
     {
         TerminalStack.push(pNode);
     }
-    return S_OK;
+    return GBM_OK;
 }
 
-HRESULT CNodeFactory::RecycleNode
+GBMRESULT CNodeFactory::RecycleNode
 (
     CNodeContinuous *pNode
 )
@@ -133,10 +133,10 @@ HRESULT CNodeFactory::RecycleNode
         if(pNode->pMissingNode != NULL) pNode->pMissingNode->RecycleSelf(this);
         ContinuousStack.push(pNode);
     }
-    return S_OK;
+    return GBM_OK;
 }
 
-HRESULT CNodeFactory::RecycleNode
+GBMRESULT CNodeFactory::RecycleNode
 (
     CNodeCategorical *pNode
 )
@@ -148,13 +148,13 @@ HRESULT CNodeFactory::RecycleNode
         if(pNode->pMissingNode != NULL) pNode->pMissingNode->RecycleSelf(this);
         if(pNode->aiLeftCategory != NULL)
         {
-            delete [] pNode->aiLeftCategory; delete_item(pNode->aiLeftCategory);
+            delete [] pNode->aiLeftCategory;
             pNode->aiLeftCategory = NULL;
         }
         CategoricalStack.push(pNode);
     }
 
-    return S_OK;
+    return GBM_OK;
 }
 
 

@@ -21,20 +21,20 @@ CNodeTerminal::~CNodeTerminal()
     #endif
 }
 
-HRESULT CNodeTerminal::Adjust
+GBMRESULT CNodeTerminal::Adjust
 (
     unsigned long cMinObsInNode
 )
 {
-    return S_OK;
+    return GBM_OK;
 }
 
-HRESULT CNodeTerminal::ApplyShrinkage
+GBMRESULT CNodeTerminal::ApplyShrinkage
 (
     double dLambda
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     dPrediction *= dLambda;
 
     return hr;
@@ -42,7 +42,7 @@ HRESULT CNodeTerminal::ApplyShrinkage
 
 
 
-HRESULT CNodeTerminal::Predict
+GBMRESULT CNodeTerminal::Predict
 (
     CDataset *pData, 
     unsigned long iRow, 
@@ -51,13 +51,13 @@ HRESULT CNodeTerminal::Predict
 {
     dFadj = dPrediction;
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
 
-HRESULT CNodeTerminal::Predict
+GBMRESULT CNodeTerminal::Predict
 (
     double *adX,
     unsigned long cRow,
@@ -68,12 +68,12 @@ HRESULT CNodeTerminal::Predict
 {
     dFadj = dPrediction;
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
-HRESULT CNodeTerminal::PrintSubtree
+GBMRESULT CNodeTerminal::PrintSubtree
 (
     unsigned long cIndent
 )
@@ -85,31 +85,31 @@ HRESULT CNodeTerminal::PrintSubtree
            dTrainW,
            dPrediction);
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
-HRESULT CNodeTerminal::GetVarRelativeInfluence
+GBMRESULT CNodeTerminal::GetVarRelativeInfluence
 (
     double *adRelInf
 )
 {
-    return S_OK;
+    return GBM_OK;
 }
 
 
-HRESULT CNodeTerminal::RecycleSelf
+GBMRESULT CNodeTerminal::RecycleSelf
 (
     CNodeFactory *pNodeFactory
 )
 {
     pNodeFactory->RecycleNode(this);
-    return S_OK;
+    return GBM_OK;
 };
 
 
 
-HRESULT CNodeTerminal::TransferTreeToRList
+GBMRESULT CNodeTerminal::TransferTreeToRList
 (
     int &iNodeID,
     CDataset *pData,
@@ -125,7 +125,7 @@ HRESULT CNodeTerminal::TransferTreeToRList
     double dShrinkage
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     aiSplitVar[iNodeID] = -1;
     adSplitPoint[iNodeID] = dShrinkage*dPrediction;

@@ -28,7 +28,7 @@ public:
 
     virtual ~CAdaBoost();
 
-    HRESULT ComputeWorkingResponse(double *adY,
+    GBMRESULT ComputeWorkingResponse(double *adY,
                                    double *adMisc,
                                    double *adOffset,
                                    double *adWeight,
@@ -37,14 +37,14 @@ public:
                                    bool *afInBag,
                                    unsigned long nTrain);
 
-    HRESULT InitF(double *adY, 
+    GBMRESULT InitF(double *adY, 
                   double *adMisc,
                   double *adOffset,
                   double *adWeight,
                   double &dInitF, 
                   unsigned long cLength);
 
-    HRESULT FitBestConstant(double *adY,
+    GBMRESULT FitBestConstant(double *adY,
                             double *adMisc,
                             double *adOffset,
                             double *adW,

@@ -14,8 +14,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef NODE_H
-#define NODE_H
+#ifndef NODGBM_H
+#define NODGBM_H
 
 #include <vector>
 #include "dataset.h"
@@ -36,11 +36,11 @@ public:
 
     CNode();
     virtual ~CNode();
-    virtual HRESULT Adjust(unsigned long cMinObsInNode);
-    virtual HRESULT Predict(CDataset *pData, 
+    virtual GBMRESULT Adjust(unsigned long cMinObsInNode);
+    virtual GBMRESULT Predict(CDataset *pData, 
                             unsigned long iRow, 
                             double &dFadj);
-    virtual HRESULT Predict(double *adX,
+    virtual GBMRESULT Predict(double *adX,
                             unsigned long cRow,
                             unsigned long cCol,
                             unsigned long iRow,
@@ -78,8 +78,8 @@ public:
     }
 
 
-    virtual HRESULT PrintSubtree(unsigned long cIndent);
-    virtual HRESULT TransferTreeToRList(int &iNodeID,
+    virtual GBMRESULT PrintSubtree(unsigned long cIndent);
+    virtual GBMRESULT TransferTreeToRList(int &iNodeID,
                                         CDataset *pData,
                                         int *aiSplitVar,
                                         double *adSplitPoint,
@@ -93,8 +93,8 @@ public:
                                         double dShrinkage);
 
     double TotalError();
-    virtual HRESULT GetVarRelativeInfluence(double *adRelInf);
-    virtual HRESULT RecycleSelf(CNodeFactory *pNodeFactory) = 0;
+    virtual GBMRESULT GetVarRelativeInfluence(double *adRelInf);
+    virtual GBMRESULT RecycleSelf(CNodeFactory *pNodeFactory) = 0;
 
     double dPrediction;
     double dTrainW;   // total training weight in node
@@ -113,7 +113,7 @@ protected:
 
 typedef CNode *PCNode;
 
-#endif // NODE_H
+#endif // NODGBM_H
 
 
 

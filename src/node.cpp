@@ -16,61 +16,56 @@ CNode::~CNode()
 }
 
 
-HRESULT CNode::Adjust
+GBMRESULT CNode::Adjust
 (
     unsigned long cMinObsInNode
 )
 {
-    HRESULT hr = E_NOTIMPL;
-    ErrorTrace(hr);
+    GBMRESULT hr = GBM_NOTIMPL;
     return hr;
 }
 
 
-HRESULT CNode::Predict
+GBMRESULT CNode::Predict
 (
     CDataset *pData, 
     unsigned long iRow, 
     double &dFadj
 )
 {
-    HRESULT hr = E_NOTIMPL;
-    ErrorTrace(hr);
+    GBMRESULT hr = GBM_NOTIMPL;
     return hr;
 }
 
 
 double CNode::TotalError()
 {
-    HRESULT hr = E_NOTIMPL;
-    ErrorTrace(hr);
+    GBMRESULT hr = GBM_NOTIMPL;
     return hr;
 }
 
 
-HRESULT CNode::PrintSubtree
+GBMRESULT CNode::PrintSubtree
 (
     unsigned long cIndent
 )
 {
-    HRESULT hr = E_NOTIMPL;
-    ErrorTrace(hr);
+    GBMRESULT hr = GBM_NOTIMPL;
     return hr;
 }
 
 
-HRESULT CNode::GetVarRelativeInfluence
+GBMRESULT CNode::GetVarRelativeInfluence
 (
     double *adRelInf
 )
 {
-    HRESULT hr = E_NOTIMPL;
-    ErrorTrace(hr);
+    GBMRESULT hr = GBM_NOTIMPL;
     return hr;
 }
 
 
-HRESULT CNode::TransferTreeToRList
+GBMRESULT CNode::TransferTreeToRList
 (
     int &iNodeID,
     CDataset *pData,
@@ -86,7 +81,7 @@ HRESULT CNode::TransferTreeToRList
     double dShrinkage
 )
 {
-    return E_NOTIMPL;
+    return GBM_NOTIMPL;
 }
 
 

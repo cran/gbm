@@ -35,7 +35,7 @@ unsigned long gbm_setup
 
     hr = pData->SetData(adX,aiXOrder,adY,adOffset,adWeight,adMisc,
                         cRows,cCols,acVarClasses,alMonotoneVar);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
@@ -43,61 +43,61 @@ unsigned long gbm_setup
     // set the distribution
     if(strncmp(pszFamily,"bernoulli",2) == 0)
     {
-        pDist = new CBernoulli(); new_item(pDist);
+        pDist = new CBernoulli();
         if(pDist==NULL)
         {
-            hr = E_OUTOFMEMORY;
+            hr = GBM_OUTOFMEMORY;
             goto Error;
         }
     }
     else if(strncmp(pszFamily,"gaussian",2) == 0)
     {
-        pDist = new CGaussian(); new_item(pDist);
+        pDist = new CGaussian();
         if(pDist==NULL)
         {
-            hr = E_OUTOFMEMORY;
+            hr = GBM_OUTOFMEMORY;
             goto Error;
         }
     }
     else if(strncmp(pszFamily,"poisson",2) == 0)
     {
-        pDist = new CPoisson(); new_item(pDist);
+        pDist = new CPoisson();
         if(pDist==NULL)
         {
-            hr = E_OUTOFMEMORY;
+            hr = GBM_OUTOFMEMORY;
             goto Error;
         }
     }
     else if(strncmp(pszFamily,"adaboost",2) == 0)
     {
-        pDist = new CAdaBoost(); new_item(pDist);
+        pDist = new CAdaBoost();
         if(pDist==NULL)
         {
-            hr = E_OUTOFMEMORY;
+            hr = GBM_OUTOFMEMORY;
             goto Error;
         }
     }
     else if(strncmp(pszFamily,"coxph",2) == 0)
     {
-        pDist = new CCoxPH(); new_item(pDist);
+        pDist = new CCoxPH();
         if(pDist==NULL)
         {
-            hr = E_OUTOFMEMORY;
+            hr = GBM_OUTOFMEMORY;
             goto Error;
         }
     }
     else if(strncmp(pszFamily,"laplace",2) == 0)
     {
-        pDist = new CLaplace(); new_item(pDist);
+        pDist = new CLaplace();
         if(pDist==NULL)
         {
-            hr = E_OUTOFMEMORY;
+            hr = GBM_OUTOFMEMORY;
             goto Error;
         }
     }
     if(pDist==NULL)
     {
-        hr = E_INVALIDARG;
+        hr = GBM_INVALIDARG;
         goto Error;
     }
 
@@ -109,7 +109,7 @@ Error:
 
 
 
-HRESULT gbm_transfer_to_R
+GBMRESULT gbm_transfer_to_R
 (
     CGBM *pGBM,
     VEC_VEC_CATEGORIES &vecSplitCodes,
@@ -123,7 +123,7 @@ HRESULT gbm_transfer_to_R
     int cCatSplitsOld
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     hr = pGBM->TransferTreeToRList(aiSplitVar,
                                    adSplitPoint,
@@ -134,7 +134,7 @@ HRESULT gbm_transfer_to_R
                                    adWeight,
                                    vecSplitCodes,
                                    cCatSplitsOld);
-    if(FAILED(hr)) goto Error;
+    if(GBM_FAILED(hr)) goto Error;
 
 Cleanup:
     return hr;
@@ -143,7 +143,7 @@ Error:
 }
 
 
-HRESULT gbm_transfer_catsplits_to_R
+GBMRESULT gbm_transfer_catsplits_to_R
 (
     int iCatSplit,
     VEC_VEC_CATEGORIES &vecSplitCodes,
@@ -157,7 +157,7 @@ HRESULT gbm_transfer_catsplits_to_R
         aiSplitCodes[i] = vecSplitCodes[iCatSplit][i];
     }
 
-    return S_OK;
+    return GBM_OK;
 }
 
 

@@ -23,7 +23,7 @@
 #include "node_continuous.h"
 #include "node_categorical.h"
 
-#define NODEFACTORY_NODE_RESERVE ((unsigned long)50)
+#define NODEFACTORY_NODGBM_RESERVE ((unsigned long)50)
 
 using namespace std;
 
@@ -33,13 +33,13 @@ public:
     CNodeFactory();
     ~CNodeFactory();
 
-    HRESULT Initialize(unsigned long cDepth);
+    GBMRESULT Initialize(unsigned long cDepth);
     CNodeTerminal* GetNewNodeTerminal();
     CNodeContinuous* GetNewNodeContinuous();
     CNodeCategorical* GetNewNodeCategorical();
-    HRESULT RecycleNode(CNodeTerminal *pNode);
-    HRESULT RecycleNode(CNodeContinuous *pNode);
-    HRESULT RecycleNode(CNodeCategorical *pNode);
+    GBMRESULT RecycleNode(CNodeTerminal *pNode);
+    GBMRESULT RecycleNode(CNodeContinuous *pNode);
+    GBMRESULT RecycleNode(CNodeCategorical *pNode);
 
 private:
     stack<PCNodeTerminal> TerminalStack;
@@ -50,9 +50,9 @@ private:
     CNodeContinuous* pNodeContinuousTemp;
     CNodeCategorical* pNodeCategoricalTemp;
 
-    CNodeTerminal aBlockTerminal[NODEFACTORY_NODE_RESERVE];
-    CNodeContinuous aBlockContinuous[NODEFACTORY_NODE_RESERVE];
-    CNodeCategorical aBlockCategorical[NODEFACTORY_NODE_RESERVE];
+    CNodeTerminal aBlockTerminal[NODEFACTORY_NODGBM_RESERVE];
+    CNodeContinuous aBlockContinuous[NODEFACTORY_NODGBM_RESERVE];
+    CNodeCategorical aBlockCategorical[NODEFACTORY_NODGBM_RESERVE];
 };
 
 #endif // NODEFACTORY_H

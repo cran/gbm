@@ -10,8 +10,11 @@ Changes from version 0.6
 - now checks that all predictors are either numeric, ordinal, or
 factor
 
-- summary.gbm now reports the correct relative influence when some 
+- summary.gbm now reports the correct relative influence when some
 variables do not enter the model. (Thanks to Hugh Chipman)
+
+- renamed several #define'd variables in buildinfo.h so they do
+not conflict with standard winerror.h names.
 
 
 Planned future changes
@@ -30,7 +33,10 @@ procedures
 Thanks to
 
 RAND for sponsoring the development of this software through
-statistical methods funding
+statistical methods funding.
+
+Kurt Hornik and Brian Ripley for helping me get gbm up to the R
+standard and into CRAN.
 
 Dan McCaffrey for testing and evangelizing the utility of this
 program.

@@ -17,18 +17,18 @@ CNodeCategorical::~CNodeCategorical()
     #endif
     if(aiLeftCategory != NULL)
     {
-        delete [] aiLeftCategory; delete_item(aiLeftCategory);
+        delete [] aiLeftCategory;
         aiLeftCategory = NULL;
     }
 }
 
 
-HRESULT CNodeCategorical::PrintSubtree
+GBMRESULT CNodeCategorical::PrintSubtree
 (
     unsigned long cIndent
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     unsigned long i = 0;
     
     for(i=0; i< cIndent; i++) Rprintf("  ");
@@ -37,8 +37,6 @@ HRESULT CNodeCategorical::PrintSubtree
            dImprovement,
            dPrediction,
            (pMissingNode == NULL ? 0.0 : pMissingNode->dPrediction));
-
-    assert(pLeftNode != NULL);
 
     for(i=0; i< cIndent; i++) Rprintf("  ");
     Rprintf("V%d in ",iSplitVar);
@@ -124,19 +122,19 @@ signed char CNodeCategorical::WhichNode
 
 
 
-HRESULT CNodeCategorical::RecycleSelf
+GBMRESULT CNodeCategorical::RecycleSelf
 (
     CNodeFactory *pNodeFactory
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     hr = pNodeFactory->RecycleNode(this);
     return hr;
 };
 
 
 
-HRESULT CNodeCategorical::TransferTreeToRList
+GBMRESULT CNodeCategorical::TransferTreeToRList
 (
     int &iNodeID,
     CDataset *pData,
@@ -152,7 +150,7 @@ HRESULT CNodeCategorical::TransferTreeToRList
     double dShrinkage
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     int iThisNodeID = iNodeID;
     unsigned long cCatSplits = vecSplitCodes.size();
@@ -186,7 +184,7 @@ HRESULT CNodeCategorical::TransferTreeToRList
                                         vecSplitCodes,
                                         cCatSplitsOld,
                                         dShrinkage);
-    if(FAILED(hr)) goto Error;
+    if(GBM_FAILED(hr)) goto Error;
 
     aiRightNode[iThisNodeID] = iNodeID;
     hr = pRightNode->TransferTreeToRList(iNodeID,
@@ -201,7 +199,7 @@ HRESULT CNodeCategorical::TransferTreeToRList
                                          vecSplitCodes,
                                          cCatSplitsOld,
                                          dShrinkage);
-    if(FAILED(hr)) goto Error;
+    if(GBM_FAILED(hr)) goto Error;
 
     aiMissingNode[iThisNodeID] = iNodeID;
     hr = pMissingNode->TransferTreeToRList(iNodeID,
@@ -216,7 +214,7 @@ HRESULT CNodeCategorical::TransferTreeToRList
                                            vecSplitCodes,
                                            cCatSplitsOld,
                                            dShrinkage);
-    if(FAILED(hr)) goto Error;
+    if(GBM_FAILED(hr)) goto Error;
 
 
 Cleanup:

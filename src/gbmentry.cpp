@@ -77,10 +77,10 @@ SEXP gbm
     CDistribution *pDist = NULL;
 
     // set up the dataset
-    pData = new CDataset(); new_item(pData);
+    pData = new CDataset();
     if(pData==NULL)
     {
-        hr = E_OUTOFMEMORY;
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
 
@@ -107,16 +107,16 @@ SEXP gbm
                    INTEGER(rcTrain)[0],
                    pData,
                    pDist);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
         
     // allocate the GBM
-    pGBM = new CGBM(); new_item(pGBM);
+    pGBM = new CGBM();
     if(pGBM==NULL)
     {
-        hr = E_OUTOFMEMORY;
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
 
@@ -128,7 +128,7 @@ SEXP gbm
                           REAL(rdBagFraction)[0],
                           INTEGER(rcDepth)[0],
                           INTEGER(rcMinObsInNode)[0]);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
@@ -187,7 +187,11 @@ SEXP gbm
     {
         hr = pGBM->iterate(REAL(radF),
                            dTrainError,dValidError,dOOBagImprove,
-                           cNodes); 
+                           cNodes);
+        if(GBM_FAILED(hr))
+        {
+            goto Error;
+        }
         // store the performance measures
         REAL(radTrainError)[iT] = dTrainError;
         REAL(radValidError)[iT] = dValidError;
@@ -325,7 +329,7 @@ SEXP gbm_pred
     PROTECT(radPredF = allocVector(REALSXP, cRows));
     if(radPredF == NULL)
     {
-        hr = E_OUTOFMEMORY;
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
 
@@ -439,7 +443,7 @@ SEXP gbm_plot
     PROTECT(radPredF = allocVector(REALSXP, cRows));
     if(radPredF == NULL)
     {
-        hr = E_OUTOFMEMORY;
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
     for(iObs=0; iObs<cRows; iObs++)

@@ -34,84 +34,78 @@ CNodeSearch::~CNodeSearch()
 {
     if(adGroupSumZ != NULL)
     {
-        delete [] adGroupSumZ; delete_item(adGroupSumZ);
+        delete [] adGroupSumZ;
         adGroupSumZ = NULL;
     }
     if(adGroupW != NULL)
     {
-        delete [] adGroupW; delete_item(adGroupW);
+        delete [] adGroupW;
         adGroupW = NULL;
     }
     if(acGroupN != NULL)
     {
-        delete [] acGroupN; delete_item(acGroupN);
+        delete [] acGroupN;
         acGroupN = NULL;
     }
     if(adGroupMean != NULL)
     {
-        delete [] adGroupMean; delete_item(adGroupMean);
+        delete [] adGroupMean;
         adGroupMean = NULL;
     }
     if(aiCurrentCategory != NULL)
     {
-        delete [] aiCurrentCategory; delete_item(aiCurrentCategory);
+        delete [] aiCurrentCategory;
         aiCurrentCategory = NULL;
     }
     if(aiBestCategory != NULL)
     {
-        delete [] aiBestCategory; delete_item(aiBestCategory);
+        delete [] aiBestCategory;
         aiBestCategory = NULL;
     }
 }
 
 
-HRESULT CNodeSearch::Initialize
+GBMRESULT CNodeSearch::Initialize
 (
     unsigned long cMinObsInNode
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
-    adGroupSumZ = new double[k_cMaxClasses]; new_item(adGroupSumZ);
+    adGroupSumZ = new double[k_cMaxClasses];
     if(adGroupSumZ == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
-    adGroupW = new double[k_cMaxClasses]; new_item(adGroupW);
+    adGroupW = new double[k_cMaxClasses];
     if(adGroupW == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
-    acGroupN = new ULONG[k_cMaxClasses]; new_item(acGroupN);
+    acGroupN = new ULONG[k_cMaxClasses];
     if(acGroupN == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
-    adGroupMean = new double[k_cMaxClasses]; new_item(adGroupMean);
+    adGroupMean = new double[k_cMaxClasses];
     if(adGroupMean == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
-    aiCurrentCategory = new int[k_cMaxClasses]; new_item(aiCurrentCategory);
+    aiCurrentCategory = new int[k_cMaxClasses];
     if(aiCurrentCategory == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
-    aiBestCategory = new ULONG[k_cMaxClasses]; new_item(aiBestCategory);
+    aiBestCategory = new ULONG[k_cMaxClasses];
     if(aiBestCategory == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
 
@@ -124,7 +118,7 @@ Error:
 }
 
 
-HRESULT CNodeSearch::Set
+GBMRESULT CNodeSearch::Set
 (
     double dSumZ,
     double dTotalW,
@@ -134,7 +128,7 @@ HRESULT CNodeSearch::Set
     CNodeFactory *pNodeFactory
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     dInitSumZ = dSumZ;
     dInitTotalW = dTotalW;
@@ -178,13 +172,13 @@ HRESULT CNodeSearch::Set
 }
 
 
-HRESULT CNodeSearch::ResetForNewVar
+GBMRESULT CNodeSearch::ResetForNewVar
 (
     unsigned long iWhichVar,
     long cCurrentVarClasses
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     long i=0;
 
     if(fIsSplit) goto Cleanup;
@@ -219,9 +213,9 @@ Cleanup:
 
 
 
-HRESULT CNodeSearch::WrapUpCurrentVariable()
+GBMRESULT CNodeSearch::WrapUpCurrentVariable()
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     if(iCurrentSplitVar == iBestSplitVar)
     {
         if(cCurrentMissingN > 0)
@@ -243,9 +237,9 @@ HRESULT CNodeSearch::WrapUpCurrentVariable()
 
 
 
-HRESULT CNodeSearch::EvaluateCategoricalSplit()
+GBMRESULT CNodeSearch::EvaluateCategoricalSplit()
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     long i=0;
     long j=0;
     unsigned long cFiniteMeans = 0;
@@ -254,8 +248,7 @@ HRESULT CNodeSearch::EvaluateCategoricalSplit()
 
     if(cCurrentVarClasses == 0)
     {
-        hr = E_INVALIDARG;
-        ErrorTrace(hr);
+        hr = GBM_INVALIDARG;
         goto Error;
     }
 
@@ -328,7 +321,7 @@ Error:
 
 
 
-HRESULT CNodeSearch::SetupNewNodes
+GBMRESULT CNodeSearch::SetupNewNodes
 (
     PCNodeNonterminal &pNewSplitNode,
     PCNodeTerminal &pNewLeftNode,
@@ -336,7 +329,7 @@ HRESULT CNodeSearch::SetupNewNodes
     PCNodeTerminal &pNewMissingNode
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     CNodeContinuous *pNewNodeContinuous = NULL;
     CNodeCategorical *pNewNodeCategorical = NULL;
     unsigned long i=0;
@@ -364,7 +357,7 @@ HRESULT CNodeSearch::SetupNewNodes
         pNewNodeCategorical->iSplitVar = iBestSplitVar;
         pNewNodeCategorical->cLeftCategory = (ULONG)dBestSplitValue + 1;
         pNewNodeCategorical->aiLeftCategory = 
-            new ULONG[pNewNodeCategorical->cLeftCategory]; new_item(pNewNodeCategorical->aiLeftCategory);
+            new ULONG[pNewNodeCategorical->cLeftCategory];
         for(i=0; i<pNewNodeCategorical->cLeftCategory; i++)
         {
             pNewNodeCategorical->aiLeftCategory[i] = aiBestCategory[i];

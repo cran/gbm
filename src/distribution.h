@@ -17,7 +17,6 @@
 #ifndef DISTRIBUTION_H
 #define DISTRIBUTION_H
 
-#include <cassert>
 #include "node_terminal.h"
 
 class CDistribution
@@ -28,7 +27,7 @@ public:
     CDistribution();
     virtual ~CDistribution();
 
-    virtual HRESULT ComputeWorkingResponse(double *adY,
+    virtual GBMRESULT ComputeWorkingResponse(double *adY,
                                            double *adMisc,
                                            double *adOffset,
                                            double *adF, 
@@ -37,7 +36,7 @@ public:
                                            bool *afInBag,
                                            unsigned long nTrain) = 0;
 
-    virtual HRESULT InitF(double *adY,
+    virtual GBMRESULT InitF(double *adY,
                           double *adMisc,
                           double *adOffset,
                           double *adWeight,
@@ -51,7 +50,7 @@ public:
                                  double *adF,
                                  unsigned long cLength) = 0;
 
-    virtual HRESULT FitBestConstant(double *adY,
+    virtual GBMRESULT FitBestConstant(double *adY,
                                     double *adMisc,
                                     double *adOffset,
                                     double *adW,

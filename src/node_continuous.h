@@ -27,8 +27,8 @@ public:
     CNodeContinuous();
     ~CNodeContinuous();
 
-    HRESULT PrintSubtree(unsigned long cIndent);
-    HRESULT TransferTreeToRList(int &iNodeID,
+    GBMRESULT PrintSubtree(unsigned long cIndent);
+    GBMRESULT TransferTreeToRList(int &iNodeID,
                                 CDataset *pData,
                                 int *aiSplitVar,
                                 double *adSplitPoint,
@@ -48,7 +48,7 @@ public:
                           unsigned long cCol,
                           unsigned long iRow);
 
-    HRESULT RecycleSelf(CNodeFactory *pNodeFactory);
+    GBMRESULT RecycleSelf(CNodeFactory *pNodeFactory);
 
     double dSplitValue;
 };

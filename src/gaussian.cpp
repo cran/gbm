@@ -11,7 +11,7 @@ CGaussian::~CGaussian()
 }
 
 
-HRESULT CGaussian::ComputeWorkingResponse
+GBMRESULT CGaussian::ComputeWorkingResponse
 (
     double *adY,
     double *adMisc,
@@ -23,12 +23,12 @@ HRESULT CGaussian::ComputeWorkingResponse
     unsigned long nTrain
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     unsigned long i = 0;
 
     if((adY == NULL) || (adF == NULL) || (adZ == NULL) || (adWeight == NULL))
     {
-        hr = E_INVALIDARG;
+        hr = GBM_INVALIDARG;
         goto Error;
     }
 
@@ -55,7 +55,7 @@ Error:
 
 
 
-HRESULT CGaussian::InitF
+GBMRESULT CGaussian::InitF
 (
     double *adY,
     double *adMisc,
@@ -68,9 +68,6 @@ HRESULT CGaussian::InitF
     double dSum=0.0;
     double dTotalWeight = 0.0;
     unsigned long i=0;
-
-    assert(adY != NULL);
-    assert(adWeight != NULL);
 
     // compute the mean
     if(adOffset==NULL)
@@ -91,7 +88,7 @@ HRESULT CGaussian::InitF
     }
     dInitF = dSum/dTotalWeight;
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
@@ -107,10 +104,6 @@ double CGaussian::LogLikelihood
 {
     unsigned long i=0;
     double dL = 0.0;
-
-    assert(adY != NULL);
-    assert(adWeight != NULL);
-    assert(adF != NULL);
 
     if(adOffset == NULL)
     {
@@ -132,7 +125,7 @@ double CGaussian::LogLikelihood
 }
 
 
-HRESULT CGaussian::FitBestConstant
+GBMRESULT CGaussian::FitBestConstant
 (
     double *adY,
     double *adMisc,
@@ -152,7 +145,7 @@ HRESULT CGaussian::FitBestConstant
     // the tree aready stores the mean prediction
     // no refitting necessary
 
-    return S_OK;
+    return GBM_OK;
 }
 
 double CGaussian::BagImprovement

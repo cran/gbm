@@ -27,7 +27,7 @@
 typedef vector<char> VEC_CATEGORIES;
 typedef vector<VEC_CATEGORIES> VEC_VEC_CATEGORIES;
 
-HRESULT gbm_setup
+GBMRESULT gbm_setup
 (
     double *adY,
     double *adOffset,
@@ -51,7 +51,7 @@ HRESULT gbm_setup
 );
 
 
-HRESULT gbm_transfer_to_R
+GBMRESULT gbm_transfer_to_R
 (
     CGBM *pGBM,
     VEC_VEC_CATEGORIES &vecSplitCodes,
@@ -66,7 +66,7 @@ HRESULT gbm_transfer_to_R
 );
 
 
-HRESULT gbm_transfer_catsplits_to_R
+GBMRESULT gbm_transfer_catsplits_to_R
 (
     int iCatSplit,
     VEC_VEC_CATEGORIES &vecSplitCodes,

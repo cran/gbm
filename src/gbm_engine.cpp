@@ -30,44 +30,44 @@ CGBM::~CGBM()
 {
     if(adFadj != NULL)
     {
-        delete [] adFadj; delete_item(adFadj);
+        delete [] adFadj;
         adFadj = NULL;
     }
     if(adZ != NULL)
     {
-        delete [] adZ; delete_item(adZ);
+        delete [] adZ;
         adZ = NULL;
     }
     if(afInBag != NULL)
     {
-        delete [] afInBag; delete_item(afInBag);
+        delete [] afInBag;
         afInBag = NULL;
     }
     if(aiNodeAssign != NULL)
     {
-        delete [] aiNodeAssign; delete_item(aiNodeAssign);
+        delete [] aiNodeAssign;
         aiNodeAssign = NULL;
     }
     if(aNodeSearch != NULL)
     {
-        delete [] aNodeSearch; delete_item(aNodeSearch);
+        delete [] aNodeSearch;
         aNodeSearch = NULL;
     }
     if(ptreeTemp != NULL)
     {
-        delete ptreeTemp; delete_item(ptreeTemp);
+        delete ptreeTemp;
         ptreeTemp = NULL;
     }
     // must delete the node factory last!!! at least after deleting trees
     if(pNodeFactory != NULL)
     {
-        delete pNodeFactory; delete_item(pNodeFactory);
+        delete pNodeFactory;
         pNodeFactory = NULL;
     }
 }
 
 
-HRESULT CGBM::Initialize
+GBMRESULT CGBM::Initialize
 (
     CDataset *pData,
     CDistribution *pDist,
@@ -78,19 +78,17 @@ HRESULT CGBM::Initialize
     unsigned long cMinObsInNode
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     unsigned long i=0;
 
     if(pData == NULL)
     {
-        hr = E_INVALIDARG;
-        ErrorTrace(hr);
+        hr = GBM_INVALIDARG;
         goto Error;
     }
     if(pDist == NULL)
     {
-        hr = E_INVALIDARG;
-        ErrorTrace(hr);
+        hr = GBM_INVALIDARG;
         goto Error;
     }
 
@@ -103,68 +101,61 @@ HRESULT CGBM::Initialize
     this->cMinObsInNode = cMinObsInNode;
 
     // allocate the tree structure
-    ptreeTemp = new CCARTTree; new_item(ptreeTemp);
+    ptreeTemp = new CCARTTree;
     if(ptreeTemp == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
 
     cValid = pData->cRows - cTrain;
     cTotalInBag = (unsigned long)(dBagFraction*cTrain);
 
-    adZ = new double[cTrain]; new_item(adZ);
+    adZ = new double[cTrain];
     if(adZ == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
-    adFadj = new double[pData->cRows]; new_item(adFadj);
+    adFadj = new double[pData->cRows];
     if(adFadj == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
 
-    pNodeFactory = new CNodeFactory(); new_item(pNodeFactory);
+    pNodeFactory = new CNodeFactory();
     if(pNodeFactory == NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
     hr = pNodeFactory->Initialize(cDepth);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
     ptreeTemp->Initialize(pNodeFactory);
 
     // array for flagging those observations in the bag
-    afInBag = new bool[cTrain]; new_item(afInBag);
+    afInBag = new bool[cTrain];
     if(afInBag==NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
     // aiNodeAssign tracks to which node each training obs belongs
-    aiNodeAssign = new ULONG[cTrain]; new_item(aiNodeAssign);
+    aiNodeAssign = new ULONG[cTrain];
     if(aiNodeAssign==NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
     // NodeSearch objects help decide which nodes to split
-    aNodeSearch = new CNodeSearch[2*cDepth+1]; new_item(aNodeSearch);
+    aNodeSearch = new CNodeSearch[2*cDepth+1];
     if(aNodeSearch==NULL)
     {
-        hr = E_OUTOFMEMORY;
-        ErrorTrace(hr);
+        hr = GBM_OUTOFMEMORY;
         goto Error;
     }
     for(i=0; i<2*cDepth+1; i++)
@@ -184,7 +175,7 @@ Error:
 
 
 
-HRESULT CGBM::Predict
+GBMRESULT CGBM::Predict
 (
     unsigned long iVar,
     unsigned long cTrees,
@@ -193,14 +184,14 @@ HRESULT CGBM::Predict
     unsigned long cLength
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
 
     return hr;
 }
 
 
-HRESULT CGBM::Predict
+GBMRESULT CGBM::Predict
 (
     double *adX,
     unsigned long cRow,
@@ -209,7 +200,7 @@ HRESULT CGBM::Predict
     double *adF
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
 
     return hr;
@@ -217,13 +208,13 @@ HRESULT CGBM::Predict
 
 
 
-HRESULT CGBM::GetVarRelativeInfluence
+GBMRESULT CGBM::GetVarRelativeInfluence
 (
     double *adRelInf,
     unsigned long cTrees
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     int iVar=0;
 
     for(iVar=0; iVar<pData->cCols; iVar++)
@@ -235,12 +226,12 @@ HRESULT CGBM::GetVarRelativeInfluence
 }
 
 
-HRESULT CGBM::PrintTree()
+GBMRESULT CGBM::PrintTree()
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     hr = ptreeTemp->Print();
-    if(FAILED(hr)) goto Error;
+    if(GBM_FAILED(hr)) goto Error;
 
 Cleanup:
     return hr;
@@ -251,7 +242,7 @@ Error:
 
 
 
-HRESULT CGBM::iterate
+GBMRESULT CGBM::iterate
 (
     double *adF,
     double &dTrainError,
@@ -260,14 +251,13 @@ HRESULT CGBM::iterate
     int &cNodes
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     unsigned long i = 0;
     unsigned long cBagged = 0;
 
     if(!fInitialized)
     {
-        hr = E_FAIL;
-        ErrorTrace(hr);
+        hr = GBM_FAIL;
         goto Error;
     }
 
@@ -303,7 +293,7 @@ HRESULT CGBM::iterate
                                        pData->adWeight,
                                        afInBag,
                                        cTrain);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
@@ -320,15 +310,16 @@ HRESULT CGBM::iterate
                          cMinObsInNode,
                          afInBag,
                          aiNodeAssign,aNodeSearch,vecpTermNodes);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
+
     #ifdef NOISY_DEBUG
     Rprintf("get node count\n");
     #endif
     hr = ptreeTemp->GetNodeCount(cNodes);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
@@ -351,7 +342,7 @@ HRESULT CGBM::iterate
                                 cMinObsInNode,
                                 afInBag,
                                 adFadj);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
@@ -360,7 +351,7 @@ HRESULT CGBM::iterate
     // fill in missing nodes where N < cMinObsInNode
     hr = ptreeTemp->Adjust(aiNodeAssign,adFadj,cTrain,
                            vecpTermNodes,cMinObsInNode);
-    if(FAILED(hr))
+    if(GBM_FAILED(hr))
     {
         goto Error;
     }
@@ -416,13 +407,12 @@ HRESULT CGBM::iterate
 
 Cleanup:
     return hr;
-
 Error:
     goto Cleanup;
 }
 
 
-HRESULT CGBM::TransferTreeToRList
+GBMRESULT CGBM::TransferTreeToRList
 (
     int *aiSplitVar,
     double *adSplitPoint,
@@ -435,7 +425,7 @@ HRESULT CGBM::TransferTreeToRList
     int cCatSplitsOld
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     hr = ptreeTemp->TransferTreeToRList(pData,
                                         aiSplitVar,

@@ -11,7 +11,7 @@ CBernoulli::~CBernoulli()
 }
 
 
-HRESULT CBernoulli::ComputeWorkingResponse
+GBMRESULT CBernoulli::ComputeWorkingResponse
 (
     double *adY,
     double *adMisc,
@@ -27,11 +27,6 @@ HRESULT CBernoulli::ComputeWorkingResponse
     double dProb = 0.0;
     double dF = 0.0;
 
-    assert(adY != NULL);
-    assert(adF != NULL);
-    assert(adZ != NULL);
-    assert(adWeight != NULL);
-
     for(i=0; i<nTrain; i++)
     {
         dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
@@ -40,12 +35,12 @@ HRESULT CBernoulli::ComputeWorkingResponse
         adZ[i] = adY[i] - dProb;
     }
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
-HRESULT CBernoulli::InitF
+GBMRESULT CBernoulli::InitF
 (
     double *adY,
     double *adMisc,
@@ -55,12 +50,10 @@ HRESULT CBernoulli::InitF
     unsigned long cLength
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     unsigned long i=0;
     double dTemp=0.0;
-
-    assert(adY != NULL);
 
     if(adOffset==NULL)
     {
@@ -114,9 +107,6 @@ double CBernoulli::LogLikelihood
     double dL = 0.0;
     double dF = 0.0;
 
-    assert(adY != NULL);
-    assert(adF != NULL);
-    
     for(i=0; i<cLength; i++)
     {
         dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
@@ -127,7 +117,7 @@ double CBernoulli::LogLikelihood
 }
 
 
-HRESULT CBernoulli::FitBestConstant
+GBMRESULT CBernoulli::FitBestConstant
 (
     double *adY,
     double *adMisc,
@@ -144,7 +134,7 @@ HRESULT CBernoulli::FitBestConstant
     double *adFadj
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     unsigned long iObs = 0;
     unsigned long iNode = 0;

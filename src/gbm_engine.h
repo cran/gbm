@@ -14,8 +14,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef GBM_ENGINE_H
-#define GBM_ENGINE_H
+#ifndef GBM_ENGINGBM_H
+#define GBM_ENGINGBM_H
 
 #include <vector>
 #include "buildinfo.h"
@@ -33,7 +33,7 @@ public:
 
     CGBM();
     ~CGBM();
-    HRESULT Initialize(CDataset *pData,
+    GBMRESULT Initialize(CDataset *pData,
                        CDistribution *pDist,
                        double dLambda,
                        unsigned long nTrain,
@@ -41,12 +41,12 @@ public:
                        unsigned long cLeaves,
                        unsigned long cMinObsInNode);
 
-    HRESULT iterate(double *adF,
+    GBMRESULT iterate(double *adF,
                     double &dTrainError,
                     double &dValidError,
                     double &dOOBagImprove,
                     int &cNodes);
-    HRESULT TransferTreeToRList(int *aiSplitVar,
+    GBMRESULT TransferTreeToRList(int *aiSplitVar,
                                 double *adSplitPoint,
                                 int *aiLeftNode,
                                 int *aiRightNode,
@@ -55,20 +55,20 @@ public:
                                 double *adWeight,
                                 VEC_VEC_CATEGORIES &vecSplitCodes,
                                 int cCatSplitsOld);
-    HRESULT Predict(unsigned long iVar,
+    GBMRESULT Predict(unsigned long iVar,
                     unsigned long cTrees,
                     double *adF,
                     double *adX,
                     unsigned long cLength);
-    HRESULT Predict(double *adX,
+    GBMRESULT Predict(double *adX,
                     unsigned long cRow,
                     unsigned long cCol,
                     unsigned long cTrees,
                     double *adF);
 
-    HRESULT GetVarRelativeInfluence(double *adRelInf,
+    GBMRESULT GetVarRelativeInfluence(double *adRelInf,
                                     unsigned long cTrees);
-    HRESULT PrintTree();
+    GBMRESULT PrintTree();
 
     CDataset *pData;            // the data
     CDistribution *pDist;       // the distribution
@@ -95,7 +95,7 @@ private:
     unsigned long cMinObsInNode;
 };
 
-#endif // GBM_ENGINE_H
+#endif // GBM_ENGINGBM_H
 
 
 

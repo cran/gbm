@@ -13,7 +13,7 @@ CLaplace::~CLaplace()
 }
 
 
-HRESULT CLaplace::ComputeWorkingResponse
+GBMRESULT CLaplace::ComputeWorkingResponse
 (
     double *adY,
     double *adMisc,
@@ -26,11 +26,6 @@ HRESULT CLaplace::ComputeWorkingResponse
 )
 {
     unsigned long i = 0;
-
-    assert(adY != NULL);
-    assert(adF != NULL);
-    assert(adZ != NULL);
-    assert(adWeight != NULL);
 
     if(adOffset == NULL)
     {
@@ -47,13 +42,13 @@ HRESULT CLaplace::ComputeWorkingResponse
         }
     }
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
 // DEBUG: needs weighted median
-HRESULT CLaplace::InitF
+GBMRESULT CLaplace::InitF
 (
     double *adY,
     double *adMisc,
@@ -65,9 +60,6 @@ HRESULT CLaplace::InitF
 {
     double dOffset=0.0;
     unsigned long i=0;
-
-    assert(adY != NULL);
-    assert(adWeight != NULL);
 
     vecd.resize(cLength);
     for(i=0; i<cLength; i++)
@@ -81,7 +73,7 @@ HRESULT CLaplace::InitF
 
     dInitF = *itMedian;
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
@@ -97,9 +89,6 @@ double CLaplace::LogLikelihood
 {
     unsigned long i=0;
     double dL = 0.0;
-
-    assert(adY != NULL);
-    assert(adF != NULL);
 
     if(adOffset == NULL)
     {
@@ -121,7 +110,7 @@ double CLaplace::LogLikelihood
 
 
 // DEBUG: needs weighted median
-HRESULT CLaplace::FitBestConstant
+GBMRESULT CLaplace::FitBestConstant
 (
     double *adY,
     double *adMisc,
@@ -138,7 +127,7 @@ HRESULT CLaplace::FitBestConstant
     double *adFadj
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     unsigned long iNode = 0;
     unsigned long iObs = 0;

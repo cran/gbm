@@ -13,8 +13,8 @@
 //        
 //------------------------------------------------------------------------------
 
-#ifndef LAPLACE_H
-#define LAPLACE_H
+#ifndef LAPLACGBM_H
+#define LAPLACGBM_H
 
 #include <algorithm>
 #include "distribution.h"
@@ -29,7 +29,7 @@ public:
 
     virtual ~CLaplace();
 
-    HRESULT ComputeWorkingResponse(double *adY,
+    GBMRESULT ComputeWorkingResponse(double *adY,
                                    double *adMisc,
                                    double *adOffset,
                                    double *adF, 
@@ -38,14 +38,14 @@ public:
                                    bool *afInBag,
                                    unsigned long nTrain);
 
-    HRESULT InitF(double *adY, 
+    GBMRESULT InitF(double *adY, 
                   double *adMisc,
                   double *adOffset,
                   double *adWeight,
                   double &dInitF, 
                   unsigned long cLength);
 
-    HRESULT FitBestConstant(double *adY,
+    GBMRESULT FitBestConstant(double *adY,
                             double *adMisc,
                             double *adOffset,
                             double *adW,
@@ -81,7 +81,7 @@ private:
     vector<double>::iterator itMedian;
 };
 
-#endif // LAPLACE_H
+#endif // LAPLACGBM_H
 
 
 

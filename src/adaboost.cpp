@@ -11,7 +11,7 @@ CAdaBoost::~CAdaBoost()
 }
 
 
-HRESULT CAdaBoost::ComputeWorkingResponse
+GBMRESULT CAdaBoost::ComputeWorkingResponse
 (
     double *adY,
     double *adMisc,
@@ -24,11 +24,6 @@ HRESULT CAdaBoost::ComputeWorkingResponse
 )
 {
     unsigned long i = 0;
-
-    assert(adY != NULL);
-    assert(adF != NULL);
-    assert(adZ != NULL);
-    assert(adWeight != NULL);
 
     if(adOffset == NULL)
     {
@@ -45,12 +40,12 @@ HRESULT CAdaBoost::ComputeWorkingResponse
         }
     }
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
-HRESULT CAdaBoost::InitF
+GBMRESULT CAdaBoost::InitF
 (
     double *adY,
     double *adMisc,
@@ -62,7 +57,7 @@ HRESULT CAdaBoost::InitF
 {
     dInitF = 0.0;
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
@@ -78,10 +73,6 @@ double CAdaBoost::LogLikelihood
 {
     unsigned long i=0;
     double dL = 0.0;
-
-    assert(adY != NULL);
-    assert(adWeight != NULL);
-    assert(adF != NULL);
 
     if(adOffset == NULL)
     {
@@ -102,7 +93,7 @@ double CAdaBoost::LogLikelihood
 }
 
 
-HRESULT CAdaBoost::FitBestConstant
+GBMRESULT CAdaBoost::FitBestConstant
 (
     double *adY,
     double *adMisc,
@@ -119,7 +110,7 @@ HRESULT CAdaBoost::FitBestConstant
     double *adFadj
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     double dF = 0.0;
     unsigned long iObs = 0;

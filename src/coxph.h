@@ -30,7 +30,7 @@ public:
 
     virtual ~CCoxPH();
 
-    HRESULT ComputeWorkingResponse(double *adT,
+    GBMRESULT ComputeWorkingResponse(double *adT,
                                    double *adDelta,
                                    double *adOffset,
                                    double *adF, 
@@ -39,14 +39,14 @@ public:
                                    bool *afInBag,
                                    unsigned long nTrain);
 
-    HRESULT InitF(double *adT,
+    GBMRESULT InitF(double *adT,
                   double *adDelta,
                   double *adOffset,
                   double *adWeight,
                   double &dInitF, 
                   unsigned long cLength);
 
-    HRESULT FitBestConstant(double *adT,
+    GBMRESULT FitBestConstant(double *adT,
                             double *adDelta,
                             double *adOffset,
                             double *adW,

@@ -19,12 +19,12 @@ CNodeNonterminal::~CNodeNonterminal()
 
 
 
-HRESULT CNodeNonterminal::Adjust
+GBMRESULT CNodeNonterminal::Adjust
 (
     unsigned long cMinObsInNode
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     hr = pLeftNode->Adjust(cMinObsInNode);
     hr = pRightNode->Adjust(cMinObsInNode);
@@ -51,14 +51,14 @@ HRESULT CNodeNonterminal::Adjust
 
 
 
-HRESULT CNodeNonterminal::Predict
+GBMRESULT CNodeNonterminal::Predict
 (
     CDataset *pData, 
     unsigned long iRow, 
     double &dFadj
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     signed char schWhichNode = WhichNode(pData,iRow);
     if(schWhichNode == -1)
@@ -78,7 +78,7 @@ HRESULT CNodeNonterminal::Predict
 }
 
 
-HRESULT CNodeNonterminal::Predict
+GBMRESULT CNodeNonterminal::Predict
 (
     double *adX,
     unsigned long cRow,
@@ -87,7 +87,7 @@ HRESULT CNodeNonterminal::Predict
     double &dFadj
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     signed char schWhichNode = WhichNode(adX,cRow,cCol,iRow);
     if(schWhichNode == -1)
@@ -107,12 +107,12 @@ HRESULT CNodeNonterminal::Predict
 }
 
 
-HRESULT CNodeNonterminal::GetVarRelativeInfluence
+GBMRESULT CNodeNonterminal::GetVarRelativeInfluence
 (
     double *adRelInf
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     adRelInf[iSplitVar] += dImprovement;
     pLeftNode->GetVarRelativeInfluence(adRelInf);

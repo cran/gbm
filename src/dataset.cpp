@@ -25,15 +25,14 @@ CDataset::~CDataset()
 
 
 
-HRESULT CDataset::ResetWeights()
+GBMRESULT CDataset::ResetWeights()
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     int i = 0;
 
     if(adWeight == NULL)
     {
-        hr = E_INVALIDARG;
-        ErrorTrace(hr);
+        hr = GBM_INVALIDARG;
         goto Error;
     }
 
@@ -52,7 +51,7 @@ Error:
 
 
 
-HRESULT CDataset::SetData
+GBMRESULT CDataset::SetData
 (
     double *adX,
     int *aiXOrder,
@@ -66,12 +65,11 @@ HRESULT CDataset::SetData
     int *alMonotoneVar
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     if((adX == NULL) || (adY == NULL))
     {
-        hr = E_INVALIDARG;
-        ErrorTrace(hr);
+        hr = GBM_INVALIDARG;
         goto Error;
     }
 

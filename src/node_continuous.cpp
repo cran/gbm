@@ -18,12 +18,12 @@ CNodeContinuous::~CNodeContinuous()
 
 
 
-HRESULT CNodeContinuous::PrintSubtree
+GBMRESULT CNodeContinuous::PrintSubtree
 (
     unsigned long cIndent
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     unsigned long i = 0;
     
     for(i=0; i< cIndent; i++) Rprintf("  ");
@@ -37,7 +37,6 @@ HRESULT CNodeContinuous::PrintSubtree
     Rprintf("V%d < %f\n",
            iSplitVar,
            dSplitValue);
-    assert(pLeftNode != NULL);
     hr = pLeftNode->PrintSubtree(cIndent+1);
 
     for(i=0; i< cIndent; i++) Rprintf("  ");
@@ -106,19 +105,19 @@ signed char CNodeContinuous::WhichNode
 
 
 
-HRESULT CNodeContinuous::RecycleSelf
+GBMRESULT CNodeContinuous::RecycleSelf
 (
     CNodeFactory *pNodeFactory
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     pNodeFactory->RecycleNode(this);
     return hr;
 };
 
 
 
-HRESULT CNodeContinuous::TransferTreeToRList
+GBMRESULT CNodeContinuous::TransferTreeToRList
 (
     int &iNodeID,
     CDataset *pData,
@@ -134,7 +133,7 @@ HRESULT CNodeContinuous::TransferTreeToRList
     double dShrinkage
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
     int iThisNodeID = iNodeID;
 
     aiSplitVar[iThisNodeID] = iSplitVar;
@@ -157,7 +156,7 @@ HRESULT CNodeContinuous::TransferTreeToRList
                                         vecSplitCodes,
                                         cCatSplitsOld,
                                         dShrinkage);
-    if(FAILED(hr)) goto Error;
+    if(GBM_FAILED(hr)) goto Error;
 
     aiRightNode[iThisNodeID] = iNodeID;
     hr = pRightNode->TransferTreeToRList(iNodeID,
@@ -172,7 +171,7 @@ HRESULT CNodeContinuous::TransferTreeToRList
                                          vecSplitCodes,
                                          cCatSplitsOld,
                                          dShrinkage);
-    if(FAILED(hr)) goto Error;
+    if(GBM_FAILED(hr)) goto Error;
 
     aiMissingNode[iThisNodeID] = iNodeID;
     hr = pMissingNode->TransferTreeToRList(iNodeID,
@@ -187,7 +186,7 @@ HRESULT CNodeContinuous::TransferTreeToRList
                                            vecSplitCodes,
                                            cCatSplitsOld,
                                            dShrinkage);
-    if(FAILED(hr)) goto Error;
+    if(GBM_FAILED(hr)) goto Error;
 
 Cleanup:
     return hr;

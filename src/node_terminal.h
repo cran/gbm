@@ -29,10 +29,10 @@ public:
 
     CNodeTerminal();
     ~CNodeTerminal();
-    HRESULT Adjust(unsigned long cMinObsInNode);
+    GBMRESULT Adjust(unsigned long cMinObsInNode);
 
-    HRESULT PrintSubtree(unsigned long cIndent);
-    HRESULT TransferTreeToRList(int &iNodeID,
+    GBMRESULT PrintSubtree(unsigned long cIndent);
+    GBMRESULT TransferTreeToRList(int &iNodeID,
                                 CDataset *pData,
                                 int *aiSplitVar,
                                 double *adSplitPoint,
@@ -45,18 +45,18 @@ public:
                                 int cCatSplitsOld,
                                 double dShrinkage);
 
-    HRESULT ApplyShrinkage(double dLambda);
-    HRESULT Predict(CDataset *pData, 
+    GBMRESULT ApplyShrinkage(double dLambda);
+    GBMRESULT Predict(CDataset *pData, 
                     unsigned long i, 
                     double &dFadj);
-    HRESULT Predict(double *adX,
+    GBMRESULT Predict(double *adX,
                     unsigned long cRow,
                     unsigned long cCol,
                     unsigned long iRow,
                     double &dFadj);
 
-    HRESULT GetVarRelativeInfluence(double *adRelInf);
-    HRESULT RecycleSelf(CNodeFactory *pNodeFactory);
+    GBMRESULT GetVarRelativeInfluence(double *adRelInf);
+    GBMRESULT RecycleSelf(CNodeFactory *pNodeFactory);
 };
 
 typedef CNodeTerminal *PCNodeTerminal;

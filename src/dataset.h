@@ -17,7 +17,6 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#include<cassert>
 #include "buildinfo.h"
 
 class CDataset  
@@ -26,8 +25,9 @@ public:
 	CDataset();
 	~CDataset();
 
-    HRESULT ResetWeights();
-    HRESULT SetData(double *adX,
+    GBMRESULT ResetWeights();
+
+    GBMRESULT SetData(double *adX,
                     int *aiXOrder,
                     double *adY,
                     double *adOffset,
@@ -38,16 +38,15 @@ public:
                     int *acVarClasses,
                     int *alMonotoneVar);
 
-    HRESULT Entry(int iRow,
+    GBMRESULT Entry(int iRow,
                   int iCol,
                   double &dValue)
     {
-        HRESULT hr = S_OK;
+        GBMRESULT hr = GBM_OK;
 
         if((iRow >= cRows) || (iCol >= cCols))
         {
-            hr = E_INVALIDARG;
-            ErrorTrace(hr);
+            hr = GBM_INVALIDARG;
             goto Error;
         }
 

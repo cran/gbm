@@ -11,7 +11,7 @@ CCoxPH::~CCoxPH()
 }
 
 
-HRESULT CCoxPH::ComputeWorkingResponse
+GBMRESULT CCoxPH::ComputeWorkingResponse
 (
     double *adT,
     double *adDelta,
@@ -27,12 +27,6 @@ HRESULT CCoxPH::ComputeWorkingResponse
     double dF = 0.0;
     double dTot = 0.0;
     double dRiskTot = 0.0;
-
-    assert(adT != NULL);
-    assert(adDelta != NULL);
-    assert(adF != NULL);
-    assert(adZ != NULL);
-    assert(adWeight != NULL);
 
     vecdRiskTot.resize(nTrain);
     dRiskTot = 0.0;
@@ -59,12 +53,12 @@ HRESULT CCoxPH::ComputeWorkingResponse
             adZ[i] = adDelta[i] - exp(dF)*dTot;
         }
     }
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
-HRESULT CCoxPH::InitF
+GBMRESULT CCoxPH::InitF
 (
     double *adY,
     double *adMisc,
@@ -76,7 +70,7 @@ HRESULT CCoxPH::InitF
 {
     dInitF = 0.0;
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
@@ -95,11 +89,6 @@ double CCoxPH::LogLikelihood
     double dF = 0.0;
     double dTotalAtRisk = 0.0;
 
-    assert(adT != NULL);
-    assert(adDelta != NULL);
-    assert(adWeight != NULL);
-    assert(adF != NULL);
-
     dTotalAtRisk = 0.0;
     for(i=0; i<cLength; i++)
     {
@@ -115,7 +104,7 @@ double CCoxPH::LogLikelihood
 }
 
 
-HRESULT CCoxPH::FitBestConstant
+GBMRESULT CCoxPH::FitBestConstant
 (
     double *adT,
     double *adDelta,
@@ -132,7 +121,7 @@ HRESULT CCoxPH::FitBestConstant
     double *adFadj
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     double dF = 0.0;
     double dRiskTot = 0.0;

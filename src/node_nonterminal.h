@@ -26,7 +26,7 @@ public:
 
     CNodeNonterminal();
     virtual ~CNodeNonterminal();
-    virtual HRESULT Adjust(unsigned long cMinObsInNode);
+    virtual GBMRESULT Adjust(unsigned long cMinObsInNode);
 
     virtual signed char WhichNode(CDataset *pData,
                                   unsigned long iObs) = 0;
@@ -34,7 +34,7 @@ public:
                                   unsigned long cRow,
                                   unsigned long cCol,
                                   unsigned long iRow) = 0;
-    virtual HRESULT TransferTreeToRList(int &iNodeID,
+    virtual GBMRESULT TransferTreeToRList(int &iNodeID,
                                         CDataset *pData,
                                         int *aiSplitVar,
                                         double *adSplitPoint,
@@ -47,17 +47,17 @@ public:
                                         int cCatSplitsOld,
                                         double dShrinkage) = 0;
 
-    HRESULT Predict(CDataset *pData, 
+    GBMRESULT Predict(CDataset *pData, 
                     unsigned long iRow, 
                     double &dFadj);
-    HRESULT Predict(double *adX,
+    GBMRESULT Predict(double *adX,
                     unsigned long cRow,
                     unsigned long cCol,
                     unsigned long iRow,
                     double &dFadj);
 
-    HRESULT GetVarRelativeInfluence(double *adRelInf);
-    virtual HRESULT RecycleSelf(CNodeFactory *pNodeFactory) = 0;
+    GBMRESULT GetVarRelativeInfluence(double *adRelInf);
+    virtual GBMRESULT RecycleSelf(CNodeFactory *pNodeFactory) = 0;
 
     CNode *pLeftNode;
     CNode *pRightNode;

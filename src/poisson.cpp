@@ -11,7 +11,7 @@ CPoisson::~CPoisson()
 }
 
 
-HRESULT CPoisson::ComputeWorkingResponse
+GBMRESULT CPoisson::ComputeWorkingResponse
 (
     double *adY,
     double *adMisc,
@@ -26,11 +26,6 @@ HRESULT CPoisson::ComputeWorkingResponse
     unsigned long i = 0;
     double dF = 0.0;
 
-    assert(adY != NULL);
-    assert(adF != NULL);
-    assert(adZ != NULL);
-    assert(adWeight != NULL);
-
     // compute working response
     for(i=0; i < nTrain; i++)
     {
@@ -38,12 +33,12 @@ HRESULT CPoisson::ComputeWorkingResponse
         adZ[i] = adY[i] - exp(dF);
     }
 
-    return S_OK;
+    return GBM_OK;
 }
 
 
 
-HRESULT CPoisson::InitF
+GBMRESULT CPoisson::InitF
 (
     double *adY,
     double *adMisc,
@@ -53,14 +48,11 @@ HRESULT CPoisson::InitF
     unsigned long cLength
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     double dSum = 0.0;
     double dDenom = 0.0;
     unsigned long i = 0;
-
-    assert(adY != NULL);
-    assert(adWeight != NULL);
 
     if(adOffset == NULL)
     {
@@ -118,7 +110,7 @@ double CPoisson::LogLikelihood
 }
 
 
-HRESULT CPoisson::FitBestConstant
+GBMRESULT CPoisson::FitBestConstant
 (
     double *adY,
     double *adMisc,
@@ -135,7 +127,7 @@ HRESULT CPoisson::FitBestConstant
     double *adFadj
 )
 {
-    HRESULT hr = S_OK;
+    GBMRESULT hr = GBM_OK;
 
     unsigned long iObs = 0;
     unsigned long iNode = 0;

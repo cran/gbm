@@ -28,9 +28,9 @@ public:
 
     CNodeSearch();
     ~CNodeSearch();
-    HRESULT Initialize(unsigned long cMinObsInNode);
+    GBMRESULT Initialize(unsigned long cMinObsInNode);
 
-    HRESULT IncorporateObs
+    GBMRESULT IncorporateObs
     (
         double dX,
         double dZ,
@@ -38,7 +38,7 @@ public:
         long lMonotone
     )
     {
-        HRESULT hr = S_OK;
+        GBMRESULT hr = GBM_OK;
         static double dWZ = 0.0;
 
         if(fIsSplit) goto Cleanup;
@@ -56,7 +56,12 @@ public:
         }
         else if(cCurrentVarClasses == 0)   // variable is continuous
         {
-            assert(dLastXValue <= dX);
+            if(dLastXValue > dX)
+            {
+                error("Observations are not in order. gbm() was unable to build an index for the design matrix. Could be a bug in gbm or an unusual data type in data.\n");
+                hr = GBM_FAIL;
+                goto Error;
+            }
 
             // Evaluate the current split
             // the newest observation is still in the right child
@@ -109,30 +114,32 @@ public:
 
     Cleanup:
         return hr;
+    Error:
+        goto Cleanup;
     }
 
-    HRESULT Set(double dSumZ,
+    GBMRESULT Set(double dSumZ,
                 double dTotalW,
                 unsigned long cTotalN,
                 CNodeTerminal *pThisNode,
                 CNode **ppParentPointerToThisNode,
                 CNodeFactory *pNodeFactory);
-    HRESULT ResetForNewVar(unsigned long iWhichVar,
+    GBMRESULT ResetForNewVar(unsigned long iWhichVar,
                            long cVarClasses);
 
     double BestImprovement() { return dBestImprovement; }
-    HRESULT SetToSplit() 
+    GBMRESULT SetToSplit() 
     {    
         fIsSplit = true;
-        return S_OK;
+        return GBM_OK;
     };
-    HRESULT SetupNewNodes(PCNodeNonterminal &pNewSplitNode,
+    GBMRESULT SetupNewNodes(PCNodeNonterminal &pNewSplitNode,
                           PCNodeTerminal &pNewLeftNode,
                           PCNodeTerminal &pNewRightNode,
                           PCNodeTerminal &pNewMissingNode);
 
-    HRESULT EvaluateCategoricalSplit();
-    HRESULT WrapUpCurrentVariable();
+    GBMRESULT EvaluateCategoricalSplit();
+    GBMRESULT WrapUpCurrentVariable();
     double ThisNodePrediction() {return pThisNode->dPrediction;}
     bool operator<(const CNodeSearch &ns) {return dBestImprovement<ns.dBestImprovement;}
 
