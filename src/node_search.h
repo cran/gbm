@@ -6,7 +6,7 @@
 //  License:    GNU GPL (version 2 or later)
 //
 //  Contents:   does the searching for where to split a node
-//        	  
+//            
 //  Owner:      gregr@rand.org
 //
 //  History:    3/26/2001   gregr created
@@ -17,8 +17,8 @@
 #ifndef NODESEARCH_H
 #define NODESEARCH_H
 
-#include "dataset.h"
 #include "node_factory.h"
+#include "dataset.h"
 
 using namespace std;
 
@@ -205,6 +205,3 @@ private:
 typedef CNodeSearch *PCNodeSearch;
 
 #endif // NODESEARCH_H
-
-
-

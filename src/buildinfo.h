@@ -4,6 +4,7 @@
 #ifndef BUILDINFO_H
 #define BUILDINFO_H
 
+    #undef ERROR
     #include <R.h>
 
     #define GBM_FAILED(hr) ((unsigned long)hr != 0)
@@ -23,5 +24,3 @@
     // #define NOISY_DEBUG
 
 #endif // BUILDINFO_H
-
-
