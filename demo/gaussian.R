@@ -40,7 +40,7 @@ gbm1 <- gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
             train.fraction = 0.5,        # fraction of data for training, first train.fraction*N used for training
             n.minobsinnode = 10,         # minimum number of obs needed in each node
             keep.data=TRUE,
-            cv.folds=10)
+            cv.folds=10)                 # do 10-fold cross-validation
 
 
 # plot the performance
@@ -62,9 +62,9 @@ print(gbm1$c.splits[1:3])
 N <- 1000
 X1 <- runif(N)
 X2 <- 2*runif(N)
-X3 <- factor(sample(letters[1:4],N,replace=T))
-X4 <- ordered(sample(letters[1:6],N,replace=T))
-X5 <- factor(sample(letters[1:3],N,replace=T))
+X3 <- factor(sample(letters[1:4],N,replace=TRUE))
+X4 <- ordered(sample(letters[1:6],N,replace=TRUE))
+X5 <- factor(sample(letters[1:3],N,replace=TRUE))
 X6 <- 3*runif(N)
 mu <- c(-1,0,1,2)[as.numeric(X3)]
 

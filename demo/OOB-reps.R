@@ -25,65 +25,73 @@ bernoulli.loglikelihood <- function(y,f.x)
 
 if(run.all)
 {
-dataset <- vector("list",n.datasets)
+   dataset <- vector("list",n.datasets)
 
-# abalone
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Abalone",
-         distribution="gaussian",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/abalone/",
-         filename="abalone.data",
-         var.names=c("sex","length","diameter","height","whole.weight",
-                     "shucked.weight","viscera.weight","shell.weight",
-                     "Rings"),
-         outcome="Rings",
-         factors="sex",
-         na.strings="",
-         sep=",",
-         shrinkage=0.02)
+   # abalone
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Abalone",
+            distribution="gaussian",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/abalone/",
+            filename="abalone.data",
+            var.names=c("sex","length","diameter","height","whole.weight",
+                        "shucked.weight","viscera.weight","shell.weight",
+                        "Rings"),
+            outcome="Rings",
+            factors="sex",
+            na.strings="",
+            sep=",",
+            shrinkage=0.02)
 
-# Adult
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Adult",
-         distribution="bernoulli",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/adult/",
-         filename="adult.data",
-         var.names=c("age","workclass","w","education","education.num",
-                     "marital.status","occupation","relationship","race",
-                     "male","capital.gain","capital.loss",
-                     "hours.per.week","native.country","income"),
-         outcome="income",
-         factors=c("workclass","education","marital.status","occupation",
-                   "relationship","race","native.country","male"),
-         na.strings="?",
-         sep=",",
-         shrinkage=0.04)
+   # Adult
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Adult",
+            distribution="bernoulli",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/adult/",
+            filename="adult.data",
+            var.names=c("age","workclass","w","education","education.num",
+                        "marital.status","occupation","relationship","race",
+                        "male","capital.gain","capital.loss",
+                        "hours.per.week","native.country","income"),
+            outcome="income",
+            factors=c("workclass","education","marital.status","occupation",
+                     "relationship","race","native.country","male"),
+            na.strings="?",
+            sep=",",
+            shrinkage=0.04)
 
-# Housing
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Boston housing",
-         distribution="gaussian",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/housing/",
-         filename="housing.data",
-         var.names=c("CRIM","ZN","INDUS","CHAS","NOX","RM","AGE",
-                     "DIS","RAD","TAX","PTRATIO","B","LSTAT","MEDV"),
-         factors=NULL,
-         outcome="MEDV",
-         na.strings="",
-         sep="",
-         shrinkage=0.005)
+   # Housing
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Boston housing",
+            distribution="gaussian",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/housing/",
+            filename="housing.data",
+            var.names=c("CRIM","ZN","INDUS","CHAS","NOX","RM","AGE",
+                        "DIS","RAD","TAX","PTRATIO","B","LSTAT","MEDV"),
+            factors=NULL,
+            outcome="MEDV",
+            na.strings="",
+            sep="",
+            shrinkage=0.005)
 
-# mushrooms
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Mushrooms",
-         distribution="bernoulli",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/mushroom/",
-         filename="agaricus-lepiota.data",
-         var.names=c("poisonous","cap-shape","cap-surface","cap-color",
+   # mushrooms
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Mushrooms",
+            distribution="bernoulli",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/mushroom/",
+            filename="agaricus-lepiota.data",
+            var.names=c("poisonous","cap-shape","cap-surface","cap-color",
+                        "bruises","odor","gill-attachment",
+                        "gill-spacing","gill-size","gill-color",
+                        "stalk-shape","stalk-root","stalk-surface-above-ring",
+                        "stalk-surface-below-ring","stalk-color-above-ring",
+                        "stalk-color-below-ring","veil-type","veil-color",
+                        "ring-number","ring-type","spore-print-color",
+                        "population","habitat"),
+            factors=c("cap-shape","cap-surface","cap-color",
                      "bruises","odor","gill-attachment",
                      "gill-spacing","gill-size","gill-color",
                      "stalk-shape","stalk-root","stalk-surface-above-ring",
@@ -91,170 +99,162 @@ dataset[[i.data]] <-
                      "stalk-color-below-ring","veil-type","veil-color",
                      "ring-number","ring-type","spore-print-color",
                      "population","habitat"),
-         factors=c("cap-shape","cap-surface","cap-color",
-                  "bruises","odor","gill-attachment",
-                  "gill-spacing","gill-size","gill-color",
-                  "stalk-shape","stalk-root","stalk-surface-above-ring",
-                  "stalk-surface-below-ring","stalk-color-above-ring",
-                  "stalk-color-below-ring","veil-type","veil-color",
-                  "ring-number","ring-type","spore-print-color",
-                  "population","habitat"),
-         outcome="poisonous",
-         drop.vars=c("veil-type"),
-         na.strings="?",
-         sep=",",
-         shrinkage=0.05)
-    
-# autoprices 1
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Auto Prices",
-         distribution="gaussian",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/autos/",
-         filename="imports-85.data",
-         var.names=c("symboling","normalizedlosses","make","fueltype",
-                     "aspiration","ndoors","bodystyle",
-                     "drivewheels","enginelocation", "wheelbase", "length", 
-                     "width", "height", "curbweight", "enginetype", 
-                     "numerofcylinders", "enginesize", "fuelsystem", "bore", 
-                     "stroke", "compressionratio", "horsepower", "peakrpm", 
-                     "citympg", "highwatmpg", "price"),
-         factors=c("symboling","make","fueltype","aspiration","ndoors",
-                   "bodystyle","drivewheels","enginelocation", "enginetype",
-                   "numerofcylinders", "fuelsystem"),
-         outcome="price",
-         na.strings="?",
-         sep=",",
-         shrinkage=0.002)
+            outcome="poisonous",
+            drop.vars=c("veil-type"),
+            na.strings="?",
+            sep=",",
+            shrinkage=0.05)
 
-# auto MPG
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Auto MPG",
-          distribution="gaussian",
-          urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/auto-mpg/",
-          filename="auto-mpg.data",
-          var.names=c("mpg","cylinders","displacement","horsepower","weight",
-                      "acceleration","modelyear","origin","carname"),
-          factors=c("cylinders", "modelyear", "origin"),
-          outcome="mpg",
-          drop.vars=c("carname"),
-          na.strings="?",
-          sep="",
-          shrinkage=0.005)
-
-# CPU
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="CPU Performance",
-         distribution="gaussian",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/cpu-performance/",
-         filename="machine.data",
-         var.names=c("vendorname","modelname","myct","mmin","mmax",
-                     "cach","chmin","chmax","prp","ERP"),
-         factors=c("vendorname","modelname"),
-         outcome="prp",
-         na.strings="",
-         drop.vars=c("vendorname","modelname"),
-         sep=",",
-         shrinkage=0.01)
-
-# credit
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Credit rating",
-         distribution="bernoulli",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/credit-screening/",
-         filename="crx.data",
-         var.names=c("A1","A2","A3","A4","A5","A6","A7","A8","A9","A10","A11",
-                     "A12", "A13", "A14", "A15","CLASS"),
-         factors=c("A1","A4", "A5", "A6", "A7", "A9", "A10", "A12", "A13","CLASS"),
-         outcome="CLASS",
-         na.strings="?",
-         sep=",",
-         shrinkage=0.005)
-
-# Haberman
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Haberman",
-         distribution="bernoulli",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/haberman/",
-         filename="haberman.data",
-         var.names=c("age","year","nodes","CLASS"),
-         outcome="CLASS",
-         factors=c("CLASS"),
-         na.strings="",
-         sep=",",
-         shrinkage=0.001)
-
-# Diabetes
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Diabetes",
-         distribution="bernoulli",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/pima-indians-diabetes/",
-         filename="pima-indians-diabetes.data",
-         var.names=c("n_preg","plasma","blood-pre","triceps","serum",
-                    "mass-index","pedigree","age","CLASS"),
-         factors=c("CLASS"),
-         outcome="CLASS",
-         na.strings="?",
-         sep=",",
-         shrinkage=0.005)
-
-# Ionosphere
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="Ionosphere",
-         distribution="bernoulli",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/ionosphere/",
-         filename="ionosphere.data",
-         var.names=c("A1","A2","A3","A4","A5","A6","A7","A8","A9","A10","A11",
-                     "A12","A13","A14","A15","A16","A17","A18","A19","A20",
-                     "A21","A22","A23","A24","A25","A26","A27","A28","A29",
-                     "A30","A31","A32","A33","A34","CLASS"),
-         factors=c("CLASS"),
-         outcome="CLASS",
-         na.strings="",
-         sep=",",
-         shrinkage=0.005)
-
-# Breast cancer
-i.data <- i.data + 1
-dataset[[i.data]] <-
-    list(name="breast cancer",
-         distribution="bernoulli",
-         urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/breast-cancer-wisconsin/",
-         filename="breast-cancer-wisconsin.data",
-         var.names=c("CODE","thickness","cellsize","cellshape","adhension",
-                     "singleecell","bnuclei","chromatin","nnucleo","mitoses",
-                     "CLASS"),
-         factors=c("CODE","CLASS"),
-         outcome="CLASS",
-         drop.vars=c("CODE"),
-         na.strings="?",
-         sep=",",
-         shrinkage=0.005)
-
-if(FALSE) # this dataset is not public, can substitute other datasets
-{
-   # time in treatment
+   # autoprices 1
    i.data <- i.data + 1
    dataset[[i.data]] <-
-      list(name="time in treatment",
+      list(name="Auto Prices",
             distribution="gaussian",
-            urlpath="./",
-            filename="txdet.csv",
-            var.names=NULL,
-            factors=c("b1","xsite4","b3new","b8new","s1a1new","m3dnew","e1new","e13anew"),
-            outcome="txdet",
-            drop.vars=c("xpid","xobs","maxcefu","recovfu","nontxdet","s7e5","r2f",
-                        "r3a9","e4a6","l5p","v2.4","v2.7","v2.8"),
-            na.strings="NA",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/autos/",
+            filename="imports-85.data",
+            var.names=c("symboling","normalizedlosses","make","fueltype",
+                        "aspiration","ndoors","bodystyle",
+                        "drivewheels","enginelocation", "wheelbase", "length",
+                        "width", "height", "curbweight", "enginetype",
+                        "numerofcylinders", "enginesize", "fuelsystem", "bore",
+                        "stroke", "compressionratio", "horsepower", "peakrpm",
+                        "citympg", "highwatmpg", "price"),
+            factors=c("symboling","make","fueltype","aspiration","ndoors",
+                     "bodystyle","drivewheels","enginelocation", "enginetype",
+                     "numerofcylinders", "fuelsystem"),
+            outcome="price",
+            na.strings="?",
             sep=",",
-            shrinkage=0.0022)
-}
+            shrinkage=0.002)
+
+   # auto MPG
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Auto MPG",
+            distribution="gaussian",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/auto-mpg/",
+            filename="auto-mpg.data",
+            var.names=c("mpg","cylinders","displacement","horsepower","weight",
+                        "acceleration","modelyear","origin","carname"),
+            factors=c("cylinders", "modelyear", "origin"),
+            outcome="mpg",
+            drop.vars=c("carname"),
+            na.strings="?",
+            sep="",
+            shrinkage=0.005)
+
+   # CPU
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="CPU Performance",
+            distribution="gaussian",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/cpu-performance/",
+            filename="machine.data",
+            var.names=c("vendorname","modelname","myct","mmin","mmax",
+                        "cach","chmin","chmax","prp","ERP"),
+            factors=c("vendorname","modelname"),
+            outcome="prp",
+            na.strings="",
+            drop.vars=c("vendorname","modelname"),
+            sep=",",
+            shrinkage=0.01)
+
+   # credit
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Credit rating",
+            distribution="bernoulli",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/credit-screening/",
+            filename="crx.data",
+            var.names=c("A1","A2","A3","A4","A5","A6","A7","A8","A9","A10","A11",
+                        "A12", "A13", "A14", "A15","CLASS"),
+            factors=c("A1","A4", "A5", "A6", "A7", "A9", "A10", "A12", "A13","CLASS"),
+            outcome="CLASS",
+            na.strings="?",
+            sep=",",
+            shrinkage=0.005)
+
+   # Haberman
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Haberman",
+            distribution="bernoulli",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/haberman/",
+            filename="haberman.data",
+            var.names=c("age","year","nodes","CLASS"),
+            outcome="CLASS",
+            factors=c("CLASS"),
+            na.strings="",
+            sep=",",
+            shrinkage=0.001)
+
+   # Diabetes
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Diabetes",
+            distribution="bernoulli",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/pima-indians-diabetes/",
+            filename="pima-indians-diabetes.data",
+            var.names=c("n_preg","plasma","blood-pre","triceps","serum",
+                     "mass-index","pedigree","age","CLASS"),
+            factors=c("CLASS"),
+            outcome="CLASS",
+            na.strings="?",
+            sep=",",
+            shrinkage=0.005)
+
+   # Ionosphere
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="Ionosphere",
+            distribution="bernoulli",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/ionosphere/",
+            filename="ionosphere.data",
+            var.names=c("A1","A2","A3","A4","A5","A6","A7","A8","A9","A10","A11",
+                        "A12","A13","A14","A15","A16","A17","A18","A19","A20",
+                        "A21","A22","A23","A24","A25","A26","A27","A28","A29",
+                        "A30","A31","A32","A33","A34","CLASS"),
+            factors=c("CLASS"),
+            outcome="CLASS",
+            na.strings="",
+            sep=",",
+            shrinkage=0.005)
+
+   # Breast cancer
+   i.data <- i.data + 1
+   dataset[[i.data]] <-
+      list(name="breast cancer",
+            distribution="bernoulli",
+            urlpath="http://ftp.ics.uci.edu/pub/machine-learning-databases/breast-cancer-wisconsin/",
+            filename="breast-cancer-wisconsin.data",
+            var.names=c("CODE","thickness","cellsize","cellshape","adhension",
+                        "singleecell","bnuclei","chromatin","nnucleo","mitoses",
+                        "CLASS"),
+            factors=c("CODE","CLASS"),
+            outcome="CLASS",
+            drop.vars=c("CODE"),
+            na.strings="?",
+            sep=",",
+            shrinkage=0.005)
+
+   if(FALSE) # this dataset is not public, can substitute other datasets
+   {
+      # time in treatment
+      i.data <- i.data + 1
+      dataset[[i.data]] <-
+         list(name="time in treatment",
+               distribution="gaussian",
+               urlpath="./",
+               filename="txdet.csv",
+               var.names=NULL,
+               factors=c("b1","xsite4","b3new","b8new","s1a1new","m3dnew","e1new","e13anew"),
+               outcome="txdet",
+               drop.vars=c("xpid","xobs","maxcefu","recovfu","nontxdet","s7e5","r2f",
+                           "r3a9","e4a6","l5p","v2.4","v2.7","v2.8"),
+               na.strings="NA",
+               sep=",",
+               shrinkage=0.0022)
+   }
 
    # Load datasets
    for(i.data in 1:n.datasets)
@@ -276,36 +276,36 @@ if(FALSE) # this dataset is not public, can substitute other datasets
       {
          names(dataset[[i.data]]$data) <- dataset[[i.data]]$var.names
       }
-   
+
       # take care of nominal predictors
       for(j in dataset[[i.data]]$factors)
       {
          dataset[[i.data]]$data[,j] <- factor(dataset[[i.data]]$data[,j])
       }
-   
+
       # take care of factor binary outcomes
-      if( with(dataset[[i.data]], 
+      if( with(dataset[[i.data]],
          (distribution=="bernoulli") && is.factor(data[,outcome])) )
       {
          dataset[[i.data]]$data[,dataset[[i.data]]$outcome] <-
                with(dataset[[i.data]], as.numeric(data[,outcome])-1)
       }
-      
+
       # drop observations with missing outcomes
       i <- with(dataset[[i.data]], !is.na(data[,outcome]))
       dataset[[i.data]]$data <- dataset[[i.data]]$data[i,]
-   
+
       # drop selected predictor variables
       if(!is.null(dataset[[i.data]]$drop.vars))
       {
          j <- match(dataset[[i.data]]$drop.vars,names(dataset[[i.data]]$data))
          dataset[[i.data]]$data <- dataset[[i.data]]$data[,-j]
       }
-   
+
       dataset[[i.data]]$loss <- switch(dataset[[i.data]]$distribution,
                                        gaussian=squared.error.loss,
                                        bernoulli=bernoulli.loglikelihood)
-   
+
       cat(nrow(dataset[[i.data]]$data),"\n")
    }
 
@@ -316,7 +316,7 @@ if(FALSE) # this dataset is not public, can substitute other datasets
 # make sure gbm is installed
 if(!is.element("gbm",installed.packages()[,1]))
 {
-    stop("The gbm package is not installed. Use install.packages(\"gbm\") to install. On Unix machines this must be executed in an R session started as root. It's also possible to install to a local library, see help(install.packages)")
+    stop("The gbm package is not installed. Use install.packages(\"gbm\") to install. On Unix machines this must be executed in an R session started as root or installed to a local library, see help(install.packages)")
 }
 
 library(gbm)
@@ -410,7 +410,7 @@ for(i.data in i.datasets)
          gbm1 <- gbm.more(gbm1,1000)
          best.iter.test <- gbm.perf(gbm1,method="test",plot.it=FALSE)
       }
-      pred.test20[i.valid] <- 
+      pred.test20[i.valid] <-
          predict(gbm1,
                   newdata=dataset[[i.data]]$data[i.valid,],
                   n.trees=best.iter.test)
@@ -452,27 +452,27 @@ for(i.data in i.datasets)
                   shrinkage=dataset[[i.data]]$shrinkage,
                   n.trees=best.iter.cv,
                   verbose = FALSE)
-      pred.cv5[i.valid] <- 
+      pred.cv5[i.valid] <-
          predict(gbm1,
                  newdata=dataset[[i.data]]$data[i.valid,],
                  n.trees=best.iter.cv)
-      dataset[[i.data]]$cv5.iter[i.rep] <- best.iter.cv      
-                  
+      dataset[[i.data]]$cv5.iter[i.rep] <- best.iter.cv
+
       # baseline prediction
       pred.base[i.valid] <- gbm1$initF
-    
+
       # evalute the methods
-      dataset[[i.data]]$base.loss[i.rep] <- 
+      dataset[[i.data]]$base.loss[i.rep] <-
          with(dataset[[i.data]], loss(data[i.valid,outcome],pred.base[i.valid]))
-      dataset[[i.data]]$oob.loss[i.rep]  <- 
+      dataset[[i.data]]$oob.loss[i.rep]  <-
          with(dataset[[i.data]], loss(data[i.valid,outcome],pred.oob[i.valid]))
-      dataset[[i.data]]$test33.loss[i.rep] <- 
+      dataset[[i.data]]$test33.loss[i.rep] <-
          with(dataset[[i.data]], loss(data[i.valid,outcome],pred.test33[i.valid]))
-      dataset[[i.data]]$test20.loss[i.rep] <- 
+      dataset[[i.data]]$test20.loss[i.rep] <-
          with(dataset[[i.data]], loss(data[i.valid,outcome],pred.test20[i.valid]))
-      dataset[[i.data]]$cv5.loss[i.rep] <- 
+      dataset[[i.data]]$cv5.loss[i.rep] <-
          with(dataset[[i.data]], loss(data[i.valid,outcome],pred.cv5[i.valid]))
-         
+
       with(dataset[[i.data]],
           cat(oob.iter[i.rep],test33.iter[i.rep],test20.iter[i.rep],
               cv5.iter[i.rep],"\n"))

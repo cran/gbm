@@ -20,9 +20,9 @@ predict.gbm(object,newdata,n.trees,
   \item{\dots}{ further arguments passed to or from other methods }
 }
 \details{
-\code{predict.gbm} runs each observation in \code{newdata} through the trees
-described by \code{object$trees[1:n.trees]}, the first n.trees in the boosting
-sequence. The function returns sum of the predictions from each of the trees.
+\code{predict.gbm} produces predicted values for each observation in \code{newdata} using the the first n.trees iterations of the boosting sequence.
+
+The predictions from \code{gbm} do not include the offset term. The user may add the value of the offset to the predicted value if desired.
 
 If \code{object} was fit using \code{\link{gbm.fit}} there will be no 
 \code{Terms} component. Therefore, the user has greater responsibility to make

@@ -309,15 +309,15 @@ Error:
 
 SEXP gbm_pred
 (
-    SEXP radX,
-    SEXP rcRows,
-    SEXP rcCols,
-    SEXP rcTrees,
-    SEXP rdInitF,
-    SEXP rTrees,
-    SEXP rCSplits,
-    SEXP raiVarType,
-    SEXP riSingleTree
+    SEXP radX,        // the data matrix
+    SEXP rcRows,      // number of rows
+    SEXP rcCols,      // number of columns
+    SEXP rcTrees,     // number of trees
+    SEXP rdInitF,     // the initial value
+    SEXP rTrees,      // the list of trees
+    SEXP rCSplits,    // the list of categorical splits
+    SEXP raiVarType,  // indicator of continuous/nominal
+    SEXP riSingleTree // boolean whether to return only results for one tree
 )
 {
     unsigned long hr = 0;
@@ -365,6 +365,7 @@ SEXP gbm_pred
     for(iTree=(fSingleTree ? cTrees-1 : 0); iTree<cTrees; iTree++)
     {
         rThisTree     = VECTOR_ELT(rTrees,iTree);
+        // these relate to columns returned by pretty.gbm.tree()
         aiSplitVar    = INTEGER(VECTOR_ELT(rThisTree,0));
         adSplitCode   = REAL   (VECTOR_ELT(rThisTree,1));
         aiLeftNode    = INTEGER(VECTOR_ELT(rThisTree,2));
@@ -1071,6 +1072,3 @@ Error:
 
 
 } // end extern "C"
-
-
-

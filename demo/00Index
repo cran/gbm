@@ -1,5 +1,4 @@
 gaussian       example of boosting for least squares, aka LSBoost
 bernoulli      example of boosting for logistic regression, aka LogitBoost
 coxph          example of boosting the Cox propotional hazards model
-laplace        example of boosting for least absolute deviations, aka LADBoost
 OOB-reps       experiment testing the predictive performance of the OOB estimator

@@ -19,7 +19,7 @@ predict.gbm <- function(object,newdata,n.trees,
    }
    if(!is.null(object$Terms))
    {
-      x <- model.frame(delete.response(object$Terms),
+      x <- model.frame(terms(reformulate(object$var.names)),
                        newdata,
                        na.action=na.pass)
    }
@@ -75,6 +75,11 @@ predict.gbm <- function(object,newdata,n.trees,
       {
          predF <- exp(predF)
       }
+   }
+   
+   if(!is.null(attr(object$Terms,"offset")))
+   {
+      warning("predict.gbm does not add the offset to the predicted values.")
    }
 
    return(predF)
@@ -285,7 +290,7 @@ gbm.more <- function(object,
       m <- eval(object$m, parent.frame())
       Terms <- attr(m, "terms")
       a <- attributes(Terms)
-      
+
       y <- as.vector(model.extract(m, response))
       offset <- model.extract(m,offset)
       x <- model.frame(delete.response(Terms),
@@ -388,6 +393,9 @@ gbm.more <- function(object,
    gbm.obj$oobag.improve <- c(object$oobag.improve, gbm.obj$oobag.improve)
    gbm.obj$trees         <- c(object$trees, gbm.obj$trees)
    gbm.obj$c.splits      <- c(object$c.splits, gbm.obj$c.splits)
+
+   # cv.error not updated when using gbm.more
+   gbm.obj$cv.error      <- object$cv.error
 
    gbm.obj$n.trees        <- length(gbm.obj$trees)
    gbm.obj$distribution   <- object$distribution
@@ -500,6 +508,10 @@ gbm.fit <- function(x,y,
    var.levels <- vector("list",cCols)
    for(i in 1:length(var.type))
    {
+      if(all(is.na(x[,i])))
+      {
+         stop("variable ",i,": ",var.names[i]," has only missing values.")
+      }
       if(is.ordered(x[,i]))
       {
          var.levels[[i]] <- levels(x[,i])
@@ -520,7 +532,7 @@ gbm.fit <- function(x,y,
       {
          stop("variable ",i,": ",var.names[i]," is not of type numeric, ordered, or factor.")
       }
-      
+
       # check for some variation in each variable
       if(length(unique(var.levels[[i]])) == 1)
       {
@@ -556,7 +568,7 @@ gbm.fit <- function(x,y,
    if((distribution == "laplace") && (length(unique(w)) > 1))
    {
       stop("This version of gbm for the Laplace loss lacks a weighted median. For now the weights must be constant.")
-   }   
+   }
    if(distribution == "coxph")
    {
       if(class(y)!="Surv")
@@ -604,13 +616,13 @@ gbm.fit <- function(x,y,
    train.error <- rep(0,n.trees)
    valid.error <- rep(0,n.trees)
    oobag.improve <- rep(0,n.trees)
-   
+
    if(is.null(var.monotone)) var.monotone <- rep(0,cCols)
-   else if(length(var.monotone)!=cCols) 
+   else if(length(var.monotone)!=cCols)
    {
       stop("Length of var.monotone != number of predictors")
    }
-   else if(!all(is.element(var.monotone,-1:1))) 
+   else if(!all(is.element(var.monotone,-1:1)))
    {
       stop("var.monotone must be -1, 0, or 1")
    }
@@ -690,7 +702,6 @@ gbm <- function(formula = formula(data),
                 distribution = "bernoulli",
                 data = list(),
                 weights,
-                offset = NULL,
                 var.monotone = NULL,
                 n.trees = 100,
                 interaction.depth = 1,
@@ -702,33 +713,24 @@ gbm <- function(formula = formula(data),
                 keep.data = TRUE,
                 verbose = TRUE)
 {
-   call <- match.call()
-   m <- match.call(expand = FALSE)
-   m$distribution <- m$offset <- m$var.monotone <- m$n.trees <- NULL
-   m$interaction.depth <- m$n.minobsinnode <- m$shrinkage <- NULL
-   m$bag.fraction <- m$train.fraction <- m$keep.data <- m$verbose <- NULL
-   m$cv.folds <- NULL
-   m[[1]] <- as.name("model.frame")
-   m$na.action <- na.pass
-   m.keep <- m
+   mf <- match.call(expand.dots = FALSE)    
+   m <- match(c("formula", "data", "weights", "offset"), names(mf), 0)
+   mf <- mf[c(1, m)]
+   mf$drop.unused.levels <- TRUE
+   mf$na.action <- na.pass
+   mf[[1]] <- as.name("model.frame")
+   mf <- eval(mf, parent.frame())
+   Terms <- attr(mf, "terms")
 
-   m <- eval(m, parent.frame())
-
-   Terms <- attr(m, "terms")
-   a <- attributes(Terms)
-
-   y <- model.extract(m, response)
-   x <- model.frame(delete.response(Terms),
+   y <- model.response(mf, "numeric")
+   w <- model.weights(mf)
+   offset <- model.offset(mf)
+   
+   var.names <- attributes(Terms)$term.labels
+   x <- model.frame(terms(reformulate(var.names)),
                     data,
                     na.action=na.pass)
-   w <- model.extract(m, weights)
 
-   if(!is.null(model.extract(m,offset)))
-   {
-      stop("In gbm the offset term needs to be specified using the offset parameter.")
-   }
-
-   var.names <- a$term.labels
    # get the character name of the response variable
    response.name <- dimnames(attr(terms(formula),"factors"))[[1]][1]
 
@@ -780,7 +782,7 @@ gbm <- function(formula = formula(data),
                       response.name = response.name)
    gbm.obj$Terms <- Terms
    gbm.obj$cv.error <- cv.error
-   
+
    if(!keep.data) # XXX check this
    {
       gbm.obj$m <- m.keep
@@ -794,10 +796,10 @@ gbm.perf <- function(object,
             plot.it=TRUE,
             oobag.curve=TRUE,
             overlay=TRUE,
-            method=c("OOB","test","cv")[1])
+            method)
 {
    smoother <- NULL
-   
+
    if((method == "OOB") || oobag.curve)
    {
       x <- 1:object$n.trees
@@ -805,27 +807,34 @@ gbm.perf <- function(object,
                         enp.target=min(max(4,length(x)/10),50))
       smoother$y <- smoother$fitted
       smoother$x <- x
-   
+
       best.iter.oob <- x[which.min(-cumsum(smoother$y))]
       best.iter <- best.iter.oob
    }
-   
+
+   if(method == "OOB")
+   {
+      warning("OOB generally underestimates the optimal number of iterations although predictive performance is reasonably competitive. Using cv.folds>0 when calling gbm usually results in improved predictive performance.")
+   }
+
    if(method == "test")
    {
       best.iter.test <- which.min(object$valid.error)
       best.iter <- best.iter.test
    }
-   
+
    if(method == "cv")
    {
-      if(is.null(object$cv.error)) 
+      if(is.null(object$cv.error))
          stop("In order to use method=\"cv\" gbm must be called with cv.folds>1.")
+      if(length(object$cv.error) < object$n.trees)
+         warning("cross-validation error is not computed for any additional iterations run using gbm.more().")
       best.iter.cv <- which.min(object$cv.error)
       best.iter <- best.iter.cv
    }
 
    if(!is.element(method,c("OOB","test","cv")))
-      stop("method must be OOB or test")
+      stop("method must be cv, test, or OOB")
 
    if(plot.it)
    {
@@ -844,17 +853,17 @@ gbm.perf <- function(object,
       {
          ylim <- range(object$train.error,object$valid.error)
       }
-      
+
       plot(object$train.error,
            ylim=ylim,
            type="l",
            xlab="Iteration",ylab=ylab)
-         
+
       if(object$train.fraction!=1)
       {
          lines(object$valid.error,col="red")
       }
-      
+
       if(oobag.curve)
       {
          if(overlay)
@@ -872,7 +881,7 @@ gbm.perf <- function(object,
             abline(h=0,col="blue",lwd=2)
             if(!is.na(best.iter)) abline(v=best.iter,col="blue",lwd=2)
          }
-   
+
          plot(object$oobag.improve,type="l",
               xlab="Iteration",
               ylab=paste("OOB change in",ylab))
@@ -882,7 +891,7 @@ gbm.perf <- function(object,
          abline(v=best.iter,col="blue",lwd=1)
       }
    }
-   
+
    return(best.iter)
 }
 
@@ -1125,7 +1134,7 @@ shrink.gbm.pred <- function(object,newdata,n.trees,
    {
       stop("lambda must have the same length as the number of variables in the gbm object.")
    }
-   
+
    if(!is.null(object$Terms))
    {
       x <- model.frame(delete.response(object$Terms),
@@ -1191,15 +1200,15 @@ shrink.gbm <- function(object,n.trees,
    {
       stop("lambda must have the same length as the number of variables in the gbm object.")
    }
-   
+
    if(is.null(object$data))
    {
       stop("shrink.gbm requires keep.data=TRUE when gbm model is fit.")
    }
-   
+
    y <- object$data$y
    x <- object$data$x
-   
+
    cCols <- length(object$var.names)
    cRows <- length(x)/cCols
 
@@ -1226,7 +1235,7 @@ shrink.gbm <- function(object,n.trees,
 
    names(result) <- c("predF","objective","gradient")
 
-   return(result)   
+   return(result)
 }
 
 
@@ -1244,7 +1253,7 @@ basehaz.gbm <- function(t,delta,f.x,
                   sum(exp(f.x[t>=t.unique[i]]))
    }
 
-   if(!smooth && !cumulative)   
+   if(!smooth && !cumulative)
    {
       if(!is.null(t.eval))
       {
@@ -1262,7 +1271,7 @@ basehaz.gbm <- function(t,delta,f.x,
    {
       lambda.smooth <- list(x=t.unique,y=cumsum(alpha))
    }
-   
+
    if(!is.null(t.eval))
    {
       obj <- approx(lambda.smooth$x,lambda.smooth$y,xout=t.eval)$y
@@ -1270,6 +1279,6 @@ basehaz.gbm <- function(t,delta,f.x,
    {
       obj <- approx(lambda.smooth$x,lambda.smooth$y,xout=t)$y
    }
-   
+
    return(obj)
 }

@@ -10,7 +10,7 @@ gbm.perf(object,
          plot.it = TRUE, 
          oobag.curve = TRUE, 
          overlay = TRUE, 
-         method = c("OOB","test","cv")[1])
+         method)
 }
 \arguments{
 \item{object}{a \code{\link{gbm.object}} created from an initial call to 

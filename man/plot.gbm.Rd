@@ -17,13 +17,13 @@ plot.gbm(x,
   \item{i.var}{a vector of indices or the names of the variables to plot. If
   using indices, the variables are indexed in the same order that they appear
   in the initial \code{gbm} formula.
-  If \code{length(i.var) is between 1 and 3 then \code{plot.gbm} produces the plots. Otherwise,
-  \code{plot.gbm} returns only the grid of evaluation points and their average predictions.}}
+  If \code{length(i.var)} is between 1 and 3 then \code{plot.gbm} produces the plots. Otherwise,
+  \code{plot.gbm} returns only the grid of evaluation points and their average predictions.}
   \item{n.trees}{ the number of trees used to generate the plot. Only the first
   \code{n.trees} trees will be used.}
   \item{continuous.resolution}{ The number of equally space points at which to 
   evaluate continuous predictors }
-  \item{return.grid}{ if true then \code{plot.gbm} produces no graphics and only returns
+  \item{return.grid}{ if \code{TRUE} then \code{plot.gbm} produces no graphics and only returns
   the grid of evaluation points and their average predictions. This is useful for
   customizing the graphics for special variable types or for dimensions greater
   than 3. }  
