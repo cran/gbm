@@ -88,6 +88,17 @@ plot.gbm <- function(x,
                      return.grid = FALSE,
                      ...)
 {
+   if(all(is.character(i.var)))
+   {
+      i <- match(i.var,x$var.names)
+      if(any(is.na(i)))
+      {
+         stop("Plot variables not used in gbm model fit: ",i.var[is.na(i)])
+      } else
+      {
+         i.var <- i
+      }
+   }
 
    if((min(i.var)<1) || (max(i.var)>length(x$var.names)))
    {
@@ -507,7 +518,7 @@ gbm.fit <- function(x,y,
       }
       else
       {
-         stop("variable ",i,": ",var.names[i]," if not of type numeric, ordered, or factor.")
+         stop("variable ",i,": ",var.names[i]," is not of type numeric, ordered, or factor.")
       }
       
       # check for some variation in each variable
@@ -667,7 +678,7 @@ gbm.fit <- function(x,y,
    else
    {
       gbm.obj$data <- NULL
-      gbm.obj$m <- m.keep
+      # gbm.obj$m <- m.keep  # XXX should drop this?
    }
 
    class(gbm.obj) <- "gbm"
@@ -735,6 +746,11 @@ gbm <- function(formula = formula(data),
                       var.names = var.names,
                       response.name = response.name)
    gbm.obj$Terms <- Terms
+   
+   if(!keep.data) # XXX check this
+   {
+      gbm.obj$m <- m.keep
+   }
 
    return(gbm.obj)
 }

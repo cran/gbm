@@ -1,3 +1,7 @@
+Changes in version 1.2
+- gbm.plot now allows i.var to be the names of the variables to plot or the
+index of the variables used
+
 Changes in version 1.1
 
 - all calculations of loss functions now compute averages rather than totals.

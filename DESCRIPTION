@@ -1,6 +1,6 @@
 Package: gbm
-Version: 1.1-1
-Date: 2003-12-01
+Version: 1.1-2
+Date: 2004-2-01
 Title: Generalized Boosted Regression Models
 Author: Greg Ridgeway <gregr@rand.org>
 Maintainer: Greg Ridgeway <gregr@rand.org>

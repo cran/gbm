@@ -14,8 +14,9 @@ plot.gbm(x,
 }
 \arguments{
   \item{x}{ a \code{\link{gbm.object}} fitted using a call to \code{\link{gbm}}}
-  \item{i.var}{a vector of indices of the variables to plot. The variables
-  are indexed in the same order that they appear in the initial \code{gbm} formula.
+  \item{i.var}{a vector of indices or the names of the variables to plot. If
+  using indices, the variables are indexed in the same order that they appear
+  in the initial \code{gbm} formula.
   If \code{length(i.var) is between 1 and 3 then \code{plot.gbm} produces the plots. Otherwise,
   \code{plot.gbm} returns only the grid of evaluation points and their average predictions.}}
   \item{n.trees}{ the number of trees used to generate the plot. Only the first

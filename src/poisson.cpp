@@ -172,6 +172,7 @@ GBMRESULT CPoisson::FitBestConstant
             }
             else
             {
+		// DEBUG: if vecdNum==0 then prediction = -Inf
                 vecpTermNodes[iNode]->dPrediction = 
                     log(vecdNum[iNode]/vecdDen[iNode]);
             }
