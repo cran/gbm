@@ -4,34 +4,49 @@
      require(survival)
      require(mgcv)
      require(modreg)
-     require(lattice)     
+     require(lattice)
 }
 
 
-predict.gbm <- function(object,newdata,n.trees,...)
+predict.gbm <- function(object,newdata,n.trees,
+                        type="link",
+                        single.tree = FALSE,
+                        ...)
 {
-   X <- model.frame(delete.response(object$Terms),
-                                    newdata,
-                                    na.action=na.pass)
-   cRows <- dim(X)[1]
-   cCols <- dim(X)[2]
+   if(!is.element(type, c("link","response")))
+   {
+      stop("type must be either 'link' or 'response'")
+   }
+   if(!is.null(object$Terms))
+   {
+      x <- model.frame(delete.response(object$Terms),
+                       newdata,
+                       na.action=na.pass)
+   }
+   else
+   {
+      x <- newdata
+   }
+
+   cRows <- nrow(x)
+   cCols <- ncol(x)
 
    for(i in 1:cCols)
    {
-      if(is.factor(X[,i]))
+      if(is.factor(x[,i]))
       {
-         j <- match(levels(X[,i]),object$var.levels[[i]])
+         j <- match(levels(x[,i]), object$var.levels[[i]])
          if(any(is.na(j)))
          {
             stop(paste("New levels for variable ",
                         object$var.names[i],": ",
-                        levels(X[,i])[is.na(j)],sep=""))
+                        levels(x[,i])[is.na(j)],sep=""))
          }
-         X[,i] <- as.numeric(X[,i])-1
+         x[,i] <- as.numeric(x[,i])-1
       }
-   }   
+   }
 
-   X <- as.vector(unlist(X))
+   x <- as.vector(unlist(x))
    if(missing(n.trees) || (n.trees > object$n.trees))
    {
       n.trees <- object$n.trees
@@ -39,7 +54,7 @@ predict.gbm <- function(object,newdata,n.trees,...)
    }
 
    predF <- .Call("gbm_pred",
-                  X=as.double(X),
+                  X=as.double(x),
                   cRows=as.integer(cRows),
                   cCols=as.integer(cCols),
                   n.trees=as.integer(n.trees),
@@ -47,7 +62,20 @@ predict.gbm <- function(object,newdata,n.trees,...)
                   trees=object$trees,
                   c.split=object$c.split,
                   var.type=as.integer(object$var.type),
+                  single.tree = as.integer(single.tree),
                   PACKAGE = "gbm")
+
+   if(type=="response")
+   {
+      if(object$distribution=="bernoulli")
+      {
+         predF <- 1/(1+exp(-predF))
+      } else
+      if(object$distribution=="poisson")
+      {
+         predF <- exp(predF)
+      }
+   }
 
    return(predF)
 }
@@ -74,7 +102,7 @@ plot.gbm <- function(x,
 
    if(length(i.var) > 3)
    {
-     warning("plot.gbm creates up to 3-way interaction plots.\nplot.gbm will only return the plotting data structure.") 
+     warning("plot.gbm creates up to 3-way interaction plots.\nplot.gbm will only return the plotting data structure.")
      return.grid = TRUE
    }
 
@@ -97,8 +125,8 @@ plot.gbm <- function(x,
       }
    }
    X <- expand.grid(grid.levels)
-   names(X) <- paste("x",1:length(i.var),sep="")
-   
+   names(X) <- paste("X",1:length(i.var),sep="")
+
    # evaluate at each data point
    X$y <- .Call("gbm_plot",
                 X=as.double(data.matrix(X)),
@@ -111,7 +139,7 @@ plot.gbm <- function(x,
                 c.splits=x$c.splits,
                 var.type=as.integer(x$var.type),
                 PACKAGE = "gbm")
-                
+
    # transform categorical variables back to factors
    f.factor <- rep(FALSE,length(i.var))
    for(i in 1:length(i.var))
@@ -123,12 +151,12 @@ plot.gbm <- function(x,
          f.factor[i] <- TRUE
       }
    }
-   
+
    if(return.grid)
    {
       names(X)[1:length(i.var)] <- x$var.names[i.var]
       return(X)
-   }   
+   }
 
 
    # create the plots
@@ -137,14 +165,14 @@ plot.gbm <- function(x,
       if(!f.factor)
       {
          j <- order(X)
-         plot(X$x1,X$y,
+         plot(X$X1,X$y,
               type="l",
               xlab=x$var.names[i.var],
               ylab=paste("f(",x$var.names[i.var],")",sep=""),...)
       }
       else
       {
-         plot(X$x1,
+         plot(X$X1,
               X$y,
               xlab=x$var.names[i.var],
               ylab=paste("f(",x$var.names[i.var],")",sep=""),
@@ -155,13 +183,13 @@ plot.gbm <- function(x,
    {
       if(!f.factor[1] && !f.factor[2])
       {
-         levelplot(y~x1*x2,data=X,
+         levelplot(y~X1*X2,data=X,
                      xlab=x$var.names[i.var[1]],
                      ylab=x$var.names[i.var[2]],...)
       }
       else if(f.factor[1] && !f.factor[2])
       {
-         xyplot(y~x2|x1,data=X,
+         xyplot(y~X2|X1,data=X,
                 xlab=x$var.names[i.var[1]],
                 ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
                 type="l",
@@ -169,7 +197,7 @@ plot.gbm <- function(x,
       }
       else if(!f.factor[1] && f.factor[2])
       {
-         xyplot(y~x1|x2,data=X,
+         xyplot(y~X1|X2,data=X,
                 xlab=x$var.names[i.var[2]],
                 ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
                 type="l",
@@ -177,7 +205,7 @@ plot.gbm <- function(x,
       }
       else
       {
-         stripplot(y~x1|x2,data=X,
+         stripplot(y~X1|X2,data=X,
                    xlab=x$var.names[i.var[2]],
                    ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
                    ...)
@@ -189,26 +217,26 @@ plot.gbm <- function(x,
       X.new <- X[,i]
       X.new$y <- X$y
       names(X.new) <- names(X)
-      
+
       # 0 factor, 3 continuous
       if(sum(f.factor)==0)
       {
-         X.new$x3 <- equal.count(X.new$x3)
-         levelplot(y~x1*x2|x3,data=X.new,
+         X.new$X3 <- equal.count(X.new$X3)
+         levelplot(y~X1*X2|X3,data=X.new,
                      xlab=x$var.names[i.var[i[1]]],
                      ylab=x$var.names[i.var[i[2]]],...)
       }
       # 1 factor, 2 continuous
       else if(sum(f.factor)==1)
       {
-         levelplot(y~x1*x2|x3,data=X.new,
+         levelplot(y~X1*X2|X3,data=X.new,
                      xlab=x$var.names[i.var[i[1]]],
                      ylab=x$var.names[i.var[i[2]]],...)
       }
       # 2 factors, 1 continuous
       else if(sum(f.factor)==2)
       {
-         xyplot(y~x1|x2*x3,data=X.new,
+         xyplot(y~X1|X2*X3,data=X.new,
                 type="l",
                 xlab=x$var.names[i.var[i[1]]],
                 ylab=paste("f(",paste(x$var.names[i.var[1:3]],collapse=","),")",sep=""),
@@ -217,7 +245,7 @@ plot.gbm <- function(x,
       # 3 factors, 0 continuous
       else if(sum(f.factor)==3)
       {
-         stripplot(y~x1|x2*x3,data=X.new,
+         stripplot(y~X1|X2*X3,data=X.new,
                    xlab=x$var.names[i.var[i[1]]],
                    ylab=paste("f(",paste(x$var.names[i.var[1:3]],collapse=","),")",sep=""),
                    ...)
@@ -229,9 +257,15 @@ plot.gbm <- function(x,
 gbm.more <- function(object,
                      n.new.trees = 100,
                      data = NULL,
-                     weights = NULL)
+                     weights = NULL,
+                     offset = NULL,
+                     verbose = NULL)
 {
-   if(is.null(object$data) && is.null(data))
+   if(is.null(object$Terms) && is.null(object$data))
+   {
+      stop("The gbm model was fit using gbm.fit (rather than gbm) and keep.data was set to FALSE. gbm.more cannot locate the dataset.")
+   }
+   else if(is.null(object$data) && is.null(data))
    {
       stop("keep.data was set to FALSE on original gbm call and argument 'data' is NULL")
    }
@@ -241,77 +275,81 @@ gbm.more <- function(object,
       Terms <- attr(m, "terms")
       a <- attributes(Terms)
       
-      Y <- as.vector(model.extract(m, response))
-      Offset <- model.extract(m,offset)
-      X <- model.frame(delete.response(Terms),
+      y <- as.vector(model.extract(m, response))
+      offset <- model.extract(m,offset)
+      x <- model.frame(delete.response(Terms),
                        data,
                        na.action=na.pass)
-      
+
       w <- weights
-      if(length(w)==0) w <- rep(1, nrow(X))
+      if(length(w)==0) w <- rep(1, nrow(x))
       w <- w*length(w)/sum(w) # normalize to N
-      
-      if(is.null(Offset) || (Offset==0))
+
+      if(is.null(offset) || (offset==0))
       {
-         Offset <- NA
+         offset <- NA
       }
       Misc <- NA
 
       if(object$distribution == "coxph")
       {
-         Misc <- as.numeric(Y)[-(1:cRows)]
-         Y <- as.numeric(Y)[1:cRows]
-   
+         Misc <- as.numeric(y)[-(1:cRows)]
+         y <- as.numeric(y)[1:cRows]
+
          # reverse sort the failure times to compute risk sets on the fly
-         i.train <- order(-Y[1:object$nTrain])
-         i.test <- order(-Y[(object$nTrain+1):cRows]) + object$nTrain
+         i.train <- order(-y[1:object$nTrain])
+         i.test <- order(-y[(object$nTrain+1):cRows]) + object$nTrain
          i.timeorder <- c(i.train,i.test)
-   
-         Y <- Y[i.timeorder]
+
+         y <- y[i.timeorder]
          Misc <- Misc[i.timeorder]
-         X <- X[i.timeorder,]
+         x <- x[i.timeorder,,drop=FALSE]
          w <- w[i.timeorder]
-         if(!is.na(Offset)) Offset <- Offset[i.timeorder]
+         if(!is.na(offset)) offset <- offset[i.timeorder]
          object$fit <- object$fit[i.timeorder]
       }
 
       # create index upfront... subtract one for 0 based order
-      if(ncol(X) > 1)
+      if(ncol(x) > 1)
       {
-         X.order <- apply(X[1:object$nTrain,],2,order,na.last=FALSE)-1
+         x.order <- apply(x[1:object$nTrain,],2,order,na.last=FALSE)-1
       }
       else
       {
-         X.order <- order(X[1:object$nTrain,],na.last=FALSE)-1
+         x.order <- order(x[1:object$nTrain,],na.last=FALSE)-1
       }
-      X <- data.matrix(X)
-      cRows <- nrow(X)
-      cCols <- ncol(X)
+      x <- data.matrix(x)
+      cRows <- nrow(x)
+      cCols <- ncol(x)
    }
    else
    {
-      Y           <- object$data$Y
-      X           <- object$data$X
-      X.order     <- object$data$X.order
-      Offset      <- object$data$Offset
+      y           <- object$data$y
+      x           <- object$data$x
+      x.order     <- object$data$x.order
+      offset      <- object$data$offset
       Misc        <- object$data$Misc
       w           <- object$data$w
-      cRows <- length(Y)
-      cCols <- length(X)/cRows
+      cRows <- length(y)
+      cCols <- length(x)/cRows
       if(object$distribution == "coxph")
       {
          i.timeorder <- object$data$i.timeorder
          object$fit <- object$fit[i.timeorder]
       }
    }
-   
-   X <- as.vector(X)
-   
-   gbm.fit <- .Call("gbm",
-                    Y = as.double(Y),
-                    Offset = as.double(Offset),
-                    X = as.double(X),
-                    X.order = as.integer(X.order),
+
+   if(is.null(verbose))
+   {
+      verbose <- object$verbose
+   }
+   x <- as.vector(x)
+
+   gbm.obj <- .Call("gbm",
+                    Y = as.double(y),
+                    Offset = as.double(offset),
+                    X = as.double(x),
+                    X.order = as.integer(x.order),
                     weights = as.double(w),
                     Misc = as.double(Misc),
                     cRows = as.integer(cRows),
@@ -328,133 +366,144 @@ gbm.more <- function(object,
                     fit.old = as.double(object$fit),
                     n.cat.splits.old = length(object$c.splits),
                     n.trees.old = as.integer(object$n.trees),
+                    verbose = as.integer(verbose),
                     PACKAGE = "gbm")
-   names(gbm.fit) <- c("initF","fit","train.error","valid.error",
+   names(gbm.obj) <- c("initF","fit","train.error","valid.error",
                        "oobag.improve","trees","c.splits")
-   
-   gbm.fit$initF         <- object$initF 
-   gbm.fit$train.error   <- c(object$train.error, gbm.fit$train.error)
-   gbm.fit$valid.error   <- c(object$valid.error, gbm.fit$valid.error)
-   gbm.fit$oobag.improve <- c(object$oobag.improve, gbm.fit$oobag.improve)
-   gbm.fit$trees         <- c(object$trees, gbm.fit$trees)
-   gbm.fit$c.splits      <- c(object$c.splits, gbm.fit$c.splits)
-   
-   gbm.fit$n.trees        <- length(gbm.fit$trees)
-   gbm.fit$distribution   <- object$distribution
-   gbm.fit$train.fraction <- object$train.fraction    
-   gbm.fit$shrinkage      <- object$shrinkage
-   gbm.fit$bag.fraction   <- object$bag.fraction
-   gbm.fit$var.type       <- object$var.type
-   gbm.fit$var.monotone   <- object$var.monotone
-   gbm.fit$var.names      <- object$var.names
-   gbm.fit$interaction.depth       <- object$interaction.depth
-   gbm.fit$n.minobsinnode <- object$n.minobsinnode
-   gbm.fit$nTrain         <- object$nTrain
-   gbm.fit$Terms          <- object$Terms
-   gbm.fit$var.levels     <- object$var.levels
-      
+
+   gbm.obj$initF         <- object$initF
+   gbm.obj$train.error   <- c(object$train.error, gbm.obj$train.error)
+   gbm.obj$valid.error   <- c(object$valid.error, gbm.obj$valid.error)
+   gbm.obj$oobag.improve <- c(object$oobag.improve, gbm.obj$oobag.improve)
+   gbm.obj$trees         <- c(object$trees, gbm.obj$trees)
+   gbm.obj$c.splits      <- c(object$c.splits, gbm.obj$c.splits)
+
+   gbm.obj$n.trees        <- length(gbm.obj$trees)
+   gbm.obj$distribution   <- object$distribution
+   gbm.obj$train.fraction <- object$train.fraction
+   gbm.obj$shrinkage      <- object$shrinkage
+   gbm.obj$bag.fraction   <- object$bag.fraction
+   gbm.obj$var.type       <- object$var.type
+   gbm.obj$var.monotone   <- object$var.monotone
+   gbm.obj$var.names      <- object$var.names
+   gbm.obj$interaction.depth <- object$interaction.depth
+   gbm.obj$n.minobsinnode    <- object$n.minobsinnode
+   gbm.obj$nTrain            <- object$nTrain
+   gbm.obj$Terms             <- object$Terms
+   gbm.obj$var.levels        <- object$var.levels
+   gbm.obj$verbose           <- verbose
+
    if(object$distribution == "coxph")
    {
-      gbm.fit$fit[i.timeorder] <- gbm.fit$fit
+      gbm.obj$fit[i.timeorder] <- gbm.obj$fit
    }
    if(!is.null(object$data))
    {
-      gbm.fit$data <- object$data
+      gbm.obj$data <- object$data
    }
    else
    {
-      gbm.fit$data <- NULL
-      gbm.fit$m <- object$m
+      gbm.obj$data <- NULL
+      gbm.obj$m <- object$m
    }
 
-   class(gbm.fit) <- "gbm"
-   return(gbm.fit)
+   class(gbm.obj) <- "gbm"
+   return(gbm.obj)
 }
 
 
-gbm <- function(formula = formula(data),
-                distribution = "bernoulli",
-                data = list(),
-                weights,
-                var.monotone = NULL,
-                n.trees = 100,
-                interaction.depth = 1,
-                n.minobsinnode = 10,
-                shrinkage = 0.1,
-                bag.fraction = 1.0,
-                train.fraction = 0.5,
-                keep.data = TRUE)
+gbm.fit <- function(x,y,
+                    offset = NULL,
+                    misc = NULL,
+                    distribution = "bernoulli",
+                    w = NULL,
+                    var.monotone = NULL,
+                    n.trees = 100,
+                    interaction.depth = 1,
+                    n.minobsinnode = 10,
+                    shrinkage = 0.001,
+                    bag.fraction = 0.5,
+                    train.fraction = 1.0,
+                    keep.data = TRUE,
+                    verbose = TRUE,
+                    var.names = NULL,
+                    response.name = NULL)
 {
-   call <- match.call()
-   m <- match.call(expand = FALSE)
-   m$distribution <- m$var.monotone <- m$n.trees <- NULL
-   m$interaction.depth <- m$n.minobsinnode <- m$shrinkage <- NULL
-   m$bag.fraction <- m$train.fraction <- m$keep.data <- NULL
-   m[[1]] <- as.name("model.frame")
-   m$na.action <- na.pass
-   m.keep <- m
-   
-   m <- eval(m, parent.frame())
-   
-   Terms <- attr(m, "terms")
-   a <- attributes(Terms)
-   
-   Y <- model.extract(m, response)
-   
-   Offset <- model.extract(m,offset)
-   X <- model.frame(delete.response(Terms),
-                    data,
-                    na.action=na.pass)
-   
-   cRows <- nrow(X)
-   cCols <- ncol(X)
-   
+   cRows <- nrow(x)
+   cCols <- ncol(x)
+   if(is.null(var.names))
+   {
+      if(is.matrix(x))
+      {
+         var.names <- colnames(x)
+      }
+      else if(is.data.frame(x))
+      {
+         var.names <- names(x)
+      }
+      else
+      {
+         var.names <- paste("X",1:cCols,sep="")
+      }
+   }
+   if(is.null(response.name))
+   {
+      response.name <- "y"
+   }
+
    # check dataset size
    if(cRows*train.fraction*bag.fraction <= 2*n.minobsinnode+1)
    {
       stop("The dataset size is too small or subsampling rate is too large: cRows*train.fraction*bag.fraction <= n.minobsinnode")
    }
+
+   if(nrow(x) != ifelse(class(y)=="Surv", length(y[,1]), length(y)))
+   {
+      stop("The number of rows in x does not equal the length of y.")
+   }
+
    if(interaction.depth < 1)
    {
       stop("interaction.depth must be at least 1.")
    }
-   
-   w <- model.extract(m, weights)
-   if(length(w)==0) w <- rep(1, nrow(m))
+
+   if(length(w)==0) w <- rep(1, cRows)
    else if(any(w < 0)) stop("negative weights not allowed")
-   
    w <- w*length(w)/sum(w) # normalize to N
-   var.names <- a$term.labels
-   # get the character name of the response variable
-   response.name <- dimnames(attr(terms(formula),"factors"))[[1]][1]
-   if(any(is.na(Y))) stop("Missing values are not allowed in the response, ",response.name)
-   
-   if(is.null(Offset) || (Offset==0))
+
+   if(any(is.na(y))) stop("Missing values are not allowed in the response, ",
+                          response.name)
+
+   if(is.null(offset) || (offset==0))
    {
-      Offset <- NA
+      offset <- NA
+   }
+   else if(length(offset) != length(y))
+   {
+      stop("The length of offset does not equal the length of y.")
    }
    Misc <- NA
-   
+
    # setup variable types
    var.type <- rep(0,cCols)
    var.levels <- vector("list",cCols)
    for(i in 1:length(var.type))
    {
-      if(is.ordered(X[,i]))
+      if(is.ordered(x[,i]))
       {
-         var.levels[[i]] <- levels(X[,i])
-         X[,i] <- as.numeric(X[,i])-1
-         var.type[i] <- 0      
+         var.levels[[i]] <- levels(x[,i])
+         x[,i] <- as.numeric(x[,i])-1
+         var.type[i] <- 0
       }
-      else if(is.factor(X[,i]))
+      else if(is.factor(x[,i]))
       {
-         var.levels[[i]] <- levels(X[,i])
-         X[,i] <- as.numeric(X[,i])-1
-         var.type[i] <- max(X[,i],na.rm=TRUE)+1
+         var.levels[[i]] <- levels(x[,i])
+         x[,i] <- as.numeric(x[,i])-1
+         var.type[i] <- max(x[,i],na.rm=TRUE)+1
       }
-      else if(is.numeric(X[,i]))
+      else if(is.numeric(x[,i]))
       {
-         var.levels[[i]] <- quantile(X[,i],prob=(0:10)/10,na.rm=TRUE)
+         var.levels[[i]] <- quantile(x[,i],prob=(0:10)/10,na.rm=TRUE)
       }
       else
       {
@@ -464,32 +513,32 @@ gbm <- function(formula = formula(data),
       # check for some variation in each variable
       if(length(unique(var.levels[[i]])) == 1)
       {
-         stop("variable ",i,": ",var.names[i]," has no variation.")
+         warning("variable ",i,": ",var.names[i]," has no variation.")
       }
    }
-   
+
    nTrain <- as.integer(train.fraction*cRows)
-      
-   supported.distributions <- 
+
+   supported.distributions <-
       c("bernoulli","gaussian","poisson","adaboost","laplace","coxph")
    # check potential problems with the distributions
    if(!is.element(distribution,supported.distributions))
    {
       stop("Distribution ",distribution," is not supported")
    }
-   if((distribution == "bernoulli") && !all(is.element(Y,0:1)))
+   if((distribution == "bernoulli") && !all(is.element(y,0:1)))
    {
       stop("Bernoulli requires the response to be in {0,1}")
    }
-   if((distribution == "poisson") && any(Y<0))
+   if((distribution == "poisson") && any(y<0))
    {
       stop("Poisson requires the response to be positive")
    }
-   if((distribution == "poisson") && any(Y != trunc(Y)))
+   if((distribution == "poisson") && any(y != trunc(y)))
    {
       stop("Poisson requires the response to be a positive integer")
    }
-   if((distribution == "adaboost") && !all(is.element(Y,0:1)))
+   if((distribution == "adaboost") && !all(is.element(y,0:1)))
    {
       stop("This version of AdaBoost requires the response to be in {0,1}")
    }
@@ -499,42 +548,48 @@ gbm <- function(formula = formula(data),
    }   
    if(distribution == "coxph")
    {
-      if(class(Y)!="Surv")
+      if(class(y)!="Surv")
       {
          stop("Outcome must be a survival object Surv(time,failure)")
       }
-      if(attr(Y,"type")!="right")
+      if(attr(y,"type")!="right")
       {
          stop("gbm() currently only handles right censored observations")
       }
-      Misc <- as.numeric(Y)[-(1:cRows)]
-      Y <- as.numeric(Y)[1:cRows]
-   
+      Misc <- y[,2]
+      y <- y[,1]
+
       # reverse sort the failure times to compute risk sets on the fly
-      i.train <- order(-Y[1:nTrain])
+      i.train <- order(-y[1:nTrain])
       n.test <- cRows - nTrain
-      i.test <- order(-Y[(nTrain+1):cRows]) + nTrain
+      if(n.test > 0)
+      {
+         i.test <- order(-y[(nTrain+1):cRows]) + nTrain
+      }
+      else
+      {
+         i.test <- NULL
+      }
       i.timeorder <- c(i.train,i.test)
 
-      Y <- Y[i.timeorder]
+      y <- y[i.timeorder]
       Misc <- Misc[i.timeorder]
-      X <- X[i.timeorder,]
+      x <- x[i.timeorder,,drop=FALSE]
       w <- w[i.timeorder]
-      if(!is.na(Offset)) Offset <- Offset[i.timeorder]
-
+      if(!is.na(offset)) offset <- offset[i.timeorder]
    }
 
    # create index upfront... subtract one for 0 based order
-   if(ncol(X) > 1)
+   if(ncol(x) > 1)
    {
-      X.order <- apply(X[1:nTrain,],2,order,na.last=FALSE)-1
+      x.order <- apply(x[1:nTrain,],2,order,na.last=FALSE)-1
    }
    else
    {
-      X.order <- order(X[1:nTrain,],na.last=FALSE)-1   
+      x.order <- order(x[1:nTrain,],na.last=FALSE)-1
    }
-   X <- as.vector(data.matrix(X))
-   predF <- rep(0,length(Y))
+   x <- as.vector(data.matrix(x))
+   predF <- rep(0,length(y))
    train.error <- rep(0,n.trees)
    valid.error <- rep(0,n.trees)
    oobag.improve <- rep(0,n.trees)
@@ -549,12 +604,11 @@ gbm <- function(formula = formula(data),
       stop("var.monotone must be -1, 0, or 1")
    }
    fError <- FALSE
-
-   gbm.fit <- .Call("gbm",
-                    Y=as.double(Y),
-                    Offset=as.double(Offset),
-                    X=as.double(X),
-                    X.order=as.integer(X.order),
+   gbm.obj <- .Call("gbm",
+                    Y=as.double(y),
+                    Offset=as.double(offset),
+                    X=as.double(x),
+                    X.order=as.integer(x.order),
                     weights=as.double(w),
                     Misc=as.double(Misc),
                     cRows=as.integer(cRows),
@@ -571,28 +625,30 @@ gbm <- function(formula = formula(data),
                     fit.old=as.double(NA),
                     n.cat.splits.old=as.integer(0),
                     n.trees.old=as.integer(0),
+                    verbose=as.integer(verbose),
                     PACKAGE = "gbm")
-   names(gbm.fit) <- c("initF","fit","train.error","valid.error",
+   names(gbm.obj) <- c("initF","fit","train.error","valid.error",
                        "oobag.improve","trees","c.splits")
-                       
-   gbm.fit$bag.fraction <- bag.fraction
-   gbm.fit$distribution <- distribution
-   gbm.fit$interaction.depth <- interaction.depth
-   gbm.fit$n.minobsinnode <- n.minobsinnode
-   gbm.fit$n.trees <- length(gbm.fit$trees)
-   gbm.fit$nTrain <- nTrain
-   gbm.fit$response.name <- response.name
-   gbm.fit$shrinkage <- shrinkage
-   gbm.fit$Terms <- Terms
-   gbm.fit$train.fraction <- train.fraction    
-   gbm.fit$var.levels <- var.levels
-   gbm.fit$var.monotone <- var.monotone
-   gbm.fit$var.names <- var.names
-   gbm.fit$var.type <- var.type
-      
+
+   gbm.obj$bag.fraction <- bag.fraction
+   gbm.obj$distribution <- distribution
+   gbm.obj$interaction.depth <- interaction.depth
+   gbm.obj$n.minobsinnode <- n.minobsinnode
+   gbm.obj$n.trees <- length(gbm.obj$trees)
+   gbm.obj$nTrain <- nTrain
+   gbm.obj$response.name <- response.name
+   gbm.obj$shrinkage <- shrinkage
+   gbm.obj$train.fraction <- train.fraction
+   gbm.obj$var.levels <- var.levels
+   gbm.obj$var.monotone <- var.monotone
+   gbm.obj$var.names <- var.names
+   gbm.obj$var.type <- var.type
+   gbm.obj$verbose <- verbose
+   gbm.obj$Terms <- NULL
+
    if(distribution == "coxph")
    {
-      gbm.fit$fit[i.timeorder] <- gbm.fit$fit
+      gbm.obj$fit[i.timeorder] <- gbm.obj$fit
    }
 
    if(keep.data)
@@ -600,22 +656,87 @@ gbm <- function(formula = formula(data),
       if(distribution == "coxph")
       {
          # put the observations back in order
-         gbm.fit$data <- list(Y=Y,X=X,X.order=X.order,Offset=Offset,Misc=Misc,w=w,
+         gbm.obj$data <- list(y=y,x=x,x.order=x.order,offset=offset,Misc=Misc,w=w,
                               i.timeorder=i.timeorder)
       }
       else
       {
-         gbm.fit$data <- list(Y=Y,X=X,X.order=X.order,Offset=Offset,Misc=Misc,w=w)
+         gbm.obj$data <- list(y=y,x=x,x.order=x.order,offset=offset,Misc=Misc,w=w)
       }
    }
    else
    {
-      gbm.fit$data <- NULL
-      gbm.fit$m <- m.keep
+      gbm.obj$data <- NULL
+      gbm.obj$m <- m.keep
    }
 
-   class(gbm.fit) <- "gbm"
-   return(gbm.fit)
+   class(gbm.obj) <- "gbm"
+   return(gbm.obj)
+}
+
+
+gbm <- function(formula = formula(data),
+                distribution = "bernoulli",
+                data = list(),
+                weights,
+                offset = NULL,
+                var.monotone = NULL,
+                n.trees = 100,
+                interaction.depth = 1,
+                n.minobsinnode = 10,
+                shrinkage = 0.001,
+                bag.fraction = 0.5,
+                train.fraction = 1.0,
+                keep.data = TRUE,
+                verbose = TRUE)
+{
+   call <- match.call()
+   m <- match.call(expand = FALSE)
+   m$distribution <- m$offset <- m$var.monotone <- m$n.trees <- NULL
+   m$interaction.depth <- m$n.minobsinnode <- m$shrinkage <- NULL
+   m$bag.fraction <- m$train.fraction <- m$keep.data <- m$verbose <- NULL
+   m[[1]] <- as.name("model.frame")
+   m$na.action <- na.pass
+   m.keep <- m
+
+   m <- eval(m, parent.frame())
+
+   Terms <- attr(m, "terms")
+   a <- attributes(Terms)
+
+   y <- model.extract(m, response)
+   x <- model.frame(delete.response(Terms),
+                    data,
+                    na.action=na.pass)
+   w <- model.extract(m, weights)
+
+   if(!is.null(model.extract(m,offset)))
+   {
+      stop("In gbm the offset term needs to be specified using the offset parameter.")
+   }
+
+   var.names <- a$term.labels
+   # get the character name of the response variable
+   response.name <- dimnames(attr(terms(formula),"factors"))[[1]][1]
+
+   gbm.obj <- gbm.fit(x,y,
+                      offset = offset,
+                      distribution = distribution,
+                      w = w,
+                      var.monotone = var.monotone,
+                      n.trees = n.trees,
+                      interaction.depth = interaction.depth,
+                      n.minobsinnode = n.minobsinnode,
+                      shrinkage = shrinkage,
+                      bag.fraction = bag.fraction,
+                      train.fraction = train.fraction,
+                      keep.data = keep.data,
+                      verbose = verbose,
+                      var.names = var.names,
+                      response.name = response.name)
+   gbm.obj$Terms <- Terms
+
+   return(gbm.obj)
 }
 
 
@@ -623,10 +744,10 @@ gbm.perf <- function(object,
             plot.it=TRUE,
             oobag.curve=TRUE,
             overlay=TRUE,
-            method = c("OOB","test")[1])
+            method=c("OOB","test")[1])
 {
      smoother <- NULL
-     
+
      if((method == "OOB") || oobag.curve)
      {
           x <- 1:object$n.trees
@@ -655,12 +776,12 @@ gbm.perf <- function(object,
      if(method == "OOB")
      {
           best.iter <- best.iter.oob
-          cat("Out of bag iteration estimate:",best.iter.oob,"\n")
+          # cat("Out of bag iteration estimate:",best.iter.oob,"\n")
      }
      else if(method == "test")
      {
           best.iter <- best.iter.test
-          cat("Test set iteration estimate:",best.iter.test,"\n")
+          # cat("Test set iteration estimate:",best.iter.test,"\n")
      }
      else stop("method must be OOB or test")
 
@@ -724,26 +845,12 @@ gbm.perf <- function(object,
 }
 
 
-summary.gbm <- function(object,
-                        cBars=length(object$var.names),
-                        n.trees=object$n.trees,
-                        plotit=TRUE,
-                        order=TRUE,
-                        ...)
+relative.influence <- function(object,
+                               n.trees)
 {
    get.rel.inf <- function(obj)
    {
       lapply(split(obj[[6]],obj[[1]]),sum) # 6 - Improvement, 1 - var name
-   }
-
-   if(n.trees < 1)
-   {
-      stop("n.trees must be greater than 0.")
-   }
-   if(n.trees > object$n.trees)
-   {
-      warning("Exceeded total number of GBM terms. Results use",object$n.trees,"terms.\n")
-      n.trees <- object$n.trees
    }
 
    temp <- unlist(lapply(object$trees[1:n.trees],get.rel.inf))
@@ -756,6 +863,86 @@ summary.gbm <- function(object,
    i <- as.numeric(names(rel.inf.compact))+1
    rel.inf[i] <- rel.inf.compact
 
+   return(rel.inf=rel.inf)
+}
+
+gbm.loss <- function(y,f,w,offset,dist,baseline)
+{
+   if(!is.na(offset))
+   {
+      f <- offset+f
+   }
+   switch(dist,
+          gaussian = weighted.mean((y - f)^2,w) - baseline,
+          bernoulli = baseline - weighted.mean(y*f - log(1+exp(f)),w),
+          laplace = weighted.mean(abs(y-f),w) - baseline,
+          adaboost = weighted.mean(exp(-(2*y-1)*f),w) - baseline,
+          poisson = baseline - weighted.mean(y*f-exp(f)),
+          stop(paste("Distribution",dist,"is not yet supported for method=permutation.test.gbm")))
+}
+
+permutation.test.gbm <- function(object,
+                                 n.trees)
+{
+   # get variables used in the model
+   i.vars <- sort(unique(unlist(lapply(object$trees[1:n.trees],
+                                       function(x){unique(x[[1]])}))))
+   i.vars <- i.vars[i.vars!=-1] + 1
+   rel.inf <- rep(0,length(object$var.names))
+
+   if(!is.null(object$data))
+   {
+      y           <- object$data$y
+      os          <- object$data$offset
+      Misc        <- object$data$Misc
+      w           <- object$data$w
+      x <- matrix(object$data$x,ncol=length(object$var.names))
+      object$Terms <- NULL # this makes predict.gbm take x as it is
+   }
+   else
+   {
+      stop("Model was fit with keep.data=FALSE. permutation.test.gbm has not been implemented for that case.")
+   }
+
+   # the index shuffler
+   j <- sample(1:nrow(x))
+   for(i in 1:length(i.vars))
+   {
+      x[ ,i.vars[i]]  <- x[j,i.vars[i]]
+
+      new.pred <- predict.gbm(object,newdata=x,n.trees=n.trees)
+      rel.inf[i.vars[i]] <- gbm.loss(y,new.pred,w,os,
+                                     object$distribution,
+                                     object$train.error[n.trees])
+
+      x[j,i.vars[i]] <- x[ ,i.vars[i]]
+   }
+
+   return(rel.inf=rel.inf)
+}
+
+
+summary.gbm <- function(object,
+                        cBars=length(object$var.names),
+                        n.trees=object$n.trees,
+                        plotit=TRUE,
+                        order=TRUE,
+                        method=relative.influence,
+                        ...)
+{
+   if(n.trees < 1)
+   {
+      stop("n.trees must be greater than 0.")
+   }
+   if(n.trees > object$n.trees)
+   {
+      warning("Exceeded total number of GBM terms. Results use",object$n.trees,"terms.\n")
+      n.trees <- object$n.trees
+   }
+
+   rel.inf <- method(object,n.trees)
+   rel.inf[rel.inf<0] <- 0
+
    if(order)
    {
       i <- order(-rel.inf)
@@ -766,9 +953,9 @@ summary.gbm <- function(object,
    }
    if(cBars==0) cBars <- min(10,length(object$var.names))
    if(cBars>length(object$var.names)) cBars <- length(object$var.names)
-   
+
    rel.inf <- 100*rel.inf/sum(rel.inf)
-   
+
    if(plotit)
    {
       barplot(rel.inf[i[cBars:1]],
@@ -798,10 +985,14 @@ calibrate.plot <- function(y,p,
                            line.par=list(col="black"),
                            shade.col="lightyellow",
                            shade.density=NULL,
-                           rug.par=list(side=1),...)
+                           rug.par=list(side=1),
+                           xlab="Predicted value",
+                           ylab="Observed average",
+                           xlim=NULL,ylim=NULL,
+                           ...)
 {
    data <- data.frame(y=y,p=p)
-   
+
    if(distribution=="bernoulli")
    {
       family1 = binomial
@@ -811,29 +1002,47 @@ calibrate.plot <- function(y,p,
    } else
    {
       family1 = gaussian
-   } 
+   }
    gam1 <- gam(y~s(p),data=data,family=family1)
-   
+
    x <- seq(min(p),max(p),length=200)
    yy <- predict(gam1,newdata=data.frame(p=x),se.fit=TRUE,type="response")
 
    x <- x[!is.na(yy$fit)]
    yy$se.fit <- yy$se.fit[!is.na(yy$fit)]
-   yy$fit <- yy$fit[!is.na(yy$fit)]      
+   yy$fit <- yy$fit[!is.na(yy$fit)]
 
-   if(replace)
-   {
-      plot(0,0,
-         type="n",
-         xlab="Estimated probability",ylab="Actual probability",
-         ...)
-   }
    if(!is.na(shade.col))
    {
       se.lower <- yy$fit-2*yy$se.fit
       se.upper <- yy$fit+2*yy$se.fit
-      se.lower[se.lower < 0] <- 0
-      se.upper[se.upper > 1] <- 1
+      if(distribution=="bernoulli")
+      {
+         se.lower[se.lower < 0] <- 0
+         se.upper[se.upper > 1] <- 1
+      }
+      if(distribution=="poisson")
+      {
+         se.lower[se.lower < 0] <- 0
+      }
+      if(is.null(xlim)) xlim <- range(se.lower,se.upper,x)
+      if(is.null(ylim)) ylim <- range(se.lower,se.upper,x)
+   }
+   else
+   {
+      if(is.null(xlim)) xlim <- range(yy$fit,x)
+      if(is.null(ylim)) ylim <- range(yy$fit,x)
+   }
+   if(replace)
+   {
+      plot(0,0,
+         type="n",
+         xlab=xlab,ylab=ylab,
+         xlim=xlim,ylim=ylim,
+         ...)
+   }
+   if(!is.na(shade.col))
+   {
       polygon(c(x,rev(x),x[1]),
                c(se.lower,rev(se.upper),se.lower[1]),
                col=shade.col,

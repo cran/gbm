@@ -87,6 +87,7 @@ double CCoxPH::LogLikelihood
     unsigned long i=0;
     double dL = 0.0;
     double dF = 0.0;
+    double dW = 0.0;
     double dTotalAtRisk = 0.0;
 
     dTotalAtRisk = 0.0;
@@ -97,10 +98,11 @@ double CCoxPH::LogLikelihood
         if(adDelta[i]==1.0)
         {
             dL += adWeight[i]*(dF - log(dTotalAtRisk));
+            dW += adWeight[i];
         }
     }
 
-    return dL;
+    return dL/dW;
 }
 
 
@@ -250,6 +252,7 @@ double CCoxPH::BagImprovement
     double dNum = 0.0;
     double dDen = 0.0;
     double dF = 0.0;
+    double dW = 0.0;
     unsigned long i = 0;
 
     dNum = 0.0;
@@ -264,11 +267,12 @@ double CCoxPH::BagImprovement
             {
                 dReturnValue += 
                     adWeight[i]*(dStepSize*adFadj[i] - log(dNum) + log(dDen));
+                dW += adWeight[i];
             }
         }
     }
 
-    return dReturnValue;
+    return dReturnValue/dW;
 }
 
 

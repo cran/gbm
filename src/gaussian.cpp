@@ -104,12 +104,14 @@ double CGaussian::LogLikelihood
 {
     unsigned long i=0;
     double dL = 0.0;
+    double dW = 0.0;
 
     if(adOffset == NULL)
     {
         for(i=0; i<cLength; i++)
         {
             dL += adWeight[i]*(adY[i]-adF[i])*(adY[i]-adF[i]);
+            dW += adWeight[i];
         }
     }
     else
@@ -118,10 +120,11 @@ double CGaussian::LogLikelihood
         {
             dL += adWeight[i]*(adY[i]-adOffset[i]-adF[i])*
                               (adY[i]-adOffset[i]-adF[i]);
-        }
+            dW += adWeight[i];
+       }
     }
 
-    return dL;
+    return dL/dW;
 }
 
 
@@ -163,6 +166,7 @@ double CGaussian::BagImprovement
 {
     double dReturnValue = 0.0;
     double dF = 0.0;
+    double dW = 0.0;
     unsigned long i = 0;
 
     for(i=0; i<nTrain; i++)
@@ -173,10 +177,11 @@ double CGaussian::BagImprovement
             
             dReturnValue += adWeight[i]*dStepSize*adFadj[i]*
                             (2.0*(adY[i]-dF) - dStepSize*adFadj[i]);
+            dW += adWeight[i];
         }
     }
 
-    return dReturnValue;
+    return dReturnValue/dW;
 }
 
 

@@ -89,12 +89,14 @@ double CPoisson::LogLikelihood
 {
     unsigned long i=0;
     double dL = 0.0;
+    double dW = 0.0;
 
     if(adOffset == NULL)
     {
         for(i=0; i<cLength; i++)
         {
             dL += adWeight[i]*(adY[i]*adF[i] - exp(adF[i]));
+            dW += adWeight[i];
         }
     }
     else
@@ -103,10 +105,11 @@ double CPoisson::LogLikelihood
         {
             dL += adWeight[i]*(adY[i]*(adOffset[i]+adF[i]) - 
                                exp(adOffset[i]+adF[i]));
-        }
+            dW += adWeight[i];
+       }
     }
 
-    return dL;
+    return dL/dW;
 }
 
 
@@ -194,6 +197,7 @@ double CPoisson::BagImprovement
 {
     double dReturnValue = 0.0;
     double dF = 0.0;
+    double dW = 0.0;
     unsigned long i = 0;
 
     for(i=0; i<nTrain; i++)
@@ -202,14 +206,15 @@ double CPoisson::BagImprovement
         {
             dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
 
-            dReturnValue = adWeight[i]*
-                           (adY[i]*dStepSize*adFadj[i] - 
-                            exp(dF+dStepSize*adFadj[i]) + 
-                            exp(dF));
+            dReturnValue += adWeight[i]*
+                            (adY[i]*dStepSize*adFadj[i] -
+                             exp(dF+dStepSize*adFadj[i]) +
+                             exp(dF));
+            dW += adWeight[i];
         }
     }
 
-    return dReturnValue;
+    return dReturnValue/dW;
 }
 
 

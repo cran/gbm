@@ -106,14 +106,16 @@ double CBernoulli::LogLikelihood
     unsigned long i=0;
     double dL = 0.0;
     double dF = 0.0;
+    double dW = 0.0;
 
     for(i=0; i<cLength; i++)
     {
         dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
         dL += adWeight[i]*(adY[i]*dF - log(1.0+exp(dF)));
+        dW += adWeight[i];
     }
 
-    return dL;
+    return dL/dW;
 }
 
 
@@ -188,6 +190,7 @@ double CBernoulli::BagImprovement
 {
     double dReturnValue = 0.0;
     double dF = 0.0;
+    double dW = 0.0;
     unsigned long i = 0;
 
     for(i=0; i<nTrain; i++)
@@ -203,10 +206,11 @@ double CBernoulli::BagImprovement
             dReturnValue += adWeight[i]*
                             (log(1.0+exp(dF)) - 
                              log(1.0+exp(dF+dStepSize*adFadj[i])));
+            dW += adWeight[i];
         }
     }
 
-    return dReturnValue;
+    return dReturnValue/dW;
 }
 
 

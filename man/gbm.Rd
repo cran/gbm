@@ -1,26 +1,48 @@
 \name{gbm}
 \alias{gbm}
 \alias{gbm.more}
+\alias{gbm.fit}
 \title{Generalized Boosted Regression Modeling}
 \description{Fits generalized boosted regression models.}
 \usage{
 gbm(formula = formula(data),
     distribution = "bernoulli",
-    data = sys.parent(),
+    data = list(),
     weights,
+    offset = NULL,
     var.monotone = NULL,
     n.trees = 100,
-    interaction.depth = 2,
+    interaction.depth = 1,
     n.minobsinnode = 10,
-    shrinkage = 0.1,
-    bag.fraction = 1.0,
-    train.fraction = 0.5,
-    keep.data = TRUE)
+    shrinkage = 0.001,
+    bag.fraction = 0.5,
+    train.fraction = 1.0,
+    keep.data = TRUE,
+    verbose = TRUE)
+
+gbm.fit(x,y,
+        offset = NULL,
+        misc = NULL,
+        distribution = "bernoulli",
+        w = NULL,
+        var.monotone = NULL,
+        n.trees = 100,
+        interaction.depth = 1,
+        n.minobsinnode = 10,
+        shrinkage = 0.001,
+        bag.fraction = 0.5,
+        train.fraction = 1.0,
+        keep.data = TRUE,
+        verbose = TRUE,
+        var.names = NULL,
+        response.name = NULL)
 
 gbm.more(object,
          n.new.trees = 100,
          data = NULL,
-         weights = NULL)
+         weights = NULL,
+         offset = NULL,
+         verbose = NULL)
 }
 \arguments{
 \item{formula}{a symbolic description of the model
@@ -42,6 +64,10 @@ the same data at this point.}
 process. Must be positive but do not need to be normalized. If
 \code{keep.data=FALSE} in the initial call to \code{gbm} then it
 is the user's responsibility to resupply the weights to \code{\link{gbm.more}}.}
+\item{offset}{an optional offset term to be used in the fitting
+process. Offsets cannot be expressed as part of \code{formula}. If
+\code{keep.data=FALSE} in the initial call to \code{gbm} then it
+is the user's responsibility to resupply the offset to \code{\link{gbm.more}}.}
 \item{var.monotone}{an optional vector, the same length as the number of
 predictors, indicating which variables have a monotone increasing (+1),
 decreasing (-1), or arbitrary (0) relationship with the outcome.}
@@ -55,8 +81,13 @@ nodes. Note that this is the actual number of observations not the total
 weight.}
 \item{shrinkage}{a shrinkage parameter applied to each tree in the expansion.
 Also known as the learning rate or step-size reduction.}
-\item{bag.fraction}{the fraction of training set observations used to propose
-the next tree in the expansion.}
+\item{bag.fraction}{the fraction of the training set observations randomly
+selected to propose the next tree in the expansion. This introduces randomnesses
+into the model fit. If \code{bag.fraction}<1 then running the same model twice
+will result in similar but different fits. \code{gbm} uses the R random number
+generator so \code{set.seed} (see \link[base]{Random}) can ensure that the model can be
+reconstructed. Preferably, the user can save the returned
+\code{\link{gbm.object}} using \code{\link{save}}.}
 \item{train.fraction}{The first \code{train.fraction * nrows(data)}
 observations are used to fit the \code{gbm} and the remainder are used for
 computing out-of-sample estimates of the loss function.}
@@ -67,6 +98,24 @@ extra copy of the dataset.}
 \item{object}{a \code{gbm} object created from an initial call to
 \code{\link{gbm}}.}
 \item{n.new.trees}{the number of additional trees to add to \code{object}.}
+\item{verbose}{If TRUE, gbm will print out progress and performance indicators.
+If this option is left unspecified for gbm.more then it uses \code{verbose} from
+\code{object}.}
+
+\item{x, y}{For \code{gbm.fit}: \code{x} is a data frame or data matrix containing the
+predictor variables and \code{y} is the vector of outcomes. The number of rows
+in \code{x} must be the same as the length of \code{y}.}
+\item{misc}{For \code{gbm.fit}: \code{misc} is an R object that is simply passed on to
+the gbm engine. It can be used for additional data for the specific distribution.
+Currently it is only used for passing the censoring indicator for the Cox
+proportional hazards model.}
+\item{w}{For \code{gbm.fit}: \code{w} is a vector of weights of the same
+length as the \code{y}.}
+\item{var.names}{For \code{gbm.fit}: A vector of strings of length equal to the
+number of columns of \code{x} containing the names of the predictor variables.}
+\item{response.name}{For \code{gbm.fit}: A character string label for the response
+variable.}
+
 }
 \details{This package implements the generalized boosted modeling framework.
 Boosting is the process of iteratively adding basis functions in a greedy
@@ -81,9 +130,18 @@ resulting \code{gbm} object, and a variety of other loss functions that had not
 previously had associated boosting algorithms, including the Cox partial
 likelihood for censored data, the poisson likelihood for count outcomes, and a
 gradient boosting implementation to minimize the AdaBoost exponential loss
-function.}
+function.
+
+\code{gbm.fit} provides the link between R and the C++ gbm engine. \code{gbm}
+is a front-end to \code{gbm.fit} that uses the familiar R modeling formulas.
+However, \code{\link[base]{model.frame}} is very slow if there are many
+predictor variables. For power-users with many variables use \code{gbm.fit}.
+For general practice \code{gbm} is preferable.
+
+}
 \value{
-\code{gbm} and \code{gbm.more} return a \code{\link{gbm.object}}.
+\code{gbm}, \code{gbm.fit}, and \code{gbm.more} return a
+\code{\link{gbm.object}}.
 }
 \references{
 Y. Freund and R.E. Schapire (1997) "A decision-theoretic generalization of
@@ -152,19 +210,21 @@ gbm1 <- gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
     distribution="gaussian",     # bernoulli, adaboost, gaussian,
                                  # poisson, and coxph available
     n.trees=100,                 # number of trees
-    shrinkage=0.005,             # shrinkage or learning rate,
+    shrinkage=0.001,             # shrinkage or learning rate,
                                  # 0.001 to 0.1 usually work
     interaction.depth=3,         # 1: additive model, 2: two-way interactions, etc.
     bag.fraction = 0.5,          # subsampling fraction, 0.5 is probably best
     train.fraction = 0.5,        # fraction of data for training,
                                  # first train.fraction*N used for training
     n.minobsinnode = 10,         # minimum total weight needed in each node
-    keep.data=TRUE)              # keep a copy of the dataset with the object
+    keep.data=TRUE,              # keep a copy of the dataset with the object
+    verbose=TRUE)                # print out progress
 
 # check performance using an out-of-bag estimator
 best.iter <- gbm.perf(gbm1,method="OOB")
 # do another 100 iterations
-gbm2 <- gbm.more(gbm1,100)
+gbm2 <- gbm.more(gbm1,100,
+                 verbose=FALSE) # stop printing detailed progress
 
 # check performance again
 best.iter <- gbm.perf(gbm2,method="OOB")
@@ -172,7 +232,7 @@ best.iter <- gbm.perf(gbm2,method="OOB")
 while(gbm2$n.trees - best.iter < 10)
 {
     # do 100 more iterations
-    gbm2 <- gbm.more(gbm2,100)
+    gbm2 <- gbm.more(gbm2,100)           # do another 100 iterations
     best.iter <- gbm.perf(gbm2,plot.it=FALSE,method="OOB")
 }
 

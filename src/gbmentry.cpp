@@ -29,7 +29,8 @@ SEXP gbm
     SEXP rcTrain,
     SEXP radFOld,
     SEXP rcCatSplitsOld,
-    SEXP rcTreesOld
+    SEXP rcTreesOld,
+    SEXP rfVerbose
 )
 {
     unsigned long hr = 0;
@@ -182,7 +183,10 @@ SEXP gbm
     SET_VECTOR_ELT(rAns,5,rSetOfTrees);
     UNPROTECT(1); // rSetOfTrees
 
-    Rprintf("Iter        TrainLL      ValidLL     StepSize      Improve\n");
+    if(INTEGER(rfVerbose)[0])
+    {
+       Rprintf("Iter        TrainLL      ValidLL     StepSize      Improve\n");
+    }
     for(iT=0; iT<cTrees; iT++)
     {
         hr = pGBM->iterate(REAL(radF),
@@ -230,10 +234,11 @@ SEXP gbm
                                REAL(rdWeight),
                                INTEGER(rcCatSplitsOld)[0]);
 
-        if((iT <= 9) || 
-           ((iT+1+INTEGER(rcTreesOld)[0])/100 == 
-            (iT+1+INTEGER(rcTreesOld)[0])/100.0) || 
-            (iT==cTrees-1))
+        if(INTEGER(rfVerbose)[0] &&
+           ((iT <= 9) ||
+            ((iT+1+INTEGER(rcTreesOld)[0])/100 ==
+             (iT+1+INTEGER(rcTreesOld)[0])/100.0) ||
+             (iT==cTrees-1)))
         {
             Rprintf("%6d %12.4f %12.4f %12.4f %12.4f\n",
                     iT+1+INTEGER(rcTreesOld)[0],
@@ -243,7 +248,7 @@ SEXP gbm
                     REAL(radOOBagImprove)[iT]);
         }
     }
-    Rprintf("\n");
+    if(INTEGER(rfVerbose)[0]) Rprintf("\n");
 
     // transfer categorical splits to R
     PROTECT(rSetSplitCodes = allocVector(VECSXP, vecSplitCodes.size()));
@@ -304,7 +309,8 @@ SEXP gbm_pred
     SEXP rdInitF,
     SEXP rTrees,
     SEXP rCSplits,
-    SEXP raiVarType
+    SEXP raiVarType,
+    SEXP riSingleTree
 )
 {
     unsigned long hr = 0;
@@ -322,6 +328,7 @@ SEXP gbm_pred
     int iCurrentNode = 0;
     double dX = 0.0;
     int iCatSplitIndicator = 0;
+    bool fSingleTree = (INTEGER(riSingleTree)[0]==1);
 
     SEXP radPredF = NULL;
 
@@ -333,12 +340,22 @@ SEXP gbm_pred
         goto Error;
     }
 
-    for(iObs=0; iObs<cRows; iObs++)
+    if(!fSingleTree)
     {
-        REAL(radPredF)[iObs] = REAL(rdInitF)[0];
+        for(iObs=0; iObs<cRows; iObs++)
+        {
+           REAL(radPredF)[iObs] = REAL(rdInitF)[0];
+        }
+    }
+    else
+    {
+        for(iObs=0; iObs<cRows; iObs++)
+        {
+           REAL(radPredF)[iObs] = 0.0;
+        }
     }
 
-    for(iTree=0; iTree<cTrees; iTree++)
+    for(iTree=(fSingleTree ? cTrees-1 : 0); iTree<cTrees; iTree++)
     {
         rThisTree     = VECTOR_ELT(rTrees,iTree);
         aiSplitVar    = INTEGER(VECTOR_ELT(rThisTree,0));
@@ -382,9 +399,9 @@ SEXP gbm_pred
                     {
                         iCurrentNode = aiRightNode[iCurrentNode];
                     }
-                    else
+                    else // categorical level not present in training
                     {
-                        // handle unused level
+                        iCurrentNode = aiMissingNode[iCurrentNode];
                     }
                 }
             }
@@ -427,6 +444,7 @@ SEXP gbm_plot
     double *adSplitCode = NULL;
     int *aiLeftNode = NULL;
     int *aiRightNode = NULL;
+    int *aiMissingNode = NULL;
     double *adW = NULL;
     int iCurrentNode = 0;
     double dCurrentW = 0.0;
@@ -452,12 +470,13 @@ SEXP gbm_plot
     }
     for(iTree=0; iTree<cTrees; iTree++)
     {
-        rThisTree   = VECTOR_ELT(rTrees,iTree);
-        aiSplitVar  = INTEGER(VECTOR_ELT(rThisTree,0));
-        adSplitCode = REAL   (VECTOR_ELT(rThisTree,1));
-        aiLeftNode  = INTEGER(VECTOR_ELT(rThisTree,2));
-        aiRightNode = INTEGER(VECTOR_ELT(rThisTree,3));
-        adW         = REAL   (VECTOR_ELT(rThisTree,6));
+        rThisTree     = VECTOR_ELT(rTrees,iTree);
+        aiSplitVar    = INTEGER(VECTOR_ELT(rThisTree,0));
+        adSplitCode   = REAL   (VECTOR_ELT(rThisTree,1));
+        aiLeftNode    = INTEGER(VECTOR_ELT(rThisTree,2));
+        aiRightNode   = INTEGER(VECTOR_ELT(rThisTree,3));
+        aiMissingNode = INTEGER(VECTOR_ELT(rThisTree,4));
+        adW           = REAL   (VECTOR_ELT(rThisTree,6));
         for(iObs=0; iObs<cRows; iObs++)
         {
             aiNodeStack[0] = 0;
@@ -475,7 +494,7 @@ SEXP gbm_plot
                 }
                 else // non-terminal node
                 {
-                    // which split variable and am I interested in it?
+                    // which split variable am I interested in it?
                     iPredVar = -1;
                     for(i=0; (iPredVar == -1) && (i < cCols); i++)
                     {
@@ -517,9 +536,9 @@ SEXP gbm_plot
                                 aiNodeStack[cStackNodes] = aiRightNode[iCurrentNode];
                                 cStackNodes++;
                             }
-                            else
+                            else // handle unused level
                             {
-                                // handle unused level... maybe nothing
+                                iCurrentNode = aiMissingNode[iCurrentNode];
                             }
                         }
                     } // iPredVar != -1

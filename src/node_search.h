@@ -30,93 +30,10 @@ public:
     ~CNodeSearch();
     GBMRESULT Initialize(unsigned long cMinObsInNode);
 
-    GBMRESULT IncorporateObs
-    (
-        double dX,
-        double dZ,
-        double dW,
-        long lMonotone
-    )
-    {
-        GBMRESULT hr = GBM_OK;
-        static double dWZ = 0.0;
-
-        if(fIsSplit) goto Cleanup;
-
-        dWZ = dW*dZ;
-
-        if(ISNAN(dX))
-        {
-            dCurrentMissingSumZ += dWZ;
-            dCurrentMissingTotalW += dW;
-            cCurrentMissingN++;
-            dCurrentRightSumZ -= dWZ;
-            dCurrentRightTotalW -= dW;
-            cCurrentRightN--;
-        }
-        else if(cCurrentVarClasses == 0)   // variable is continuous
-        {
-            if(dLastXValue > dX)
-            {
-                error("Observations are not in order. gbm() was unable to build an index for the design matrix. Could be a bug in gbm or an unusual data type in data.\n");
-                hr = GBM_FAIL;
-                goto Error;
-            }
-
-            // Evaluate the current split
-            // the newest observation is still in the right child
-            dCurrentSplitValue = 0.5*(dLastXValue + dX);
-            if((dLastXValue != dX) && 
-               (cCurrentLeftN >= cMinObsInNode) && 
-               (cCurrentRightN >= cMinObsInNode) &&
-               ((lMonotone==0) ||
-                (lMonotone*(dCurrentRightSumZ*dCurrentLeftTotalW - 
-                            dCurrentLeftSumZ*dCurrentRightTotalW) > 0)))
-            {
-                dCurrentImprovement = 
-                    CNode::Improvement(dCurrentLeftTotalW,dCurrentRightTotalW,
-                                       dCurrentMissingTotalW,
-                                       dCurrentLeftSumZ,dCurrentRightSumZ,
-                                       dCurrentMissingSumZ);
-                if(dCurrentImprovement > dBestImprovement)
-                {
-                    iBestSplitVar = iCurrentSplitVar;
-                    dBestSplitValue = dCurrentSplitValue;
-                    cBestVarClasses = 0;
-
-                    dBestLeftSumZ    = dCurrentLeftSumZ;
-                    dBestLeftTotalW  = dCurrentLeftTotalW;
-                    cBestLeftN       = cCurrentLeftN;
-                    dBestRightSumZ   = dCurrentRightSumZ;
-                    dBestRightTotalW = dCurrentRightTotalW;
-                    cBestRightN      = cCurrentRightN;
-                    dBestImprovement = dCurrentImprovement;
-                }
-            }
-
-            // now move the new observation to the left
-            // if another observation arrives we will evaluate this
-            dCurrentLeftSumZ += dWZ;
-            dCurrentLeftTotalW += dW;
-            cCurrentLeftN++;
-            dCurrentRightSumZ -= dWZ;
-            dCurrentRightTotalW -= dW;
-            cCurrentRightN--;
-
-            dLastXValue = dX;
-        }
-        else // variable is categorical, evaluates later
-        {
-            adGroupSumZ[(unsigned long)dX] += dWZ;
-            adGroupW[(unsigned long)dX] += dW;
-            acGroupN[(unsigned long)dX] ++;
-        }
-
-    Cleanup:
-        return hr;
-    Error:
-        goto Cleanup;
-    }
+    GBMRESULT IncorporateObs(double dX,
+                             double dZ,
+                             double dW,
+                             long lMonotone);
 
     GBMRESULT Set(double dSumZ,
                 double dTotalW,

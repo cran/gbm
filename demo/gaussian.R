@@ -17,6 +17,7 @@ Y <- X1**1.5 + 2 * (X2**.5) + mu
 sigma <- sqrt(var(Y)/SNR)
 Y <- Y + rnorm(N,0,sigma)
 
+# create a bunch of missing values
 X1[sample(1:N,size=100)] <- NA
 X3[sample(1:N,size=300)] <- NA
 
@@ -47,7 +48,7 @@ gbm2 <- gbm.more(gbm1,100)
 
 best.iter <- gbm.perf(gbm2,method="OOB")
 while(gbm2$n.trees - best.iter < 10)
-{    
+{
    # do 100 more iterations
    gbm2 <- gbm.more(gbm2,100)
    best.iter <- gbm.perf(gbm2,plot.it=F,method="OOB")
@@ -71,8 +72,8 @@ print(gbm2$c.splits[1:3])
 N <- 1000
 X1 <- runif(N)
 X2 <- 2*runif(N)
-X3 <- ordered(sample(letters[1:4],N,replace=T))
-X4 <- factor(sample(letters[1:6],N,replace=T))
+X3 <- factor(sample(letters[1:4],N,replace=T))
+X4 <- ordered(sample(letters[1:6],N,replace=T))
 X5 <- factor(sample(letters[1:3],N,replace=T))
 X6 <- 3*runif(N)
 mu <- c(-1,0,1,2)[as.numeric(X3)]

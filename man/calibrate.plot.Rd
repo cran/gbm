@@ -12,33 +12,42 @@ calibrate.plot(y,p,
                line.par=list(col="black"),
                shade.col="lightyellow",
                shade.density=NULL,
-               rug.par=list(side=1),...)
+               rug.par=list(side=1),
+               xlab="Predicted value",
+               ylab="Observed average",
+               xlim=NULL,ylim=NULL,
+               ...)
 }
 \arguments{
   \item{y}{ the outcome 0-1 variable }
   \item{p}{ the predictions estimating E(y|x) }
-  \item{distribution}{ the loss function used in creating \code{p}. \code{bernoulli} and \code{poisson}
-                       are currently the only special options. All others default to squared error 
-                       assuming \code{gaussian}}
-  \item{replace}{ determines whether this plots will replace or overlay the current plot.
+  \item{distribution}{the loss function used in creating \code{p}.
+                      \code{bernoulli} and \code{poisson} are currently the
+                      only special options. All others default to squared error
+                      assuming \code{gaussian}}
+  \item{replace}{ determines whether this plot will replace or overlay the current plot.
                   \code{replace=FALSE} is useful for comparing the calibration of several
                   methods}
   \item{line.par}{ graphics parameters for the line }
-  \item{shade.col}{ color for shading the 2 SE region. \code{shade.col=NA} implies no 2 SE 
+  \item{shade.col}{ color for shading the 2 SE region. \code{shade.col=NA} implies no 2 SE
                     region}
   \item{shade.density}{ the \code{density} parameter for \code{\link{polygon}}}
   \item{rug.par}{graphics parameters passed to \code{\link{rug}}}
+  \item{xlab}{x-axis label corresponding to the predicted values}
+  \item{ylab}{y-axis label corresponding to the observed average}
+  \item{xlim,ylim}{x and y-axis limits. If not specified te function will select
+                   limits}
   \item{...}{ other graphics parameters passed on to the plot function }
 }
 \details{
-Uses \code{\link[mgcv]{gam}} to estimate E(y|p). Well-calibrated probabilities
+Uses \code{\link[mgcv]{gam}} to estimate E(y|p). Well-calibrated predictions
 imply that E(y|p) = p. The plot also includes a pointwise 95% confidence
 band.
 }
 \value{
 \code{calibrate.plot} returns no values.
 }
-\references{ 
+\references{
 J.F. Yates (1982). "External correspondence: decomposition of the mean
 probability score," Organisational Behaviour and Human Performance 30:132-156.
 

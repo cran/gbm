@@ -89,12 +89,14 @@ double CLaplace::LogLikelihood
 {
     unsigned long i=0;
     double dL = 0.0;
+    double dW = 0.0;
 
     if(adOffset == NULL)
     {
         for(i=0; i<cLength; i++)
         {
             dL += adWeight[i]*fabs(adY[i]-adF[i]);
+            dW += adWeight[i];
         }
     }
     else
@@ -102,10 +104,11 @@ double CLaplace::LogLikelihood
         for(i=0; i<cLength; i++)
         {
             dL += adWeight[i]*fabs(adY[i]-adOffset[i]-adF[i]);
+            dW += adWeight[i];
         }
     }
 
-    return dL;
+    return dL/dW;
 }
 
 
@@ -175,6 +178,7 @@ double CLaplace::BagImprovement
 {
     double dReturnValue = 0.0;
     double dF = 0.0;
+    double dW = 0.0;
     unsigned long i = 0;
 
     for(i=0; i<nTrain; i++)
@@ -185,10 +189,11 @@ double CLaplace::BagImprovement
             
             dReturnValue += 
                 adWeight[i]*(fabs(adY[i]-dF) - fabs(adY[i]-dF-dStepSize*adFadj[i]));
+            dW += adWeight[i];
         }
     }
 
-    return dReturnValue;
+    return dReturnValue/dW;
 }
 
 

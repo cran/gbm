@@ -108,12 +108,14 @@ double CAdaBoost::LogLikelihood
 {
     unsigned long i=0;
     double dL = 0.0;
+    double dW = 0.0;
 
     if(adOffset == NULL)
     {
         for(i=0; i<cLength; i++)
         {
             dL += adWeight[i] * exp(-(2*adY[i]-1)*adF[i]);
+            dW += adWeight[i];
         }
     }
     else
@@ -121,10 +123,11 @@ double CAdaBoost::LogLikelihood
         for(i=0; i<cLength; i++)
         {
             dL += adWeight[i] * exp(-(2*adY[i]-1)*(adOffset[i]+adF[i]));
-        }
+            dW += adWeight[i];
+       }
     }
 
-    return dL;
+    return dL/dW;
 }
 
 
@@ -203,6 +206,7 @@ double CAdaBoost::BagImprovement
 {
     double dReturnValue = 0.0;
     double dF = 0.0;
+    double dW = 0.0;
     unsigned long i = 0;
 
     for(i=0; i<nTrain; i++)
@@ -214,8 +218,9 @@ double CAdaBoost::BagImprovement
             dReturnValue += adWeight[i]*
                 (exp(-(2*adY[i]-1)*dF) -
                  exp(-(2*adY[i]-1)*(dF+dStepSize*adFadj[i])));
+            dW += adWeight[i];
         }
     }
 
-    return dReturnValue;
+    return dReturnValue/dW;
 }
