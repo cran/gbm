@@ -74,7 +74,7 @@ GBMRESULT CCoxPH::InitF
 }
 
 
-double CCoxPH::LogLikelihood
+double CCoxPH::Deviance
 (
     double *adT,
     double *adDelta,
@@ -102,7 +102,7 @@ double CCoxPH::LogLikelihood
         }
     }
 
-    return dL/dW;
+    return -2*dL/dW;
 }
 
 

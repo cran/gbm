@@ -7,12 +7,6 @@
     #undef ERROR
     #include <R.h>
 
-    // for windows and Mac build need to undo declarations in R.h (R>1.8.0)
-    //#ifdef IEEE_754
-    //#undef ISNAN
-    //#define ISNAN(x)   R_IsNaNorNA(x)
-    //#endif
-
     #define GBM_FAILED(hr) ((unsigned long)hr != 0)
     typedef unsigned long GBMRESULT;
     #define GBM_OK 0
@@ -30,4 +24,3 @@
     // #define NOISY_DEBUG
 
 #endif // BUILDINFO_H
-

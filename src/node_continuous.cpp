@@ -59,7 +59,7 @@ signed char CNodeContinuous::WhichNode
     signed char ReturnValue = 0;
     double dX = pData->adX[iSplitVar*(pData->cRows) + iObs];
 
-    if(!ISNAN(dX))
+    if(!ISNA(dX))
     {
         if(dX < dSplitValue)
         {
@@ -87,7 +87,7 @@ signed char CNodeContinuous::WhichNode
     signed char ReturnValue = 0;
     double dX = adX[iSplitVar*cRow + iRow];
 
-    if(!ISNAN(dX))
+    if(!ISNA(dX))
     {
         if(dX < dSplitValue)
         {
@@ -128,6 +128,7 @@ GBMRESULT CNodeContinuous::TransferTreeToRList
     int *aiMissingNode,
     double *adErrorReduction,
     double *adWeight,
+    double *adPred,
     VEC_VEC_CATEGORIES &vecSplitCodes,
     int cCatSplitsOld,
     double dShrinkage
@@ -140,6 +141,7 @@ GBMRESULT CNodeContinuous::TransferTreeToRList
     adSplitPoint[iThisNodeID] = dSplitValue;
     adErrorReduction[iThisNodeID] = dImprovement;
     adWeight[iThisNodeID] = dTrainW;
+    adPred[iThisNodeID] = dShrinkage*dPrediction;
 
 
     iNodeID++;
@@ -153,6 +155,7 @@ GBMRESULT CNodeContinuous::TransferTreeToRList
                                         aiMissingNode,
                                         adErrorReduction,
                                         adWeight,
+                                        adPred,
                                         vecSplitCodes,
                                         cCatSplitsOld,
                                         dShrinkage);
@@ -168,6 +171,7 @@ GBMRESULT CNodeContinuous::TransferTreeToRList
                                          aiMissingNode,
                                          adErrorReduction,
                                          adWeight,
+                                         adPred,
                                          vecSplitCodes,
                                          cCatSplitsOld,
                                          dShrinkage);
@@ -183,6 +187,7 @@ GBMRESULT CNodeContinuous::TransferTreeToRList
                                            aiMissingNode,
                                            adErrorReduction,
                                            adWeight,
+                                           adPred,
                                            vecSplitCodes,
                                            cCatSplitsOld,
                                            dShrinkage);

@@ -88,6 +88,7 @@ public:
                                         int *aiMissingNode,
                                         double *adErrorReduction,
                                         double *adWeight,
+                                        double *adPred,
                                         VEC_VEC_CATEGORIES &vecSplitCodes,
                                         int cCatSplitsOld,
                                         double dShrinkage);

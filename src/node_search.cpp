@@ -133,7 +133,7 @@ GBMRESULT CNodeSearch::IncorporateObs
 
     dWZ = dW*dZ;
 
-    if(ISNAN(dX))
+    if(ISNA(dX))
     {
         dCurrentMissingSumZ += dWZ;
         dCurrentMissingTotalW += dW;

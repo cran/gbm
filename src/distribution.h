@@ -43,12 +43,12 @@ public:
                           double &dInitF, 
                           unsigned long cLength) = 0;
 
-    virtual double LogLikelihood(double *adY,
-                                 double *adMisc,
-                                 double *adOffset,
-                                 double *adWeight,
-                                 double *adF,
-                                 unsigned long cLength) = 0;
+    virtual double Deviance(double *adY,
+                            double *adMisc,
+                            double *adOffset,
+                            double *adWeight,
+                            double *adF,
+                            unsigned long cLength) = 0;
 
     virtual GBMRESULT FitBestConstant(double *adY,
                                     double *adMisc,

@@ -17,6 +17,7 @@ gbm(formula = formula(data),
     shrinkage = 0.001,
     bag.fraction = 0.5,
     train.fraction = 1.0,
+    cv.folds=0,
     keep.data = TRUE,
     verbose = TRUE)
 
@@ -74,6 +75,9 @@ decreasing (-1), or arbitrary (0) relationship with the outcome.}
 \item{n.trees}{the total number of trees to fit. This is equivalent to the
 number of iterations and the number of basis functions in the additive
 expansion.}
+\item{cv.folds}{Number of cross-validation folds to perform. If \code{cv.folds}>1 then
+\code{gbm}, in addition to the usual fit, will perform a cross-validation, calculate 
+an estimate of generalization error returned in \code{cv.error}.}
 \item{interaction.depth}{The maximum depth of variable interactions. 1 implies
 an additive model, 2 implies a model with up to 2-way interactions, etc.}
 \item{n.minobsinnode}{minimum number of observations in the trees terminal

@@ -1,0 +1,74 @@
+\documentclass{article}
+
+\title{Generalized Boosted Models:\\A guide to the gbm package}
+\author{Greg Ridgeway}
+
+%\VignetteIndexEntry{Generalized Boosted Models:\\A guide to the gbm package}
+
+\begin{document}
+
+\maketitle
+
+\section{Available distributions}
+
+For non-zero offset terms, replace all $f(\mathbf{x}_i)$ with $o_i + f(\mathbf{x}_i)$
+
+\subsection{Gaussian}
+
+\begin{tabular}{ll}
+Loss function & $\frac{1}{\sum w_i} \sum_{i=1}^N w_i(y_i-f(\mathbf{x}_i))^2$ \\
+Initial value & $f(\mathbf{x})=\frac{\sum y_i-o_i}{\sum w_i}$ \\
+Gradient & $z_i=y_i - f(\mathbf{x}_i)$ \\
+Terminal node estimates & $\frac{\sum w_i(y_i-f(\mathbf{x}_i))}{\sum w_i}$
+\end{tabular}
+
+\subsection{AdaBoost}
+
+\begin{tabular}{ll}
+Loss function & $$ \\
+Gradient & $z_i=$ \\
+Terminal node estimates & $$
+\end{tabular}
+
+\subsection{Bernoulli}
+
+\begin{tabular}{ll}
+Loss function & $$ \\
+Gradient & $z_i=$ \\
+Terminal node estimates & $$
+\end{tabular}
+
+\subsection{Laplace}
+
+\begin{tabular}{ll}
+Loss function & $$ \\
+Gradient & $z_i=$ \\
+Terminal node estimates & $$
+\end{tabular}
+
+\subsection{Cox Proportional Hazard}
+
+\begin{tabular}{ll}
+Loss function & $$ \\
+Gradient & $z_i=$ \\
+Terminal node estimates & $$
+\end{tabular}
+
+\subsection{Poisson}
+\begin{tabular}{ll}
+Loss function & -2$\frac{1}{\sum w_i} \sum w_i(y_if(\mathbf{x}_i)-\exp(f(\mathbf{x}_i)))$ \\
+Initial value & $f(\mathbf{x})= \log\left(\frac{\sum w_iy_i}{\sum w_ie^{o_i}}\right)$ \\
+Gradient & $z_i=y_i - \exp(f(\mathbf{x}_i))$ \\
+Terminal node estimates & $\frac{\sum w_iy_i}{\sum w_i\exp{\mathbf{x}_i}}$
+\end{tabular}
+
+\subsection{}
+
+\begin{tabular}{ll}
+Loss function & $$ \\
+Gradient & $z_i=$ \\
+Terminal node estimates & $$
+\end{tabular}
+
+\end{document}
+

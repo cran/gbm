@@ -93,29 +93,40 @@ GBMRESULT CBernoulli::InitF
 
 
 
-double CBernoulli::LogLikelihood
+double CBernoulli::Deviance
 (
-    double *adY,
-    double *adMisc,
-    double *adOffset,
-    double *adWeight,
-    double *adF,
-    unsigned long cLength
+   double *adY,
+   double *adMisc,
+   double *adOffset,
+   double *adWeight,
+   double *adF,
+   unsigned long cLength
 )
 {
-    unsigned long i=0;
-    double dL = 0.0;
-    double dF = 0.0;
-    double dW = 0.0;
+   unsigned long i=0;
+   double dL = 0.0;
+   double dF = 0.0;
+   double dW = 0.0;
 
-    for(i=0; i<cLength; i++)
-    {
-        dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
-        dL += adWeight[i]*(adY[i]*dF - log(1.0+exp(dF)));
-        dW += adWeight[i];
-    }
+   if(adOffset==NULL)
+   {
+      for(i=0; i<cLength; i++)
+      {
+         dL += adWeight[i]*(adY[i]*adF[i] - log(1.0+exp(adF[i])));
+         dW += adWeight[i];
+      }
+   }
+   else
+   {
+      for(i=0; i<cLength; i++)
+      {
+         dF = adF[i] + adOffset[i];
+         dL += adWeight[i]*(adY[i]*dF - log(1.0+exp(dF)));
+         dW += adWeight[i];
+      }
+   }
 
-    return dL/dW;
+   return -2*dL/dW;
 }
 
 

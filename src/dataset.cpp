@@ -84,7 +84,7 @@ GBMRESULT CDataset::SetData
     this->acVarClasses = acVarClasses;
     this->alMonotoneVar = alMonotoneVar;
     
-    if((adOffset != NULL) && !ISNAN(*adOffset))
+    if((adOffset != NULL) && !ISNA(*adOffset))
     {
         this->adOffset = adOffset;
         fHasOffset = true;
@@ -94,7 +94,7 @@ GBMRESULT CDataset::SetData
         this->adOffset = NULL;
         fHasOffset = false;
     }
-    if((adMisc != NULL) && !ISNAN(*adMisc))
+    if((adMisc != NULL) && !ISNA(*adMisc))
     {
         this->adMisc = adMisc;
     }

@@ -53,6 +53,7 @@ public:
                                 int *aiMissingNode,
                                 double *adErrorReduction,
                                 double *adWeight,
+                                double *adPred,                                
                                 VEC_VEC_CATEGORIES &vecSplitCodes,
                                 int cCatSplitsOld);
     GBMRESULT Predict(unsigned long iVar,

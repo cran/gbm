@@ -77,7 +77,7 @@ GBMRESULT CLaplace::InitF
 }
 
 
-double CLaplace::LogLikelihood
+double CLaplace::Deviance
 (
     double *adY,
     double *adMisc,

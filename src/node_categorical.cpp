@@ -71,7 +71,7 @@ signed char CNodeCategorical::WhichNode
     signed char ReturnValue = 0;
     double dX = pData->adX[iSplitVar*(pData->cRows) + iObs];
 
-    if(!ISNAN(dX))
+    if(!ISNA(dX))
     {
         if(std::find(aiLeftCategory,
                      aiLeftCategory+cLeftCategory,
@@ -101,7 +101,7 @@ signed char CNodeCategorical::WhichNode
     signed char ReturnValue = 0;
     double dX = adX[iSplitVar*cRow + iRow];
 
-    if(!ISNAN(dX))
+    if(!ISNA(dX))
     {
         if(std::find(aiLeftCategory,
                      aiLeftCategory+cLeftCategory,
@@ -145,6 +145,7 @@ GBMRESULT CNodeCategorical::TransferTreeToRList
     int *aiMissingNode,
     double *adErrorReduction,
     double *adWeight,
+    double *adPred,
     VEC_VEC_CATEGORIES &vecSplitCodes,
     int cCatSplitsOld,
     double dShrinkage
@@ -161,6 +162,7 @@ GBMRESULT CNodeCategorical::TransferTreeToRList
     adSplitPoint[iThisNodeID] = cCatSplits+cCatSplitsOld; // 0 based
     adErrorReduction[iThisNodeID] = dImprovement;
     adWeight[iThisNodeID] = dTrainW;
+    adPred[iThisNodeID] = dShrinkage*dPrediction;
 
     vecSplitCodes.push_back(VEC_CATEGORIES());
 
@@ -181,6 +183,7 @@ GBMRESULT CNodeCategorical::TransferTreeToRList
                                         aiMissingNode,
                                         adErrorReduction,
                                         adWeight,
+                                        adPred,
                                         vecSplitCodes,
                                         cCatSplitsOld,
                                         dShrinkage);
@@ -196,6 +199,7 @@ GBMRESULT CNodeCategorical::TransferTreeToRList
                                          aiMissingNode,
                                          adErrorReduction,
                                          adWeight,
+                                         adPred,
                                          vecSplitCodes,
                                          cCatSplitsOld,
                                          dShrinkage);
@@ -211,6 +215,7 @@ GBMRESULT CNodeCategorical::TransferTreeToRList
                                            aiMissingNode,
                                            adErrorReduction,
                                            adWeight,
+                                           adPred,
                                            vecSplitCodes,
                                            cCatSplitsOld,
                                            dShrinkage);

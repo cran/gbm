@@ -77,7 +77,7 @@ GBMRESULT CPoisson::InitF
 }
 
 
-double CPoisson::LogLikelihood
+double CPoisson::Deviance
 (
     double *adY,
     double *adMisc,
@@ -109,7 +109,7 @@ double CPoisson::LogLikelihood
        }
     }
 
-    return dL/dW;
+    return -2*dL/dW;
 }
 
 
@@ -138,6 +138,11 @@ GBMRESULT CPoisson::FitBestConstant
     vecdNum.assign(vecdNum.size(),0.0);
     vecdDen.resize(cTermNodes);
     vecdDen.assign(vecdDen.size(),0.0);
+    
+    vecdMax.resize(cTermNodes);
+    vecdMax.assign(vecdMax.size(),-HUGE_VAL);
+    vecdMin.resize(cTermNodes);
+    vecdMin.assign(vecdMin.size(),HUGE_VAL);
 
     if(adOffset == NULL)
     {
@@ -148,6 +153,10 @@ GBMRESULT CPoisson::FitBestConstant
                 vecdNum[aiNodeAssign[iObs]] += adW[iObs]*adY[iObs];
                 vecdDen[aiNodeAssign[iObs]] += adW[iObs]*exp(adF[iObs]);
             }
+            vecdMax[aiNodeAssign[iObs]] = 
+               fmax2(adF[iObs],vecdMax[aiNodeAssign[iObs]]);
+            vecdMin[aiNodeAssign[iObs]] =  
+               fmin2(adF[iObs],vecdMin[aiNodeAssign[iObs]]);
         }
     }
     else
@@ -166,16 +175,29 @@ GBMRESULT CPoisson::FitBestConstant
     {
         if(vecpTermNodes[iNode]!=NULL)
         {
-            if(vecdDen[iNode] == 0.0)
+            if(vecdNum[iNode] == 0.0)
+            {
+                // DEBUG: if vecdNum==0 then prediction = -Inf
+                // Not sure what else to do except plug in an arbitrary
+                //   negative number, -1? -10? Let's use -1, then make
+                //   sure |adF| < 19 always.
+                vecpTermNodes[iNode]->dPrediction = -19.0;
+            }
+            else if(vecdDen[iNode] == 0.0)
             {
                 vecpTermNodes[iNode]->dPrediction = 0.0;
-            }
+            }            
             else
             {
-		// DEBUG: if vecdNum==0 then prediction = -Inf
                 vecpTermNodes[iNode]->dPrediction = 
                     log(vecdNum[iNode]/vecdDen[iNode]);
             }
+            vecpTermNodes[iNode]->dPrediction = 
+               fmin2(vecpTermNodes[iNode]->dPrediction,
+                     19-vecdMax[iNode]);
+            vecpTermNodes[iNode]->dPrediction = 
+               fmax2(vecpTermNodes[iNode]->dPrediction,
+                     -19-vecdMin[iNode]);
         }
     }
 

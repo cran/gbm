@@ -44,6 +44,7 @@ SEXP gbm
     SEXP riMissingNode = NULL;
     SEXP rdErrorReduction = NULL;
     SEXP rdWeight = NULL;
+    SEXP rdPred = NULL;
 
     SEXP rdInitF = NULL;
     SEXP radF = NULL;
@@ -63,9 +64,9 @@ SEXP gbm
     const int cResultComponents = 7;
     // rdInitF, radF, radTrainError, radValidError, radOOBagImprove
     // rSetOfTrees, rSetSplitCodes
-    const int cTreeComponents = 7;
+    const int cTreeComponents = 8;
     // riSplitVar, rdSplitPoint, riLeftNode,
-    // riRightNode, riMissingNode, rdErrorReduction, rdWeight
+    // riRightNode, riMissingNode, rdErrorReduction, rdWeight, rdPred
     int cNodes = 0;
     int cTrain = INTEGER(rcTrain)[0];
 
@@ -147,7 +148,7 @@ SEXP gbm
     SET_VECTOR_ELT(rAns,1,radF);
     UNPROTECT(1); // radF
 
-    if(ISNAN(REAL(radFOld)[0])) // check for old predictions
+    if(ISNA(REAL(radFOld)[0])) // check for old predictions
     {
         // set the initial value of F as a constant
         hr = pDist->InitF(pData->adY,
@@ -185,7 +186,7 @@ SEXP gbm
 
     if(INTEGER(rfVerbose)[0])
     {
-       Rprintf("Iter        TrainLL      ValidLL     StepSize      Improve\n");
+       Rprintf("Iter   TrainDeviance   ValidDeviance   StepSize   Improve\n");
     }
     for(iT=0; iT<cTrees; iT++)
     {
@@ -203,7 +204,8 @@ SEXP gbm
 
         // allocate the new tree component for the R list structure
         PROTECT(rNewTree = allocVector(VECSXP, cTreeComponents));
-
+        // riNodeID,riSplitVar,rdSplitPoint,riLeftNode,
+        // riRightNode,riMissingNode,rdErrorReduction,rdWeight
         PROTECT(riSplitVar = allocVector(INTSXP, cNodes));
         PROTECT(rdSplitPoint = allocVector(REALSXP, cNodes));
         PROTECT(riLeftNode = allocVector(INTSXP, cNodes));
@@ -211,6 +213,7 @@ SEXP gbm
         PROTECT(riMissingNode = allocVector(INTSXP, cNodes));
         PROTECT(rdErrorReduction = allocVector(REALSXP, cNodes));
         PROTECT(rdWeight = allocVector(REALSXP, cNodes));
+        PROTECT(rdPred = allocVector(REALSXP, cNodes));
         SET_VECTOR_ELT(rNewTree,0,riSplitVar);
         SET_VECTOR_ELT(rNewTree,1,rdSplitPoint);
         SET_VECTOR_ELT(rNewTree,2,riLeftNode);
@@ -218,8 +221,8 @@ SEXP gbm
         SET_VECTOR_ELT(rNewTree,4,riMissingNode);
         SET_VECTOR_ELT(rNewTree,5,rdErrorReduction);
         SET_VECTOR_ELT(rNewTree,6,rdWeight);
-        UNPROTECT(cTreeComponents); // riNodeID,riSplitVar,rdSplitPoint,riLeftNode,
-                                    // riRightNode,riMissingNode,rdErrorReduction,rdWeight
+        SET_VECTOR_ELT(rNewTree,7,rdPred);
+        UNPROTECT(cTreeComponents); 
         SET_VECTOR_ELT(rSetOfTrees,iT,rNewTree);
         UNPROTECT(1); // rNewTree
 
@@ -232,20 +235,24 @@ SEXP gbm
                                INTEGER(riMissingNode),
                                REAL(rdErrorReduction),
                                REAL(rdWeight),
+                               REAL(rdPred),
                                INTEGER(rcCatSplitsOld)[0]);
 
-        if(INTEGER(rfVerbose)[0] &&
-           ((iT <= 9) ||
-            ((iT+1+INTEGER(rcTreesOld)[0])/100 ==
-             (iT+1+INTEGER(rcTreesOld)[0])/100.0) ||
-             (iT==cTrees-1)))
+        if((iT <= 9) ||
+           ((iT+1+INTEGER(rcTreesOld)[0])/100 ==
+            (iT+1+INTEGER(rcTreesOld)[0])/100.0) ||
+            (iT==cTrees-1))
         {
-            Rprintf("%6d %12.4f %12.4f %12.4f %12.4f\n",
-                    iT+1+INTEGER(rcTreesOld)[0],
-                    REAL(radTrainError)[iT],
-                    REAL(radValidError)[iT],
-                    REAL(rdShrinkage)[0],
-                    REAL(radOOBagImprove)[iT]);
+            R_CheckUserInterrupt();
+            if(INTEGER(rfVerbose)[0])
+            {
+               Rprintf("%6d %13.4f %15.4f %10.4f %9.4f\n",
+                       iT+1+INTEGER(rcTreesOld)[0],
+                       REAL(radTrainError)[iT],
+                       REAL(radValidError)[iT],
+                       REAL(rdShrinkage)[0],
+                       REAL(radOOBagImprove)[iT]);
+            }
         }
     }
     if(INTEGER(rfVerbose)[0]) Rprintf("\n");
@@ -370,7 +377,7 @@ SEXP gbm_pred
             {
                 dX = REAL(radX)[aiSplitVar[iCurrentNode]*cRows + iObs];
                 // missing?
-                if(ISNAN(dX))
+                if(ISNA(dX))
                 {
                     iCurrentNode = aiMissingNode[iCurrentNode];
                 }
@@ -567,6 +574,500 @@ Cleanup:
 Error:
     goto Cleanup;
 } // gbm_plot
+
+
+SEXP gbm_shrink_pred
+(
+   SEXP radX,
+   SEXP rcRows,
+   SEXP rcCols,
+   SEXP racTrees,
+   SEXP rdInitF,
+   SEXP rTrees,
+   SEXP rCSplits,
+   SEXP raiVarType,
+   SEXP rcInteractionDepth,
+   SEXP radLambda
+)
+{
+   unsigned long hr = 0;
+   int iTree = 0;
+   int iPredictionIter = 0;
+   int iObs = 0;
+   int i = 0;
+   int cRows = INTEGER(rcRows)[0];
+   double *adLambda = REAL(radLambda);
+   double dLambda = 0.0;
+   double dPred = 0.0;
+
+   SEXP rThisTree = NULL;
+   int *aiSplitVar = NULL;
+   double *adSplitCode = NULL;
+   int *aiLeftNode = NULL;
+   int *aiRightNode = NULL;
+   int *aiMissingNode = NULL;
+   double *adNodeW = NULL;
+   int iCurrentNode = 0;
+   double dX = 0.0;
+   int iCatSplitIndicator = 0;
+
+   SEXP rResult  = NULL;
+   SEXP radPredF = NULL;
+
+   // The predictions
+   double *adPredF = NULL;
+   // The shrunken predictions
+   double *adNodePred = NULL;
+   int *aiNodeStack = NULL;
+   unsigned long cNodeStack = 0;
+   int cMaxNodes = 1+3*(INTEGER(rcInteractionDepth)[0]);
+
+   adPredF = new double[cRows];
+   if(adPredF == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+   for(iObs=0; iObs<cRows; iObs++)
+   {
+      adPredF[iObs] = REAL(rdInitF)[0];
+   }
+
+   adNodePred = new double[cMaxNodes];
+   if(adNodePred == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+   aiNodeStack = new int[cMaxNodes];
+   if(aiNodeStack == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+
+   // allocate the predictions to return
+   PROTECT(rResult = allocVector(VECSXP, length(racTrees)));
+   if(rResult == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+
+   iPredictionIter = 0;
+   iTree = 0;
+   while(iPredictionIter < length(racTrees))
+   {
+      while(iTree < INTEGER(racTrees)[iPredictionIter])
+      {
+         rThisTree     = VECTOR_ELT(rTrees,iTree);
+         aiSplitVar    = INTEGER(VECTOR_ELT(rThisTree,0));
+         adSplitCode   = REAL   (VECTOR_ELT(rThisTree,1));
+         aiLeftNode    = INTEGER(VECTOR_ELT(rThisTree,2));
+         aiRightNode   = INTEGER(VECTOR_ELT(rThisTree,3));
+         aiMissingNode = INTEGER(VECTOR_ELT(rThisTree,4));
+         adNodeW       = REAL   (VECTOR_ELT(rThisTree,6));
+
+         // shrink the tree's predictions
+         aiNodeStack[0] = 0;
+         cNodeStack = 1;
+         for(i=0; i<cMaxNodes; i++)
+         {
+            adNodePred[i] = NAN;
+         }
+         while(cNodeStack>0)
+         {
+            i = aiNodeStack[cNodeStack-1];
+            if(aiSplitVar[i]==-1)
+            {
+               adNodePred[i] = adSplitCode[i];
+               cNodeStack--;
+            }
+            else if(ISNA(adNodePred[aiLeftNode[i]]))
+            {
+               aiNodeStack[cNodeStack] = aiLeftNode[i];
+               cNodeStack++;
+               aiNodeStack[cNodeStack] = aiRightNode[i];
+               cNodeStack++;
+
+               // check whether missing node is the same as parent node
+               // occurs when X_i has no missing values
+               if(adNodeW[i] != adNodeW[aiMissingNode[i]])
+               {
+                  aiNodeStack[cNodeStack] = aiMissingNode[i];
+                  cNodeStack++;
+               }
+               else
+               {
+                  adNodePred[aiMissingNode[i]] = 0.0;
+               }
+            }
+            else
+            {
+               // compute the parent node's prediction
+               adNodePred[i] = 
+                  (adNodeW[aiLeftNode[i]]*adNodePred[aiLeftNode[i]] +
+                   adNodeW[aiRightNode[i]]*adNodePred[aiRightNode[i]]+
+                   adNodeW[aiMissingNode[i]]*adNodePred[aiMissingNode[i]])/
+                  adNodeW[i];
+               cNodeStack--;
+            }         
+         }
+
+         // predict for the observations
+         for(iObs=0; iObs<cRows; iObs++)
+         {
+            iCurrentNode = 0;
+            dPred = 0.0;
+            dLambda = 1.0;
+
+            while(aiSplitVar[iCurrentNode] != -1)
+            {
+               dPred += dLambda*
+                        (1-adLambda[aiSplitVar[iCurrentNode]])*
+                        adNodePred[iCurrentNode];
+               dLambda *= adLambda[aiSplitVar[iCurrentNode]];
+               
+               dX = REAL(radX)[aiSplitVar[iCurrentNode]*cRows + iObs];
+               // missing?
+               if(ISNA(dX))
+               {
+                  iCurrentNode = aiMissingNode[iCurrentNode];
+               }
+               // continuous?
+               else if(INTEGER(raiVarType)[aiSplitVar[iCurrentNode]] == 0)
+               {
+                  if(dX < adSplitCode[iCurrentNode])
+                  {
+                     iCurrentNode = aiLeftNode[iCurrentNode];
+                  }
+                  else
+                  {
+                     iCurrentNode = aiRightNode[iCurrentNode];
+                  }
+               }
+               else // categorical
+               {
+                  iCatSplitIndicator = INTEGER(
+                     VECTOR_ELT(rCSplits,
+                                (int)adSplitCode[iCurrentNode]))[(int)dX];
+                  if(iCatSplitIndicator==-1)
+                  {
+                     iCurrentNode = aiLeftNode[iCurrentNode];
+                  }
+                  else if(iCatSplitIndicator==1)
+                  {
+                     iCurrentNode = aiRightNode[iCurrentNode];
+                  }
+                  else // categorical level not present in training
+                  {
+                     iCurrentNode = aiMissingNode[iCurrentNode];
+                  }
+               }
+            }
+            dPred += dLambda*adNodePred[iCurrentNode];
+
+            // add the shrunken prediction
+            adPredF[iObs] += dPred; // add the prediction
+         } // iObs
+
+         iTree++;
+      } // iTree
+
+      PROTECT(radPredF = allocVector(REALSXP, cRows));
+      if(radPredF == NULL)
+      {
+         hr = GBM_OUTOFMEMORY;
+         goto Error;
+      }
+      for(iObs=0; iObs<cRows; iObs++)
+      {
+         REAL(radPredF)[iObs] = adPredF[iObs];
+      }
+      SET_VECTOR_ELT(rResult,iPredictionIter,radPredF);
+      UNPROTECT(1); // radPredF
+
+      iPredictionIter++;
+   }
+
+Cleanup:
+   if(adPredF!=NULL)
+   {
+      delete [] adPredF;
+      adPredF = NULL;
+   }
+   if(adNodePred!=NULL)
+   {
+      delete [] adNodePred;
+      adNodePred = NULL;
+   }
+   if(aiNodeStack!=NULL)
+   {
+      delete [] aiNodeStack;
+      aiNodeStack = NULL;
+   }
+
+   UNPROTECT(1); // rResult
+   return rResult;
+Error:
+   goto Cleanup;
+}
+
+
+SEXP gbm_shrink_gradient
+(
+   SEXP radY,
+   SEXP radX,
+   SEXP rcRows,
+   SEXP rcCols,
+   SEXP rcTrees,
+   SEXP rdInitF,
+   SEXP rTrees,
+   SEXP rCSplits,
+   SEXP raiVarType,
+   SEXP rcInteractionDepth,
+   SEXP radLambda
+)
+{
+   unsigned long hr = 0;
+   int iTree = 0;
+   
+   int iObs = 0;
+   int iLambda = 0;
+   int iNode = 0;   
+   int cRows = INTEGER(rcRows)[0];
+   double *adY = REAL(radY);
+   double *adLambda = REAL(radLambda);
+   double dLambdaProduct = 0.0;
+   double dPred = 0.0;
+   double dNewPredTerm = 0.0;
+   double dDJDf = 0.0;
+   
+   SEXP rThisTree = NULL;
+   int *aiSplitVar = NULL;
+   double *adSplitCode = NULL;
+   int *aiLeftNode = NULL;
+   int *aiRightNode = NULL;
+   int *aiMissingNode = NULL;
+   double *adNodeW = NULL;
+   int iCurrentNode = 0;
+   double dX = 0.0;
+   int iCatSplitIndicator = 0;
+
+   SEXP rResult  = NULL;
+   SEXP radPredF = NULL;
+   SEXP rdObjective = NULL;
+   SEXP radGradient = NULL;
+
+   // The node predictions
+   double *adNodePred = NULL;
+   // tracks which variables are in the prediction path
+   int *aiInPath = NULL;
+   int cInPath = 0;
+   double *adDfDLambda = NULL;
+   
+   adDfDLambda = new double[length(radLambda)];
+   if(adDfDLambda == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+   aiInPath = new int[INTEGER(rcInteractionDepth)[0]+1];
+   if(aiInPath == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+   // allocate the predictions to return
+   PROTECT(rResult = allocVector(VECSXP, 3));
+   if(rResult == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+   // allocate predictions
+   PROTECT(radPredF = allocVector(REALSXP, cRows));
+   if(radPredF == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+   SET_VECTOR_ELT(rResult,0,radPredF);
+   UNPROTECT(1); // radPredF
+   //allocate objective function
+   PROTECT(rdObjective = allocVector(REALSXP, 1));
+   if(rdObjective == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+   SET_VECTOR_ELT(rResult,1,rdObjective);
+   UNPROTECT(1); // rdObjective
+   //allocate objective function
+   PROTECT(radGradient = allocVector(REALSXP, length(radLambda)));
+   if(radGradient == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
+   SET_VECTOR_ELT(rResult,2,radGradient);
+   UNPROTECT(1); // radGradient
+
+
+   // initialize the predicted values
+   for(iObs=0; iObs<cRows; iObs++)
+   {
+      REAL(radPredF)[iObs] = REAL(rdInitF)[0];
+   }
+   // initialize the gradient
+   for(iLambda=0; iLambda<length(radGradient); iLambda++)
+   {
+      REAL(radGradient)[iLambda] = 0.0;
+   }
+   REAL(rdObjective)[0] = 0.0;
+   
+   // predict for the observations
+   // first loop has to be over observations in order to compute the gradient
+   for(iObs=0; iObs<cRows; iObs++)
+   {
+      for(iLambda=0; iLambda<length(radGradient); iLambda++)
+      {
+         adDfDLambda[iLambda] = 0.0;
+      }
+     
+      for(iTree=0; iTree<INTEGER(rcTrees)[0]; iTree++)
+      {
+         rThisTree     = VECTOR_ELT(rTrees,iTree);
+         aiSplitVar    = INTEGER(VECTOR_ELT(rThisTree,0));
+         adSplitCode   = REAL   (VECTOR_ELT(rThisTree,1));
+         aiLeftNode    = INTEGER(VECTOR_ELT(rThisTree,2));
+         aiRightNode   = INTEGER(VECTOR_ELT(rThisTree,3));
+         aiMissingNode = INTEGER(VECTOR_ELT(rThisTree,4));
+         adNodeW       = REAL   (VECTOR_ELT(rThisTree,6));
+         adNodePred    = REAL   (VECTOR_ELT(rThisTree,7));
+
+         iCurrentNode = 0;
+         dPred = 0.0;
+         dLambdaProduct = 1.0;
+         
+         // reset for the new tree
+         cInPath = 0;
+
+         while(aiSplitVar[iCurrentNode] != -1)
+         {
+            dNewPredTerm = dLambdaProduct*
+                           (1-adLambda[aiSplitVar[iCurrentNode]])*
+                           adNodePred[iCurrentNode];
+            
+            // update prediction
+            dPred += dNewPredTerm;
+            
+            // update gradient
+            if(adLambda[aiSplitVar[iCurrentNode]]!=1.0)
+            {
+               adDfDLambda[aiSplitVar[iCurrentNode]] -= 
+                  dNewPredTerm/(1.0-adLambda[aiSplitVar[iCurrentNode]]);
+            }
+            for(iNode=0; iNode<cInPath; iNode++)
+            {
+               if(adLambda[aiInPath[iNode]]!=0.0)
+               {
+                  adDfDLambda[aiInPath[iNode]] += 
+                     dNewPredTerm/adLambda[aiInPath[iNode]];
+               }
+            }
+            aiInPath[cInPath] = aiSplitVar[iCurrentNode];
+            cInPath++;
+ 
+            dLambdaProduct *= adLambda[aiSplitVar[iCurrentNode]];
+            
+            dX = REAL(radX)[aiSplitVar[iCurrentNode]*cRows + iObs];
+            // missing?
+            if(ISNA(dX))
+            {
+               iCurrentNode = aiMissingNode[iCurrentNode];
+            }
+            // continuous?
+            else if(INTEGER(raiVarType)[aiSplitVar[iCurrentNode]] == 0)
+            {
+               if(dX < adSplitCode[iCurrentNode])
+               {
+                  iCurrentNode = aiLeftNode[iCurrentNode];
+               }
+               else
+               {
+                  iCurrentNode = aiRightNode[iCurrentNode];
+               }
+            }
+            else // categorical
+            {
+               iCatSplitIndicator = INTEGER(
+                  VECTOR_ELT(rCSplits,
+                              (int)adSplitCode[iCurrentNode]))[(int)dX];
+               if(iCatSplitIndicator==-1)
+               {
+                  iCurrentNode = aiLeftNode[iCurrentNode];
+               }
+               else if(iCatSplitIndicator==1)
+               {
+                  iCurrentNode = aiRightNode[iCurrentNode];
+               }
+               else // categorical level not present in training
+               {
+                  iCurrentNode = aiMissingNode[iCurrentNode];
+               }
+            }
+         } // aiSplitVar[iCurrentNode] != -1
+         
+         // incorporate the terminal node
+         dNewPredTerm = dLambdaProduct*adNodePred[iCurrentNode];
+         dPred += dNewPredTerm;
+         // update gradient
+         for(iNode=0; iNode<cInPath; iNode++)
+         {
+            if(adLambda[aiInPath[iNode]] != 0.0)
+            {
+               adDfDLambda[aiInPath[iNode]] += 
+                  dNewPredTerm/adLambda[aiInPath[iNode]];
+            }
+         }
+
+         // add the prediction from tree iTree to prediction iObs
+         REAL(radPredF)[iObs] += dPred; 
+      } // iTree
+      
+      // DEBUG: need to make more general for other loss functions!
+      REAL(rdObjective)[0] += (adY[iObs]-REAL(radPredF)[iObs])*
+                              (adY[iObs]-REAL(radPredF)[iObs]);
+      dDJDf = -2*(adY[iObs]-REAL(radPredF)[iObs]);
+      
+      for(iLambda=0; iLambda<length(radLambda); iLambda++)
+      {
+         if(adDfDLambda[iLambda] != 0.0)
+         {
+            REAL(radGradient)[iLambda] += 
+               dDJDf * adDfDLambda[iLambda]; // *                adLambda[iLambda]*(1.0-adLambda[iLambda]);
+         }
+      }
+   } // iObs
+
+Cleanup:
+   if(adDfDLambda!=NULL)
+   {
+      delete [] adDfDLambda;
+      adDfDLambda = NULL;
+   }
+   if(aiInPath!=NULL)
+   {
+      delete [] aiInPath;
+      aiInPath = NULL;
+   }
+   
+   UNPROTECT(1); // rResult
+   return rResult;
+Error:
+   goto Cleanup;
+}
 
 
 } // end extern "C"

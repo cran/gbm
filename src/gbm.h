@@ -62,6 +62,7 @@ GBMRESULT gbm_transfer_to_R
     int *aiMissingNode,
     double *adErrorReduction,
     double *adWeight,
+    double *adPred,
     int cCatSplitsOld
 );
 

@@ -60,12 +60,12 @@ public:
                             bool *afInBag,
                             double *adFadj);
 
-    double LogLikelihood(double *adT,
-                         double *adDelta,
-                         double *adOffset,
-                         double *adWeight,
-                         double *adF,
-                         unsigned long cLength);
+    double Deviance(double *adT,
+                    double *adDelta,
+                    double *adOffset,
+                    double *adWeight,
+                    double *adF,
+                    unsigned long cLength);
 
     double BagImprovement(double *adT,
                           double *adDelta,

@@ -1,3 +1,16 @@
+Changes in version 1.3
+
+- All likelihood based loss functions are now in terms of Deviance (-2*log likelihood). As a result, gbm always minimizes the loss. Previous versions minimized losses for some choices of distribution and maximized a likelihood for other choices.
+
+- Fixed the Poisson regression to avoid predicting +/- infinity which occurs when a terminal node has only observations with y=0. The largest predicted value is now +/-19, similar to what glm predicts for these extreme cases for linear Poisson regression. The shrinkage factor will be applied to the -19 predictions so it will take 1/shrinkage gbm iterations locating pure terminal nodes before gbm would actually return a predicted value of +/-19.
+
+- Introduces shrink.gbm.pred() that does a lasso-style variable selection
+  Consider this function as still in an experimental phase.
+  
+- Bug fix in plot.gbm
+
+- All calls to ISNAN now call ISNA (avoids using isnan)
+
 Changes in version 1.2
 
 - fixed gbm.object help file and updated the function to check for missing values to the latest R standard. 

@@ -38,12 +38,12 @@ public:
                                    bool *afInBag,
                                    unsigned long nTrain);
 
-    double LogLikelihood(double *adY,
-                         double *adMisc,
-                         double *adOffset,
-                         double *adWeight,
-                         double *adF,
-                         unsigned long cLength);
+    double Deviance(double *adY,
+                    double *adMisc,
+                    double *adOffset,
+                    double *adWeight,
+                    double *adF,
+                    unsigned long cLength);
 
     GBMRESULT InitF(double *adY,
                   double *adMisc,

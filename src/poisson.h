@@ -16,6 +16,7 @@
 #ifndef POISSON_H
 #define POISSON_H
 
+#include <Rmath.h>
 #include "distribution.h"
 
 class CPoisson : public CDistribution
@@ -36,12 +37,12 @@ public:
                                    bool *afInBag,
                                    unsigned long nTrain);
 
-    double LogLikelihood(double *adY,
-                         double *adMisc,
-                         double *adOffset,
-                         double *adWeight,
-                         double *adF,
-                         unsigned long cLength);
+    double Deviance(double *adY,
+                    double *adMisc,
+                    double *adOffset,
+                    double *adWeight,
+                    double *adF,
+                    unsigned long cLength);
 
     GBMRESULT InitF(double *adY, 
                   double *adMisc,
@@ -77,6 +78,8 @@ public:
 private:
     vector<double> vecdNum;
     vector<double> vecdDen;
+    vector<double> vecdMax;
+    vector<double> vecdMin;
 };
 
 #endif // POISSON_H

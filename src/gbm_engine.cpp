@@ -373,12 +373,12 @@ GBMRESULT CGBM::iterate
     {
         adF[i] += dLambda*adFadj[i];
     }
-    dTrainError = pDist->LogLikelihood(pData->adY,
-                                       pData->adMisc,
-                                       pData->adOffset,
-                                       pData->adWeight,
-                                       adF,
-                                       cTrain);
+    dTrainError = pDist->Deviance(pData->adY,
+                                  pData->adMisc,
+                                  pData->adOffset,
+                                  pData->adWeight,
+                                  adF,
+                                  cTrain);
     // update the validation predictions
     hr = ptreeTemp->PredictValid(pData,cValid,adFadj);
     for(i=cTrain; i < cTrain+cValid; i++)
@@ -388,21 +388,21 @@ GBMRESULT CGBM::iterate
     if(pData->fHasOffset)
     {
         dValidError = 
-            pDist->LogLikelihood(&(pData->adY[cTrain]),
-                                 &(pData->adMisc[cTrain]),
-                                 &(pData->adOffset[cTrain]),
-                                 &(pData->adWeight[cTrain]),
-                                 &(adF[cTrain]),
-                                 cValid);
+            pDist->Deviance(&(pData->adY[cTrain]),
+                            &(pData->adMisc[cTrain]),
+                            &(pData->adOffset[cTrain]),
+                            &(pData->adWeight[cTrain]),
+                            &(adF[cTrain]),
+                            cValid);
     }
     else
     {
-        dValidError = pDist->LogLikelihood(&(pData->adY[cTrain]),
-                                           &(pData->adMisc[cTrain]),
-                                           NULL,
-                                           &(pData->adWeight[cTrain]),
-                                           &(adF[cTrain]),
-                                           cValid);
+        dValidError = pDist->Deviance(&(pData->adY[cTrain]),
+                                      &(pData->adMisc[cTrain]),
+                                      NULL,
+                                      &(pData->adWeight[cTrain]),
+                                      &(adF[cTrain]),
+                                      cValid);
     }
 
 Cleanup:
@@ -421,6 +421,7 @@ GBMRESULT CGBM::TransferTreeToRList
     int *aiMissingNode,
     double *adErrorReduction,
     double *adWeight,
+    double *adPred,    
     VEC_VEC_CATEGORIES &vecSplitCodes,
     int cCatSplitsOld
 )
@@ -435,6 +436,7 @@ GBMRESULT CGBM::TransferTreeToRList
                                         aiMissingNode,
                                         adErrorReduction,
                                         adWeight,
+                                        adPred,
                                         vecSplitCodes,
                                         cCatSplitsOld,
                                         dLambda);

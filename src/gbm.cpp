@@ -120,6 +120,7 @@ GBMRESULT gbm_transfer_to_R
     int *aiMissingNode,
     double *adErrorReduction,
     double *adWeight,
+    double *adPred,
     int cCatSplitsOld
 )
 {
@@ -132,6 +133,7 @@ GBMRESULT gbm_transfer_to_R
                                    aiMissingNode,
                                    adErrorReduction,
                                    adWeight,
+                                   adPred,
                                    vecSplitCodes,
                                    cCatSplitsOld);
     if(GBM_FAILED(hr)) goto Error;

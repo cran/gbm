@@ -120,6 +120,7 @@ GBMRESULT CNodeTerminal::TransferTreeToRList
     int *aiMissingNode,
     double *adErrorReduction,
     double *adWeight,
+    double *adPred,
     VEC_VEC_CATEGORIES &vecSplitCodes,
     int cCatSplitsOld,
     double dShrinkage
@@ -134,6 +135,7 @@ GBMRESULT CNodeTerminal::TransferTreeToRList
     aiMissingNode[iNodeID] = -1;
     adErrorReduction[iNodeID] = 0.0;
     adWeight[iNodeID] = dTrainW;
+    adPred[iNodeID] = dShrinkage*dPrediction;
 
     iNodeID++;
 

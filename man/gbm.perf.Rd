@@ -10,7 +10,7 @@ gbm.perf(object,
          plot.it = TRUE, 
          oobag.curve = TRUE, 
          overlay = TRUE, 
-         method = c("OOB","test")[1])
+         method = c("OOB","test","cv")[1])
 }
 \arguments{
 \item{object}{a \code{\link{gbm.object}} created from an initial call to 
@@ -29,7 +29,9 @@ function is plotted versus the iteration number.}
 \item{method}{indicate the method used to estimate the optimal number
 of boosting iterations. \code{method="OOB"} computes the out-of-bag
 estimate and \code{method="test"} uses the test (or validation) dataset 
-to compute an out-of-sample estimate.}
+to compute an out-of-sample estimate. \code{method="cv"} extracts the 
+optimal number of iterations using cross-validation if \code{gbm} was called
+with \code{cv.folds}>1}
 }
 \value{
 \code{gbm.perf} returns the estimated optimal number of iterations. The method 

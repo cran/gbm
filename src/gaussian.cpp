@@ -92,7 +92,7 @@ GBMRESULT CGaussian::InitF
 }
 
 
-double CGaussian::LogLikelihood
+double CGaussian::Deviance
 (
     double *adY,
     double *adMisc,

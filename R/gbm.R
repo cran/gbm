@@ -175,7 +175,7 @@ plot.gbm <- function(x,
    {
       if(!f.factor)
       {
-         j <- order(X)
+         j <- order(X$X1)
          plot(X$X1,X$y,
               type="l",
               xlab=x$var.names[i.var],
@@ -698,6 +698,7 @@ gbm <- function(formula = formula(data),
                 shrinkage = 0.001,
                 bag.fraction = 0.5,
                 train.fraction = 1.0,
+                cv.folds=0,
                 keep.data = TRUE,
                 verbose = TRUE)
 {
@@ -730,6 +731,37 @@ gbm <- function(formula = formula(data),
    # get the character name of the response variable
    response.name <- dimnames(attr(terms(formula),"factors"))[[1]][1]
 
+   cv.error <- NULL
+   if(cv.folds>1)
+   {
+      i.train <- 1:floor(train.fraction*length(y))
+      cv.group <- sample(rep(1:cv.folds,
+                             length=length(i.train)))
+      cv.error <- rep(0, n.trees)
+      for(i.cv in 1:cv.folds)
+      {
+         if(verbose) cat("CV:",i.cv,"\n")
+         i <- order(cv.group==i.cv)
+         gbm.obj <- gbm.fit(x[i.train,][i,], y[i.train][i],
+                            offset = ifelse(offset==NULL,NULL,offset[i.train][i]),
+                            distribution = distribution,
+                            w = ifelse(w==NULL,NULL,w[i.train][i]),
+                            var.monotone = var.monotone,
+                            n.trees = n.trees,
+                            interaction.depth = interaction.depth,
+                            n.minobsinnode = n.minobsinnode,
+                            shrinkage = shrinkage,
+                            bag.fraction = bag.fraction,
+                            train.fraction = mean(cv.group!=i.cv),
+                            keep.data = FALSE,
+                            verbose = verbose,
+                            var.names = var.names,
+                            response.name = response.name)
+         cv.error <- cv.error + gbm.obj$valid.error*sum(cv.group==i.cv)
+      }
+      cv.error <- cv.error/length(i.train)
+   }
+
    gbm.obj <- gbm.fit(x,y,
                       offset = offset,
                       distribution = distribution,
@@ -746,6 +778,7 @@ gbm <- function(formula = formula(data),
                       var.names = var.names,
                       response.name = response.name)
    gbm.obj$Terms <- Terms
+   gbm.obj$cv.error <- cv.error
    
    if(!keep.data) # XXX check this
    {
@@ -760,104 +793,95 @@ gbm.perf <- function(object,
             plot.it=TRUE,
             oobag.curve=TRUE,
             overlay=TRUE,
-            method=c("OOB","test")[1])
+            method=c("OOB","test","cv")[1])
 {
-     smoother <- NULL
+   smoother <- NULL
+   
+   if((method == "OOB") || oobag.curve)
+   {
+      x <- 1:object$n.trees
+      smoother <- loess(object$oobag.improve~x,
+                        enp.target=min(max(4,length(x)/10),50))
+      smoother$y <- smoother$fitted
+      smoother$x <- x
+   
+      best.iter.oob <- x[which.min(-cumsum(smoother$y))]
+      best.iter <- best.iter.oob
+   }
+   
+   if(method == "test")
+   {
+      best.iter.test <- which.min(object$valid.error)
+      best.iter <- best.iter.test
+   }
+   
+   if(method == "cv")
+   {
+      if(is.null(cv.error)) stop("In order to use method=\"cv\" gbm must be called with cv.folds>1.")
+      best.iter.cv <- which.min(object$cv.error)
+      best.iter <- best.iter.cv
+   }
 
-     if((method == "OOB") || oobag.curve)
-     {
-          x <- 1:object$n.trees
-          smoother <- loess(object$oobag.improve~x,
-                            enp.target=min(max(4,length(x)/10),50))
-          smoother$y <- smoother$fitted
-          smoother$x <- x
+   if(!is.element(method,c("OOB","test","cv")))
+      stop("method must be OOB or test")
 
-          best.iter.oob <- x[order(-cumsum(smoother$y))[1]]
-     }
+   if(plot.it)
+   {
+      par(mar=c(5,4,4,4)+.1)
+      ylab <- switch(substring(object$distribution,1,2),
+                               ga="Squared error loss",
+                               be="Bernoulli log-likelihood",
+                               po="Poisson log-likelihood",
+                               ad="AdaBoost exponential bound",
+                               co="Cox partial log-likelihood")
+      if(object$train.fraction==1)
+      {
+         ylim <- range(object$train.error)
+      }
+      else
+      {
+         ylim <- range(object$train.error,object$valid.error)
+      }
+      
+      plot(object$train.error,
+           ylim=ylim,
+           type="l",
+           xlab="Iteration",ylab=ylab)
+         
+      if(object$train.fraction!=1)
+      {
+         lines(object$valid.error,col="red")
+      }
+      
+      if(oobag.curve)
+      {
+         if(overlay)
+         {
+            par(new=TRUE)
+            plot(smoother$x,
+                 cumsum(smoother$y),
+                 col="blue",
+                 type="l",
+                 xlab="",ylab="",
+                 axes=FALSE)
+            axis(4,srt=0)
+            at <- mean(range(smoother$y))
+            mtext(paste("OOB improvement in",ylab),side=4,srt=270,line=2)
+            abline(h=0,col="blue",lwd=2)
+            if(!is.na(best.iter)) abline(v=best.iter,col="blue",lwd=2)
+         }
+   
+         plot(object$oobag.improve,type="l",
+              xlab="Iteration",
+              ylab=paste("OOB change in",ylab))
+         lines(smoother,col="red",lwd=2)
+         abline(h=0,col="blue",lwd=1)
 
-     if(method == "test")
-     {
-          if((object$distribution == "gaussian") ||
-             (object$distribution == "adaboost") ||
-             (object$distribution == "laplace"))
-          {
-                best.iter.test <- order(object$valid.error)[1]
-          }
-          else
-          {
-                best.iter.test <- order(-object$valid.error)[1]      
-          }
-     }
-
-     if(method == "OOB")
-     {
-          best.iter <- best.iter.oob
-          # cat("Out of bag iteration estimate:",best.iter.oob,"\n")
-     }
-     else if(method == "test")
-     {
-          best.iter <- best.iter.test
-          # cat("Test set iteration estimate:",best.iter.test,"\n")
-     }
-     else stop("method must be OOB or test")
-
-     if(plot.it)
-     {
-          par(mfrow=c(1,1),mar=c(5,4,4,4)+.1)
-          ylab <- switch(substring(object$distribution,1,2),
-                                     ga="Squared error loss",
-                                     be="Bernoulli log-likelihood",
-                                     po="Poisson log-likelihood",
-                                     ad="AdaBoost exponential bound",
-                                     co="Cox partial log-likelihood")
-          if(object$train.fraction==1)
-          {
-                ylim <- range(object$train.error)
-          }
-          else
-          {
-                ylim <- range(object$train.error,object$valid.error)
-          }
-          
-          plot(object$train.error,
-                ylim=ylim,
-                type="l",
-                xlab="Iteration",ylab=ylab)
-                
-          if(object$train.fraction!=1)
-          {
-                lines(object$valid.error,col="red")
-          }
-          
-          if(oobag.curve)
-          {
-                if(overlay)
-                {
-                     par(new=TRUE)
-                     plot(smoother$x,
-                             cumsum(smoother$y),
-                             col="blue",
-                             type="l",
-                             xlab="",ylab="",
-                             axes=FALSE)
-                     axis(4,srt=0)
-                     at <- mean(range(smoother$y))
-                     mtext(paste("OOB improvement in",ylab),side=4,srt=270,line=2)
-                     abline(h=0,col="blue",lwd=2)
-                     if(!is.na(best.iter)) abline(v=best.iter,col="blue",lwd=2)
-                }
-     
-                plot(object$oobag.improve,type="l",
-                          xlab="Iteration",
-                          ylab=paste("OOB change in",ylab))
-                lines(smoother,col="red",lwd=2)
-                abline(h=0,col="blue",lwd=1)
-
-                abline(v=best.iter,col="blue",lwd=1)
-          }
-     }
-     
-     return(best.iter)
+         abline(v=best.iter,col="blue",lwd=1)
+      }
+   }
+   
+   return(best.iter)
 }
 
 
@@ -890,10 +914,10 @@ gbm.loss <- function(y,f,w,offset,dist,baseline)
    }
    switch(dist,
           gaussian = weighted.mean((y - f)^2,w) - baseline,
-          bernoulli = baseline - weighted.mean(y*f - log(1+exp(f)),w),
+          bernoulli = -2*weighted.mean(y*f - log(1+exp(f)),w) - baseline,
           laplace = weighted.mean(abs(y-f),w) - baseline,
           adaboost = weighted.mean(exp(-(2*y-1)*f),w) - baseline,
-          poisson = baseline - weighted.mean(y*f-exp(f)),
+          poisson = -2*weighted.mean(y*f-exp(f)) - baseline,
           stop(paste("Distribution",dist,"is not yet supported for method=permutation.test.gbm")))
 }
 
@@ -1083,8 +1107,122 @@ pretty.gbm.tree <- function(object,i.tree=1)
       temp <- data.frame(object$trees[[i.tree]])
       names(temp) <- c("SplitVar","SplitCodePred","LeftNode",
                        "RightNode","MissingNode","ErrorReduction",
-                       "Weight")
+                       "Weight","Prediction")
       row.names(temp) <- 0:(nrow(temp)-1)
    }
    return(temp)
+}
+
+
+
+shrink.gbm.pred <- function(object,newdata,n.trees,
+                            lambda=rep(1,length(object$var.names)),
+                            ...)
+{
+   if(length(lambda) != length(object$var.names))
+   {
+      stop("lambda must have the same length as the number of variables in the gbm object.")
+   }
+   
+   if(!is.null(object$Terms))
+   {
+      x <- model.frame(delete.response(object$Terms),
+                       newdata,
+                       na.action=na.pass)
+   }
+   else
+   {
+      x <- newdata
+   }
+
+   cRows <- nrow(x)
+   cCols <- ncol(x)
+
+   for(i in 1:cCols)
+   {
+      if(is.factor(x[,i]))
+      {
+         j <- match(levels(x[,i]), object$var.levels[[i]])
+         if(any(is.na(j)))
+         {
+            stop(paste("New levels for variable ",
+                        object$var.names[i],": ",
+                        levels(x[,i])[is.na(j)],sep=""))
+         }
+         x[,i] <- as.numeric(x[,i])-1
+      }
+   }
+
+   x <- as.vector(unlist(x))
+   if(missing(n.trees) || any(n.trees > object$n.trees))
+   {
+      n.trees <- n.trees[n.trees<=object$n.trees]
+      if(length(n.trees)==0) n.trees <- object$n.trees
+      warning("n.trees not specified or some values exceeded number fit so far. Using ",n.trees,".")
+   }
+   # sort n.trees so that predictions are easier to generate and store
+   n.trees <- sort(n.trees)
+
+   predF <- .Call("gbm_shrink_pred",
+                  X=as.double(x),
+                  cRows=as.integer(cRows),
+                  cCols=as.integer(cCols),
+                  n.trees=as.integer(n.trees),
+                  initF=object$initF,
+                  trees=object$trees,
+                  c.split=object$c.split,
+                  var.type=as.integer(object$var.type),
+                  depth=as.integer(object$interaction.depth),
+                  lambda=as.double(lambda),
+                  PACKAGE = "gbm")
+
+   return(predF)
+}
+
+# evaluates the objective function and gradient with respect to beta
+# beta = log(lambda/(1-lambda))
+shrink.gbm <- function(object,n.trees,
+                       lambda=rep(10,length(object$var.names)),
+                       ...)
+{
+   if(length(lambda) != length(object$var.names))
+   {
+      stop("lambda must have the same length as the number of variables in the gbm object.")
+   }
+   
+   if(is.null(object$data))
+   {
+      stop("shrink.gbm requires keep.data=TRUE when gbm model is fit.")
+   }
+   
+   y <- object$data$y
+   x <- object$data$x
+   
+   cCols <- length(object$var.names)
+   cRows <- length(x)/cCols
+
+
+   if(missing(n.trees) || (n.trees > object$n.trees))
+   {
+      n.trees <- object$n.trees
+      warning("n.trees not specified or some values exceeded number fit so far. Using ",n.trees,".")
+   }
+
+   result <- .Call("gbm_shrink_gradient",
+                  y=as.double(y),
+                  X=as.double(x),
+                  cRows=as.integer(cRows),
+                  cCols=as.integer(cCols),
+                  n.trees=as.integer(n.trees),
+                  initF=object$initF,
+                  trees=object$trees,
+                  c.split=object$c.split,
+                  var.type=as.integer(object$var.type),
+                  depth=as.integer(object$interaction.depth),
+                  lambda=as.double(lambda),
+                  PACKAGE = "gbm")
+
+   names(result) <- c("predF","objective","gradient")
+
+   return(result)   
 }

@@ -7,4 +7,7 @@ predict.gbm             Predict method for GBM Model Fits
 pretty.gbm.tree         Print gbm tree components
 quantile.rug            Quantile rug plot
 relative.influence      Methods for estimating relative influence
+shrink.gbm              L1 shrinkage of the predictor variables in a
+                        GBM
+shrink.gbm.pred         Predictions from a shrunked GBM
 summary.gbm             Summary of a gbm object

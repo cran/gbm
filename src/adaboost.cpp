@@ -96,7 +96,7 @@ GBMRESULT CAdaBoost::InitF
 }
 
 
-double CAdaBoost::LogLikelihood
+double CAdaBoost::Deviance
 (
     double *adY,
     double *adMisc,

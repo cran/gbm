@@ -446,6 +446,7 @@ GBMRESULT CCARTTree::TransferTreeToRList
     int *aiMissingNode,
     double *adErrorReduction,
     double *adWeight,
+    double *adPred,
     VEC_VEC_CATEGORIES &vecSplitCodes,
     int cCatSplitsOld,
     double dShrinkage
@@ -466,6 +467,7 @@ GBMRESULT CCARTTree::TransferTreeToRList
                                             aiMissingNode,
                                             adErrorReduction,
                                             adWeight,
+                                            adPred,
                                             vecSplitCodes,
                                             cCatSplitsOld,
                                             dShrinkage);
