@@ -12,12 +12,14 @@ summary.gbm(object,
             order=TRUE,
             ...)
 }
-%- maybe also `usage' for other objects documented here.
 \arguments{
 \item{object}{a \code{gbm} object created from an initial call to 
 \code{\link{gbm}}.}  
-\item{cBars}{ the number of bars to plot. Only the variables with 
-the \code{cBars} largest relative influence will appear in the barplot.}
+\item{cBars}{ the number of bars to plot. If \code{order=TRUE} the only the 
+variables with the \code{cBars} largest relative influence will appear in the 
+barplot. If \code{order=FALSE} then the first \code{cBars} variables will
+appear in the plot. In either case, the function will return the relative 
+influence of all of the variables.}
 \item{n.trees}{ the number of trees used to generate the plot. Only the first
 \code{n.trees} trees will be used.}
 \item{plotit}{ an indicator as to whether the plot is generated. }
@@ -39,7 +41,7 @@ second is the computed relative influence, normalized to sum to 100.
 }
 \references{ 
 J.H. Friedman (2001). "Greedy Function Approximation: A Gradient Boosting
-Machine," Annals of Statistics 29(4).
+Machine," Annals of Statistics 29(5):1189-1232.
 }
 \author{Greg Ridgeway \email{gregr@rand.org}}
 

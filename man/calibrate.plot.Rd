@@ -6,15 +6,32 @@ An experimental diagnostic tool that plots the fitted values versus the actual a
 Currently developed for only \code{distribution="bernoulli"}.
 }
 \usage{
-calibrate.plot(y, p, ...)
+calibrate.plot(y,p,
+               distribution="bernoulli",
+               replace=TRUE,
+               line.par=list(col="black"),
+               shade.col="lightyellow",
+               shade.density=NULL,
+               rug.par=list(side=1),...)
 }
 \arguments{
   \item{y}{ the outcome 0-1 variable }
-  \item{p}{ the estimated probabilities }
+  \item{p}{ the predictions estimating E(y|x) }
+  \item{distribution}{ the loss function used in creating \code{p}. \code{bernoulli} and \code{poisson}
+                       are currently the only special options. All others default to squared error 
+                       assuming \code{gaussian}}
+  \item{replace}{ determines whether this plots will replace or overlay the current plot.
+                  \code{replace=FALSE} is useful for comparing the calibration of several
+                  methods}
+  \item{line.par}{ graphics parameters for the line }
+  \item{shade.col}{ color for shading the 2 SE region. \code{shade.col=NA} implies no 2 SE 
+                    region}
+  \item{shade.density}{ the \code{density} parameter for \code{\link{polygon}}}
+  \item{rug.par}{graphics parameters passed to \code{\link{rug}}}
   \item{...}{ other graphics parameters passed on to the plot function }
 }
 \details{
-Uses \code{\link[modreg]{loess}} to estimate E(y|p). Well-calibrated probabilities
+Uses \code{\link[mgcv]{gam}} to estimate E(y|p). Well-calibrated probabilities
 imply that E(y|p) = p. The plot also includes a pointwise 95% confidence
 band.
 }

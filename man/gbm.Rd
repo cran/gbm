@@ -97,7 +97,7 @@ J.H. Friedman, T. Hastie, R. Tibshirani (2000). "Additive Logistic Regression:
 a Statistical View of Boosting," Annals of Statistics 28(2):337-374.
 
 J.H. Friedman (2001). "Greedy Function Approximation: A Gradient Boosting
-Machine," Annals of Statistics 29(4).
+Machine," Annals of Statistics 29(5):1189-1232.
 
 J.H. Friedman (2002). "Stochastic Gradient Boosting," Computational Statistics
 and Data Analysis 38(4):367-378.

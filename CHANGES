@@ -1,3 +1,14 @@
+Changes from version 0.7
+
+- Additional documentation about the loss functions, graphics, and
+methods is now available with the package
+
+- Fixed the initial value for the adaboost exponential loss. Prior
+to version 0.8 the initial value was 0.0, now half the baseline
+log-odds
+
+- Changes in some headers and #define's to compile under gcc 3.2
+(Brian Ripley)
 
 Changes from version 0.6
 
@@ -18,16 +29,16 @@ not conflict with standard winerror.h names.
 
 
 Planned future changes
-1. (2/18/2003) Add weighted median functionality to Laplace
 
-2. (2/18/2003) Automate the fitting process, ie, selecting
-shrinkage and number of iterations
+1. Add weighted median functionality to Laplace
 
-3. (2/18/2003) Add overlay factor*continuous predictor plot as an
-option rather than lattice plots
+2. Automate the fitting process, ie, selecting shrinkage and
+number of iterations
 
-4. (2/18/2003) Add multinomial and ordered logistic regression
-procedures
+3. Add overlay factor*continuous predictor plot as an option
+rather than lattice plots
+
+4. Add multinomial and ordered logistic regression procedures
 
 
 Thanks to

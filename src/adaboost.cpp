@@ -16,8 +16,8 @@ GBMRESULT CAdaBoost::ComputeWorkingResponse
     double *adY,
     double *adMisc,
     double *adOffset,
-    double *adF, 
-    double *adZ, 
+    double *adF,
+    double *adZ,
     double *adWeight,
     bool *afInBag,
     unsigned long nTrain
@@ -49,13 +49,48 @@ GBMRESULT CAdaBoost::InitF
 (
     double *adY,
     double *adMisc,
-    double *adOffset, 
+    double *adOffset,
     double *adWeight,
-    double &dInitF, 
+    double &dInitF,
     unsigned long cLength
 )
 {
+    unsigned long i=0;
+    double dNum = 0.0;
+    double dDen = 0.0;
+
     dInitF = 0.0;
+
+    if(adOffset == NULL)
+    {
+        for(i=0; i<cLength; i++)
+        {
+            if(adY[i]==1.0)
+            {
+                dNum += adWeight[i];
+            }
+            else
+            {
+                dDen += adWeight[i];
+            }
+        }
+    }
+    else
+    {
+        for(i=0; i<cLength; i++)
+        {
+            if(adY[i]==1.0)
+            {
+                dNum += adWeight[i] * exp(-adOffset[i]);
+            }
+            else
+            {
+                dDen += adWeight[i] * exp(adOffset[i]);
+            }
+        }
+    }
+
+    dInitF = 0.5*log(dNum/dDen);
 
     return GBM_OK;
 }
@@ -64,8 +99,8 @@ GBMRESULT CAdaBoost::InitF
 double CAdaBoost::LogLikelihood
 (
     double *adY,
-    double *adMisc, 
-    double *adOffset, 
+    double *adMisc,
+    double *adOffset,
     double *adWeight,
     double *adF,
     unsigned long cLength
@@ -120,15 +155,15 @@ GBMRESULT CAdaBoost::FitBestConstant
     vecdDen.resize(cTermNodes);
     vecdDen.assign(vecdDen.size(),0.0);
 
-    
+
     for(iObs=0; iObs<nTrain; iObs++)
     {
         if(afInBag[iObs])
         {
             dF = adF[iObs] + ((adOffset==NULL) ? 0.0 : adOffset[iObs]);
-            vecdNum[aiNodeAssign[iObs]] += 
+            vecdNum[aiNodeAssign[iObs]] +=
                 adW[iObs]*(2*adY[iObs]-1)*exp(-(2*adY[iObs]-1)*dF);
-            vecdDen[aiNodeAssign[iObs]] += 
+            vecdDen[aiNodeAssign[iObs]] +=
                 adW[iObs]*exp(-(2*adY[iObs]-1)*dF);
         }
     }
@@ -143,7 +178,7 @@ GBMRESULT CAdaBoost::FitBestConstant
             }
             else
             {
-                vecpTermNodes[iNode]->dPrediction = 
+                vecpTermNodes[iNode]->dPrediction =
                     vecdNum[iNode]/vecdDen[iNode];
             }
         }
@@ -175,7 +210,7 @@ double CAdaBoost::BagImprovement
         if(!afInBag[i])
         {
             dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
-            
+
             dReturnValue += adWeight[i]*
                 (exp(-(2*adY[i]-1)*dF) -
                  exp(-(2*adY[i]-1)*(dF+dStepSize*adFadj[i])));
@@ -184,5 +219,3 @@ double CAdaBoost::BagImprovement
 
     return dReturnValue;
 }
-
-

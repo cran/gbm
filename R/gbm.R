@@ -2,6 +2,7 @@
 {
      library.dynam("gbm", pkg, lib)
      require(survival)
+     require(mgcv)
      require(modreg)
      require(lattice)     
 }
@@ -788,49 +789,59 @@ quantile.rug <- function(x,prob=(0:10)/10,...)
      {
           quants <- jitter(quants)
      }
-     rug(quants)
+     rug(quants,...)
 }
 
-calibrate.plot <- function(y,p,...)
+calibrate.plot <- function(y,p,
+                           distribution="bernoulli",
+                           replace=TRUE,
+                           line.par=list(col="black"),
+                           shade.col="lightyellow",
+                           shade.density=NULL,
+                           rug.par=list(side=1),...)
 {
-   if(any(!is.element(y,0:1)))
-   {
-      stop("y must be in {0,1}")
-   }
-   if(any(p>1 || p<0))
-   {
-      stop("p must be in [0,1]")
-   }   
-   if(length(y) > 5000)
-   {
-      i <- sample(1:length(y),size=5000,replace=FALSE)
-   }
-   else i <- 1:length(y)
+   data <- data.frame(y=y,p=p)
    
-   data <- data.frame(y=y[i],p=p[i])
-   loess1 <- loess(y~p,data=data,degree=1,enp.target=length(y)/30)
-   
+   if(distribution=="bernoulli")
+   {
+      family1 = binomial
+   } else if(distribution=="poisson")
+   {
+      family1 = poisson
+   } else
+   {
+      family1 = gaussian
+   } 
+   gam1 <- gam(y~s(p),data=data,family=family1)
    
    x <- seq(min(p),max(p),length=200)
-   yy <- predict(loess1,newdata=data.frame(p=x),se=TRUE)
-   
+   yy <- predict(gam1,newdata=data.frame(p=x),se.fit=TRUE,type="response")
+
    x <- x[!is.na(yy$fit)]
    yy$se.fit <- yy$se.fit[!is.na(yy$fit)]
    yy$fit <- yy$fit[!is.na(yy$fit)]      
 
-   plot(0,0,
-        type="n",
-        xlab="Estimated probability",ylab="Actual probability",
-        ...)
-   se.lower <- yy$fit-2*yy$se.fit
-   se.upper <- yy$fit+2*yy$se.fit
-   se.lower[se.lower < 0] <- 0
-   se.upper[se.upper > 1] <- 1
-   polygon(c(x,rev(x),x[1]),
-             c(se.lower,rev(se.upper),se.lower[1]),
-             col="lightyellow",border=NA)
-   lines(x,yy$fit)
-   quantile.rug(p)
+   if(replace)
+   {
+      plot(0,0,
+         type="n",
+         xlab="Estimated probability",ylab="Actual probability",
+         ...)
+   }
+   if(!is.na(shade.col))
+   {
+      se.lower <- yy$fit-2*yy$se.fit
+      se.upper <- yy$fit+2*yy$se.fit
+      se.lower[se.lower < 0] <- 0
+      se.upper[se.upper > 1] <- 1
+      polygon(c(x,rev(x),x[1]),
+               c(se.lower,rev(se.upper),se.lower[1]),
+               col=shade.col,
+               border=NA,
+               density=shade.density)
+   }
+   lines(x,yy$fit,col=line.par$col)
+   quantile.rug(p,side=rug.par$side)
    abline(0,1,col="red")
 }
 

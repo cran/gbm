@@ -37,7 +37,6 @@ of computation depends on the \code{method} argument.}
 \references{
 G. Ridgeway (2003). "A note on out-of-bag estimation for estimating the optimal
 number of boosting iterations," a working paper available at
-
 \url{http://www.i-pensieri.com/gregr/gbm.shtml}.
 }
 \author{Greg Ridgeway \email{gregr@rand.org}}
