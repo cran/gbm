@@ -162,23 +162,23 @@ gbm1 <- gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
     keep.data=TRUE)              # keep a copy of the dataset with the object
 
 # check performance using an out-of-bag estimator
-best.iter <- gbm.perf(gbm1,best.iter.calc="OOB")
+best.iter <- gbm.perf(gbm1,method="OOB")
 # do another 100 iterations
 gbm2 <- gbm.more(gbm1,100)
 
 # check performance again
-best.iter <- gbm.perf(gbm2,best.iter.calc="OOB")
+best.iter <- gbm.perf(gbm2,method="OOB")
 # iterate until a sufficient number of trees are fit
 while(gbm2$n.trees - best.iter < 10)
 {
     # do 100 more iterations
     gbm2 <- gbm.more(gbm2,100)
-    best.iter <- gbm.perf(gbm2,plot.it=FALSE,best.iter.calc="OOB")
+    best.iter <- gbm.perf(gbm2,plot.it=FALSE,method="OOB")
 }
 
 # plot the performance
 # returns test set estimate of best number of trees
-best.iter <- gbm.perf(gbm2,best.iter.calc="test")
+best.iter <- gbm.perf(gbm2,method="test")
 
 # plot variable influence
 summary(gbm2,n.trees=1)         # based on the first tree

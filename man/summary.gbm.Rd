@@ -6,9 +6,11 @@ Computes the relative influence of each variable in the gbm object.
 }
 \usage{
 summary.gbm(object,
-            cBars=min(10,object$cCols),
+            cBars=object$cCols,
             n.trees=object$n.trees,
-            plotit=TRUE,...)
+            plotit=TRUE,
+            order=TRUE,
+            ...)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -19,10 +21,17 @@ the \code{cBars} largest relative influence will appear in the barplot.}
 \item{n.trees}{ the number of trees used to generate the plot. Only the first
 \code{n.trees} trees will be used.}
 \item{plotit}{ an indicator as to whether the plot is generated. }
+\item{order}{ an indicator as to whether the plotted and/or returned relative 
+influences are sorted. }
 \item{...}{ other arguments passed to the plot function. }
 }
 \details{
-Details to come later
+For \code{distribution="gaussian"} this returns exactly a set of 
+Type III sum of squares for each variable normalized to sum to 100. For other
+loss functions this returns the reduction attributeable to each varaible in sum 
+of squared error in predicting the gradient on each iteration. It describes the 
+relative influence of each variable in reducing the loss function. See the 
+references below for exact details on the computation.
 }
 \value{
 Returns a data frame where the first component is the variable name and the 

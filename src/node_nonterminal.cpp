@@ -121,3 +121,5 @@ HRESULT CNodeNonterminal::GetVarRelativeInfluence
 
     return hr;
 }
+
+

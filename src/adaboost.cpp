@@ -193,3 +193,5 @@ double CAdaBoost::BagImprovement
 
     return dReturnValue;
 }
+
+

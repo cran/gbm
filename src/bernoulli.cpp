@@ -218,3 +218,5 @@ double CBernoulli::BagImprovement
 
     return dReturnValue;
 }
+
+

@@ -396,3 +396,5 @@ HRESULT CNodeSearch::SetupNewNodes
 
     return hr;
 }
+
+

@@ -186,3 +186,5 @@ double CGaussian::BagImprovement
     return dReturnValue;
 }
 
+
+

@@ -56,3 +56,6 @@ public:
 typedef CNodeContinuous *PCNodeContinuous;
 
 #endif // NODECONTINUOUS_H
+
+
+

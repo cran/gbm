@@ -79,3 +79,5 @@ int size_of_vector
     VEC_VEC_CATEGORIES &vec,
     int i
 );
+
+

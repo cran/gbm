@@ -88,3 +88,5 @@ HRESULT CNode::TransferTreeToRList
 {
     return E_NOTIMPL;
 }
+
+

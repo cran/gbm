@@ -1,0 +1,50 @@
+
+Changes from version 0.6
+
+- gbm.perf, the argument named best.iter.calc has been renamed
+"method" for greater simplicity
+
+- all entries in the design matrix are now coerced to doubles
+(Thanks to Bonnie Ghosh)
+
+- now checks that all predictors are either numeric, ordinal, or
+factor
+
+- summary.gbm now reports the correct relative influence when some 
+variables do not enter the model. (Thanks to Hugh Chipman)
+
+
+Planned future changes
+1. (2/18/2003) Add weighted median functionality to Laplace
+
+2. (2/18/2003) Automate the fitting process, ie, selecting
+shrinkage and number of iterations
+
+3. (2/18/2003) Add overlay factor*continuous predictor plot as an
+option rather than lattice plots
+
+4. (2/18/2003) Add multinomial and ordered logistic regression
+procedures
+
+
+Thanks to
+
+RAND for sponsoring the development of this software through
+statistical methods funding
+
+Dan McCaffrey for testing and evangelizing the utility of this
+program.
+
+Bonnie Ghosh for finding bugs.
+
+Arnab Mukherji for testing and suggesting new features.
+
+Daniela Golinelli for finding bugs and marrying me.
+
+Andrew Morral for suggesting improvements and finding new
+applications of the method in the evaluation of drug treatment
+programs.
+
+Katrin Hambarsoomians for finding bugs.
+
+Hugh Chipman for finding bugs.

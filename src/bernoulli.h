@@ -82,3 +82,6 @@ private:
 };
 
 #endif // BERNOULLI_H
+
+
+

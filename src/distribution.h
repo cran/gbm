@@ -77,3 +77,6 @@ public:
 };
 typedef CDistribution *PCDistribution;
 #endif // DISTRIBUTION_H
+
+
+

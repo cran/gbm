@@ -77,3 +77,6 @@ public:
 };
 
 #endif // GAUSSIAN_H
+
+
+

@@ -58,3 +58,6 @@ public:
 typedef CNodeCategorical *PCNodeCategorical;
 
 #endif // NODECATEGORICAL_H
+
+
+

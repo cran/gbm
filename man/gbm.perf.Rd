@@ -10,7 +10,7 @@ gbm.perf(object,
          plot.it = TRUE, 
          oobag.curve = TRUE, 
          overlay = TRUE, 
-         best.iter.calc = c("OOB","test")[1])
+         method = c("OOB","test")[1])
 }
 \arguments{
 \item{object}{a \code{\link{gbm.object}} created from an initial call to 
@@ -26,14 +26,14 @@ in a second plot.}
 \item{overlay}{if TRUE and oobag.curve=TRUE then a right y-axis is added to the 
 training and test error plot and the estimated cumulative improvement in the loss 
 function is plotted versus the iteration number.}
-\item{best.iter.calc}{indicate the method used to estimate the optimal number
-of boosting iterations. \code{best.iter.calc="OOB"} computes the out-of-bag
-estimate and \code{best.iter.calc="test"} uses the test (or validation) dataset 
+\item{method}{indicate the method used to estimate the optimal number
+of boosting iterations. \code{method="OOB"} computes the out-of-bag
+estimate and \code{method="test"} uses the test (or validation) dataset 
 to compute an out-of-sample estimate.}
 }
 \value{
 \code{gbm.perf} returns the estimated optimal number of iterations. The method 
-of computation depends on the \code{best.iter.calc} argument.}
+of computation depends on the \code{method} argument.}
 \references{
 G. Ridgeway (2003). "A note on out-of-bag estimation for estimating the optimal
 number of boosting iterations," a working paper available at

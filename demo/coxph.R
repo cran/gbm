@@ -41,8 +41,8 @@ gbm1 <- gbm(Surv(tt,delta)~X1+X2+X3,       # formula
 gbm2 <- gbm.more(gbm1,1000)
 
 # plot the performance
-best.iter <- gbm.perf(gbm2,best.iter.calc="OOB")  # returns out-of-bag estimated best number of trees
-best.iter <- gbm.perf(gbm2,best.iter.calc="test") # returns test set estimate of best number of trees
+best.iter <- gbm.perf(gbm2,method="OOB")  # returns out-of-bag estimated best number of trees
+best.iter <- gbm.perf(gbm2,method="test") # returns test set estimate of best number of trees
 
 # plot variable influence
 summary(gbm2,n.trees=1)         # based on the first tree

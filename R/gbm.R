@@ -45,7 +45,8 @@ predict.gbm <- function(object,newdata,n.trees,...)
                   initF=object$initF,
                   trees=object$trees,
                   c.split=object$c.split,
-                  var.type=as.integer(object$var.type))
+                  var.type=as.integer(object$var.type),
+                  PACKAGE = "gbm")
 
    return(predF)
 }
@@ -107,7 +108,8 @@ plot.gbm <- function(x,
                 initF=as.double(x$initF),
                 trees=x$trees,
                 c.splits=x$c.splits,
-                var.type=as.integer(x$var.type))
+                var.type=as.integer(x$var.type),
+                PACKAGE = "gbm")
                 
    # transform categorical variables back to factors
    f.factor <- rep(FALSE,length(i.var))
@@ -282,6 +284,8 @@ gbm.more <- function(object,
          X.order <- order(X[1:object$nTrain,],na.last=FALSE)-1
       }
       X <- data.matrix(X)
+      cRows <- nrow(X)
+      cCols <- ncol(X)
    }
    else
    {
@@ -291,19 +295,21 @@ gbm.more <- function(object,
       Offset      <- object$data$Offset
       Misc        <- object$data$Misc
       w           <- object$data$w
+      cRows <- length(Y)
+      cCols <- length(X)/cRows
       if(object$distribution == "coxph")
       {
          i.timeorder <- object$data$i.timeorder
          object$fit <- object$fit[i.timeorder]
       }
    }
-   cRows <- dim(X)[1]
-   cCols <- dim(X)[2]
+   
+   X <- as.vector(X)
    
    gbm.fit <- .Call("gbm",
                     Y = as.double(Y),
                     Offset = as.double(Offset),
-                    X = X,
+                    X = as.double(X),
                     X.order = as.integer(X.order),
                     weights = as.double(w),
                     Misc = as.double(Misc),
@@ -320,7 +326,8 @@ gbm.more <- function(object,
                     nTrain = as.integer(object$nTrain),
                     fit.old = as.double(object$fit),
                     n.cat.splits.old = length(object$c.splits),
-                    n.trees.old = as.integer(object$n.trees))
+                    n.trees.old = as.integer(object$n.trees),
+                    PACKAGE = "gbm")
    names(gbm.fit) <- c("initF","fit","train.error","valid.error",
                        "oobag.improve","trees","c.splits")
    
@@ -375,7 +382,7 @@ gbm <- function(formula = formula(data),
                 shrinkage = 0.1,
                 bag.fraction = 1.0,
                 train.fraction = 0.5,
-                keep.data = FALSE)
+                keep.data = TRUE)
 {
    call <- match.call()
    m <- match.call(expand = FALSE)
@@ -398,8 +405,8 @@ gbm <- function(formula = formula(data),
                     data,
                     na.action=na.pass)
    
-   cRows <- dim(X)[1]
-   cCols <- dim(X)[2]
+   cRows <- nrow(X)
+   cCols <- ncol(X)
    
    # check dataset size
    if(cRows*train.fraction*bag.fraction <= 2*n.minobsinnode+1)
@@ -444,9 +451,13 @@ gbm <- function(formula = formula(data),
          X[,i] <- as.numeric(X[,i])-1
          var.type[i] <- max(X[,i],na.rm=TRUE)+1
       }
-      else
+      else if(is.numeric(X[,i]))
       {
          var.levels[[i]] <- quantile(X[,i],prob=(0:10)/10,na.rm=TRUE)
+      }
+      else
+      {
+         stop("variable ",i,": ",var.names[i]," if not of type numeric, ordered, or factor.")
       }
       
       # check for some variation in each variable
@@ -521,7 +532,7 @@ gbm <- function(formula = formula(data),
    {
       X.order <- order(X[1:nTrain,],na.last=FALSE)-1   
    }
-   X <- data.matrix(X)
+   X <- as.vector(data.matrix(X))
    predF <- rep(0,length(Y))
    train.error <- rep(0,n.trees)
    valid.error <- rep(0,n.trees)
@@ -537,11 +548,11 @@ gbm <- function(formula = formula(data),
       stop("var.monotone must be -1, 0, or 1")
    }
    fError <- FALSE
-   
+
    gbm.fit <- .Call("gbm",
                     Y=as.double(Y),
                     Offset=as.double(Offset),
-                    X=X,
+                    X=as.double(X),
                     X.order=as.integer(X.order),
                     weights=as.double(w),
                     Misc=as.double(Misc),
@@ -558,7 +569,8 @@ gbm <- function(formula = formula(data),
                     nTrain=as.integer(nTrain),
                     fit.old=as.double(NA),
                     n.cat.splits.old=as.integer(0),
-                    n.trees.old=as.integer(0))
+                    n.trees.old=as.integer(0),
+                    PACKAGE = "gbm")
    names(gbm.fit) <- c("initF","fit","train.error","valid.error",
                        "oobag.improve","trees","c.splits")
                        
@@ -610,22 +622,22 @@ gbm.perf <- function(object,
             plot.it=TRUE,
             oobag.curve=TRUE,
             overlay=TRUE,
-            best.iter.calc = c("OOB","test")[1])
+            method = c("OOB","test")[1])
 {
      smoother <- NULL
      
-     if((best.iter.calc == "OOB") || oobag.curve)
+     if((method == "OOB") || oobag.curve)
      {
           x <- 1:object$n.trees
           smoother <- loess(object$oobag.improve~x,
-                                          enp.target=min(max(4,length(x)/10),50))
+                            enp.target=min(max(4,length(x)/10),50))
           smoother$y <- smoother$fitted
           smoother$x <- x
 
           best.iter.oob <- x[order(-cumsum(smoother$y))[1]]
      }
 
-     if(best.iter.calc == "test")
+     if(method == "test")
      {
           if((object$distribution == "gaussian") ||
              (object$distribution == "adaboost") ||
@@ -639,17 +651,17 @@ gbm.perf <- function(object,
           }
      }
 
-     if(best.iter.calc == "OOB")
+     if(method == "OOB")
      {
           best.iter <- best.iter.oob
           cat("Out of bag iteration estimate:",best.iter.oob,"\n")
      }
-     else if(best.iter.calc == "test")
+     else if(method == "test")
      {
           best.iter <- best.iter.test
           cat("Test set iteration estimate:",best.iter.test,"\n")
      }
-     else stop("best.iter.calc must be OOB or test")
+     else stop("method must be OOB or test")
 
      if(plot.it)
      {
@@ -712,40 +724,60 @@ gbm.perf <- function(object,
 
 
 summary.gbm <- function(object,
-                        cBars=min(10,object$cCols),
+                        cBars=length(object$var.names),
                         n.trees=object$n.trees,
-                        plotit=TRUE,...)
+                        plotit=TRUE,
+                        order=TRUE,
+                        ...)
 {
-    get.rel.inf <- function(obj)
-    {
-        lapply(split(obj[[6]],obj[[1]]),sum) # 6 - Improvement, 1 - var name
-    }
+   get.rel.inf <- function(obj)
+   {
+      lapply(split(obj[[6]],obj[[1]]),sum) # 6 - Improvement, 1 - var name
+   }
 
-    if(n.trees > object$n.trees)
-    {
-        cat("Exceeded total number of GBM terms. Results use",object$n.trees,"terms.\n")
-        n.trees <- object$n.trees
-    }
-  
-    temp <- unlist(lapply(object$trees[1:n.trees],get.rel.inf))
-    rel.inf <- unlist(lapply(split(temp,names(temp)),sum))[-1]
+   if(n.trees < 1)
+   {
+      stop("n.trees must be greater than 0.")
+   }
+   if(n.trees > object$n.trees)
+   {
+      warning("Exceeded total number of GBM terms. Results use",object$n.trees,"terms.\n")
+      n.trees <- object$n.trees
+   }
 
-    i <- order(-rel.inf)
-    if(cBars==0) cBars <- min(10,length(object$var.type))
-    if(cBars>length(object$var.type)) cBars <- length(object$var.type)
-     
-    rel.inf <- 100*rel.inf/sum(rel.inf)
-     
-    if(plotit)
-    {
-       barplot(rel.inf[i[cBars:1]],
-               horiz=TRUE,
-               col=rainbow(cBars,start=3/6,end=4/6),
-               names=object$var.names[i[cBars:1]],
-               xlab="Relative influence",...)
-    }
-    return(data.frame(var=object$var.names[i],
-                      rel.inf=rel.inf[i]))
+   temp <- unlist(lapply(object$trees[1:n.trees],get.rel.inf))
+   rel.inf.compact <- unlist(lapply(split(temp,names(temp)),sum))
+   rel.inf.compact <- rel.inf.compact[names(rel.inf.compact)!="-1"]
+
+   # rel.inf.compact excludes those variable that never entered the model
+   # insert 0's for the excluded variables
+   rel.inf <- rep(0,length(object$var.names))
+   i <- as.numeric(names(rel.inf.compact))+1
+   rel.inf[i] <- rel.inf.compact
+
+   if(order)
+   {
+      i <- order(-rel.inf)
+   }
+   else
+   {
+      i <- 1:length(rel.inf)
+   }
+   if(cBars==0) cBars <- min(10,length(object$var.names))
+   if(cBars>length(object$var.names)) cBars <- length(object$var.names)
+   
+   rel.inf <- 100*rel.inf/sum(rel.inf)
+   
+   if(plotit)
+   {
+      barplot(rel.inf[i[cBars:1]],
+              horiz=TRUE,
+              col=rainbow(cBars,start=3/6,end=4/6),
+              names=object$var.names[i[cBars:1]],
+              xlab="Relative influence",...)
+   }
+   return(data.frame(var=object$var.names[i],
+                     rel.inf=rel.inf[i]))
 }
 
 
