@@ -1,6 +1,13 @@
 Changes in version 1.2
+
+- fixed gbm.object help file and updated the function to check for missing values to the latest R standard. 
+
 - gbm.plot now allows i.var to be the names of the variables to plot or the
 index of the variables used
+
+- gbm now requires "stats" package into which "modreg" has been merged
+
+- documentation for predict.gbm corrected
 
 Changes in version 1.1
 

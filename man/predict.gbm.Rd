@@ -33,7 +33,7 @@ as the one originally used to fit the model.
 
 Returns a vector of predictions. By default the predictions are on the scale of f(x). For example, for the Bernoulli loss the returned value is on the log odds scale, poisson loss on the log scale, and coxph is on the log hazard scale.
 
-If \code{link="response"} then \code{gbm} converts back to the same scale as the outcome. Currently the only effect this will have is returning probabilities for bernoulli and expected counts for poisson. For the other distributions "response" and "link" return the same.
+If \code{type="response"} then \code{gbm} converts back to the same scale as the outcome. Currently the only effect this will have is returning probabilities for bernoulli and expected counts for poisson. For the other distributions "response" and "link" return the same.
 }
 \author{Greg Ridgeway \email{gregr@rand.org}}
 \seealso{

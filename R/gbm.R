@@ -3,7 +3,7 @@
      library.dynam("gbm", pkg, lib)
      require(survival)
      require(mgcv)
-     require(modreg)
+     require(stats)
      require(lattice)
 }
 

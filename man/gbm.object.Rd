@@ -2,10 +2,7 @@
 \alias{gbm.object}
 \title{Generalized Boosted Regression Model Object}
 \description{These are objects representing fitted \code{gbm}s.}
-\section{Structure}
-{
-The following components must be included in a legitimate \code{gbm} object.
-}
+\section{Structure}{The following components must be included in a legitimate \code{gbm} object.}
 \value{
 \item{initF}{the "intercept" term, the initial predicted value to which trees
 make adjustments}

@@ -1,7 +1,7 @@
 calibrate.plot          Calibration plot
+gbm                     Generalized Boosted Regression Modeling
 gbm.object              Generalized Boosted Regression Model Object
 gbm.perf                GBM performance
-gbm                     Generalized Boosted Regression Modeling
 plot.gbm                Marginal plots of fitted gbm objects
 predict.gbm             Predict method for GBM Model Fits
 pretty.gbm.tree         Print gbm tree components
