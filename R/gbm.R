@@ -485,7 +485,7 @@ gbm.fit <- function(x,y,
       stop("The dataset size is too small or subsampling rate is too large: cRows*train.fraction*bag.fraction <= n.minobsinnode")
    }
 
-   if(nrow(x) != ifelse(class(y)=="Surv", length(y[,1]), length(y)))
+   if(nrow(x) != ifelse(class(y)=="Surv", nrow(y), length(y)))
    {
       stop("The number of rows in x does not equal the length of y.")
    }
@@ -747,7 +747,8 @@ gbm <- function(formula = formula(data),
    cv.error <- NULL
    if(cv.folds>1)
    {
-      i.train <- 1:floor(train.fraction*length(y))
+      if(distribution=="coxph") i.train <- 1:floor(train.fraction*nrow(y))
+      else                      i.train <- 1:floor(train.fraction*length(y))
       cv.group <- sample(rep(1:cv.folds,
                              length=length(i.train)))
       cv.error <- rep(0, n.trees)
