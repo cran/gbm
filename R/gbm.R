@@ -5,6 +5,7 @@
      require(mgcv)
      require(stats)
      require(lattice)
+     cat("Loaded gbm",installed.packages()["gbm","Version"],"\n")
 }
 
 
@@ -47,17 +48,18 @@ predict.gbm <- function(object,newdata,n.trees,
    }
 
    x <- as.vector(unlist(x))
-   if(missing(n.trees) || (n.trees > object$n.trees))
+   if(missing(n.trees) || any(n.trees > object$n.trees))
    {
-      n.trees <- object$n.trees
-      warning("Number of trees not specified or exceeded number fit so far. Using ",n.trees,".")
+      n.trees[n.trees>object$n.trees] <- object$n.trees
+      warning("Number of trees not specified or exceeded number fit so far. Using ",paste(n.trees,collapse=" "),".")
    }
-
+   i.ntree.order <- order(n.trees)
+      
    predF <- .Call("gbm_pred",
                   X=as.double(x),
                   cRows=as.integer(cRows),
                   cCols=as.integer(cCols),
-                  n.trees=as.integer(n.trees),
+                  n.trees=as.integer(n.trees[i.ntree.order]),
                   initF=object$initF,
                   trees=object$trees,
                   c.split=object$c.split,
@@ -75,6 +77,13 @@ predict.gbm <- function(object,newdata,n.trees,
       {
          predF <- exp(predF)
       }
+   }
+   
+   if(length(n.trees)>1) 
+   {
+      predF <- matrix(predF,ncol=length(n.trees),byrow=FALSE)
+      colnames(predF) <- n.trees
+      predF[,i.ntree.order] <- predF
    }
    
    if(!is.null(attr(object$Terms,"offset")))
@@ -520,6 +529,8 @@ gbm.fit <- function(x,y,
       }
       else if(is.factor(x[,i]))
       {
+         if(length(levels(x[,i]))>1024)
+            stop("gbm does not currently handle categorical variables with more than 1024 levels. Variable ",i,": ",var.names[i]," has ",length(levels(x[,i]))," levels.")
          var.levels[[i]] <- levels(x[,i])
          x[,i] <- as.numeric(x[,i])-1
          var.type[i] <- max(x[,i],na.rm=TRUE)+1
@@ -690,7 +701,6 @@ gbm.fit <- function(x,y,
    else
    {
       gbm.obj$data <- NULL
-      # gbm.obj$m <- m.keep  # XXX should drop this?
    }
 
    class(gbm.obj) <- "gbm"
@@ -782,11 +792,6 @@ gbm <- function(formula = formula(data),
                       response.name = response.name)
    gbm.obj$Terms <- Terms
    gbm.obj$cv.error <- cv.error
-
-   if(!keep.data) # XXX check this
-   {
-      gbm.obj$m <- m.keep
-   }
 
    return(gbm.obj)
 }

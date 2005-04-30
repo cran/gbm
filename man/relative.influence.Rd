@@ -7,13 +7,12 @@
 Helper functions for computing the relative influence of each variable in the gbm object.
 }
 \usage{
-relative.influence <- function(object, n.trees)
-permutation.test.gbm <- function(object, n.trees)
-gbm.loss <- function(y,f,w,offset,dist,baseline)
+relative.influence(object, n.trees)
+permutation.test.gbm(object, n.trees)
+gbm.loss(y,f,w,offset,dist,baseline)
 }
 \arguments{
-\item{object}{a \code{gbm} object created from an initial call to
-\code{\link{gbm}}.}
+\item{object}{a \code{gbm} object created from an initial call to \code{\link{gbm}}.}
 \item{n.trees}{ the number of trees to use for computations.}
 \item{y,f,w,offset,dist,baseline}{For \code{gbm.loss}: These components are the
 outcome, predicted value, observation weight, offset, distribution, and comparison

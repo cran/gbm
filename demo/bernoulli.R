@@ -32,12 +32,14 @@ gbm1 <- gbm(Y~X1+X2+X3,                # formula
             n.minobsinnode = 10)       # minimum total weight needed in each node
 
 # plot the performance
-best.iter <- gbm.perf(gbm1,method="OOB")  # returns out-of-bag estimated best number of trees
-print(best.iter)
-best.iter <- gbm.perf(gbm1,method="cv")   # returns 5-fold cv estimate of best number of trees
-print(best.iter)
-best.iter <- gbm.perf(gbm1,method="test") # returns test set estimate of best number of trees
-print(best.iter)
+best.iter.oob <- gbm.perf(gbm1,method="OOB")  # returns out-of-bag estimated best number of trees
+print(best.iter.oob)
+best.iter.cv <- gbm.perf(gbm1,method="cv")   # returns 5-fold cv estimate of best number of trees
+print(best.iter.cv)
+best.iter.test <- gbm.perf(gbm1,method="test") # returns test set estimate of best number of trees
+print(best.iter.test)
+
+best.iter <- best.iter.test
 
 # plot variable influence
 summary(gbm1,n.trees=1)         # based on the first tree
@@ -73,13 +75,16 @@ data2 <- data.frame(Y=Y,X1=X1,X2=X2,X3=X3)
 
 # predict on the new data using "best" number of trees
 # f.predict will be on the canonical scale (logit,log,etc.)
-f.predict <- predict.gbm(gbm1,data2,best.iter)
+f.predict <- predict.gbm(gbm1,data2,
+                         n.trees=c(best.iter.oob,best.iter.cv,best.iter.test))
 # transform to probability scale for logistic regression
 p.pred <- 1/(1+exp(-f.predict))
 
 # calibration plot for logistic regression - well calibrated means a 45 degree line
 par(mfrow=c(1,1))
-calibrate.plot(Y,p.pred)
+calibrate.plot(Y,p.pred[,3])
 
 # logistic error
-sum(data2$Y*f.predict - log(1+exp(f.predict)))
+sum(data2$Y*f.predict[,1] - log(1+exp(f.predict[,1])))
+sum(data2$Y*f.predict[,2] - log(1+exp(f.predict[,2])))
+sum(data2$Y*f.predict[,3] - log(1+exp(f.predict[,3])))

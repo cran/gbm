@@ -1,7 +1,20 @@
-Changes in version 1.4
-- The formula interface now allows for "-x" to indicate not including certain variables in the model fit.
+Changes in version 1.5
 
-- Fixed the formula interface to allow offset(). The offset argument has now been removed from gbm().
+- Increased the largest factor variable allowed from 256 levels to 1024
+levels. gbm stops if any factor variable exceeds 1024. Will try to make this
+cleaner in the future.
+
+- predict.gbm now allows n.trees to be a vector and efficiently computes 
+predictions for each indicated model. Avoids having to call predict.gbm
+several times for different choices of n.trees.
+
+Changes in version 1.4
+
+- The formula interface now allows for "-x" to indicate not including certain
+variables in the model fit.
+
+- Fixed the formula interface to allow offset(). The offset argument has now
+been removed from gbm().
 
 - Added basehaz.gbm that computes the Breslow estimate of the baseline hazard.
 At a later stage this will be substituted with a call to survfit, which is

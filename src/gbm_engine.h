@@ -6,7 +6,7 @@
 //  License:    GNU GPL (version 2 or later)
 //
 //  Contents:   Generalized boosted model engine
-//        	  
+//
 //  Owner:      gregr@rand.org
 //
 //  History:    3/26/2001   gregr created
@@ -34,12 +34,12 @@ public:
     CGBM();
     ~CGBM();
     GBMRESULT Initialize(CDataset *pData,
-                       CDistribution *pDist,
-                       double dLambda,
-                       unsigned long nTrain,
-                       double dBagFraction,
-                       unsigned long cLeaves,
-                       unsigned long cMinObsInNode);
+                         CDistribution *pDist,
+                         double dLambda,
+                         unsigned long nTrain,
+                         double dBagFraction,
+                         unsigned long cLeaves,
+                         unsigned long cMinObsInNode);
 
     GBMRESULT iterate(double *adF,
                     double &dTrainError,
@@ -53,7 +53,7 @@ public:
                                 int *aiMissingNode,
                                 double *adErrorReduction,
                                 double *adWeight,
-                                double *adPred,                                
+                                double *adPred,
                                 VEC_VEC_CATEGORIES &vecSplitCodes,
                                 int cCatSplitsOld);
     GBMRESULT Predict(unsigned long iVar,

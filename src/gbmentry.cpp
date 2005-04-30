@@ -7,7 +7,6 @@ extern "C" {
 #include <R.h>
 #include <Rinternals.h>
 
-
 SEXP gbm
 (
     SEXP radY,       // outcome or response
@@ -309,114 +308,135 @@ Error:
 
 SEXP gbm_pred
 (
-    SEXP radX,        // the data matrix
-    SEXP rcRows,      // number of rows
-    SEXP rcCols,      // number of columns
-    SEXP rcTrees,     // number of trees
-    SEXP rdInitF,     // the initial value
-    SEXP rTrees,      // the list of trees
-    SEXP rCSplits,    // the list of categorical splits
-    SEXP raiVarType,  // indicator of continuous/nominal
-    SEXP riSingleTree // boolean whether to return only results for one tree
+   SEXP radX,        // the data matrix
+   SEXP rcRows,      // number of rows
+   SEXP rcCols,      // number of columns
+   SEXP rcTrees,     // number of trees, may be a vector
+   SEXP rdInitF,     // the initial value
+   SEXP rTrees,      // the list of trees
+   SEXP rCSplits,    // the list of categorical splits
+   SEXP raiVarType,  // indicator of continuous/nominal
+   SEXP riSingleTree // boolean whether to return only results for one tree
 )
 {
-    unsigned long hr = 0;
-    int iTree = 0;
-    int iObs = 0;
-    int cRows = INTEGER(rcRows)[0];
-    int cTrees = INTEGER(rcTrees)[0];
+   unsigned long hr = 0;
+   int iTree = 0;
+   int iObs = 0;
+   int cRows = INTEGER(rcRows)[0];
+   int cPredIterations = LENGTH(rcTrees);
+   int iPredIteration = 0;
+   int cTrees = 0;
 
-    SEXP rThisTree = NULL;
-    int *aiSplitVar = NULL;
-    double *adSplitCode = NULL;
-    int *aiLeftNode = NULL;
-    int *aiRightNode = NULL;
-    int *aiMissingNode = NULL;
-    int iCurrentNode = 0;
-    double dX = 0.0;
-    int iCatSplitIndicator = 0;
-    bool fSingleTree = (INTEGER(riSingleTree)[0]==1);
+   SEXP rThisTree = NULL;
+   int *aiSplitVar = NULL;
+   double *adSplitCode = NULL;
+   int *aiLeftNode = NULL;
+   int *aiRightNode = NULL;
+   int *aiMissingNode = NULL;
+   int iCurrentNode = 0;
+   double dX = 0.0;
+   int iCatSplitIndicator = 0;
+   bool fSingleTree = (INTEGER(riSingleTree)[0]==1);
 
-    SEXP radPredF = NULL;
+   SEXP radPredF = NULL;
 
-    // allocate the predictions to return
-    PROTECT(radPredF = allocVector(REALSXP, cRows));
-    if(radPredF == NULL)
-    {
-        hr = GBM_OUTOFMEMORY;
-        goto Error;
-    }
+   // allocate the predictions to return
+   PROTECT(radPredF = allocVector(REALSXP, cRows*cPredIterations));
+   if(radPredF == NULL)
+   {
+      hr = GBM_OUTOFMEMORY;
+      goto Error;
+   }
 
-    if(!fSingleTree)
-    {
-        for(iObs=0; iObs<cRows; iObs++)
-        {
-           REAL(radPredF)[iObs] = REAL(rdInitF)[0];
-        }
-    }
-    else
-    {
-        for(iObs=0; iObs<cRows; iObs++)
-        {
-           REAL(radPredF)[iObs] = 0.0;
-        }
-    }
+   // initialize the predicted values
+   if(!fSingleTree)
+   {
+      // initialize with the intercept for only the smallest rcTrees
+      for(iObs=0; iObs<cRows; iObs++)
+      {
+         REAL(radPredF)[iObs] = REAL(rdInitF)[0];
+      }
+   }
+   else
+   {
+      for(iObs=0; iObs<cRows*cPredIterations; iObs++)
+      {
+         REAL(radPredF)[iObs] = 0.0;
+      }
+   }
 
-    for(iTree=(fSingleTree ? cTrees-1 : 0); iTree<cTrees; iTree++)
-    {
-        rThisTree     = VECTOR_ELT(rTrees,iTree);
-        // these relate to columns returned by pretty.gbm.tree()
-        aiSplitVar    = INTEGER(VECTOR_ELT(rThisTree,0));
-        adSplitCode   = REAL   (VECTOR_ELT(rThisTree,1));
-        aiLeftNode    = INTEGER(VECTOR_ELT(rThisTree,2));
-        aiRightNode   = INTEGER(VECTOR_ELT(rThisTree,3));
-        aiMissingNode = INTEGER(VECTOR_ELT(rThisTree,4));
-        for(iObs=0; iObs<cRows; iObs++)
-        {
+   iTree = 0;
+   for(iPredIteration=0; iPredIteration<LENGTH(rcTrees); iPredIteration++)
+   {
+      cTrees = INTEGER(rcTrees)[iPredIteration];
+      if(fSingleTree) iTree=cTrees-1;
+      if(!fSingleTree && (iPredIteration>0))
+      {
+         // copy over from the last rcTrees
+         for(iObs=0; iObs<cRows; iObs++)
+         {
+            REAL(radPredF)[cRows*iPredIteration+iObs] =
+               REAL(radPredF)[cRows*(iPredIteration-1)+iObs];
+         }
+      }
+      while(iTree<cTrees)
+      {
+         rThisTree     = VECTOR_ELT(rTrees,iTree);
+         // these relate to columns returned by pretty.gbm.tree()
+         aiSplitVar    = INTEGER(VECTOR_ELT(rThisTree,0));
+         adSplitCode   = REAL   (VECTOR_ELT(rThisTree,1));
+         aiLeftNode    = INTEGER(VECTOR_ELT(rThisTree,2));
+         aiRightNode   = INTEGER(VECTOR_ELT(rThisTree,3));
+         aiMissingNode = INTEGER(VECTOR_ELT(rThisTree,4));
+         for(iObs=0; iObs<cRows; iObs++)
+         {
             iCurrentNode = 0;
             while(aiSplitVar[iCurrentNode] != -1)
             {
-                dX = REAL(radX)[aiSplitVar[iCurrentNode]*cRows + iObs];
-                // missing?
-                if(ISNA(dX))
-                {
-                    iCurrentNode = aiMissingNode[iCurrentNode];
-                }
-                // continuous?
-                else if(INTEGER(raiVarType)[aiSplitVar[iCurrentNode]] == 0)
-                {
-                    if(dX < adSplitCode[iCurrentNode])
-                    {
+               dX = REAL(radX)[aiSplitVar[iCurrentNode]*cRows + iObs];
+               // missing?
+               if(ISNA(dX))
+               {
+                  iCurrentNode = aiMissingNode[iCurrentNode];
+               }
+               // continuous?
+               else if(INTEGER(raiVarType)[aiSplitVar[iCurrentNode]] == 0)
+               {
+                  if(dX < adSplitCode[iCurrentNode])
+                  {
                         iCurrentNode = aiLeftNode[iCurrentNode];
-                    }
-                    else
-                    {
+                  }
+                  else
+                  {
                         iCurrentNode = aiRightNode[iCurrentNode];
-                    }
-                }
-                else // categorical
-                {
-                    iCatSplitIndicator = INTEGER(
+                  }
+               }
+               else // categorical
+               {
+                  iCatSplitIndicator = INTEGER(
                         VECTOR_ELT(rCSplits,
-                                   (int)adSplitCode[iCurrentNode]))[(int)dX];
-                    if(iCatSplitIndicator==-1)
-                    {
+                                 (int)adSplitCode[iCurrentNode]))[(int)dX];
+                  if(iCatSplitIndicator==-1)
+                  {
                         iCurrentNode = aiLeftNode[iCurrentNode];
-                    }
-                    else if(iCatSplitIndicator==1)
-                    {
+                  }
+                  else if(iCatSplitIndicator==1)
+                  {
                         iCurrentNode = aiRightNode[iCurrentNode];
-                    }
-                    else // categorical level not present in training
-                    {
+                  }
+                  else // categorical level not present in training
+                  {
                         iCurrentNode = aiMissingNode[iCurrentNode];
-                    }
-                }
+                  }
+               }
             }
-            REAL(radPredF)[iObs] += adSplitCode[iCurrentNode]; // add the prediction
-        } // iObs
-    } // iTree
-
+            REAL(radPredF)[cRows*iPredIteration+iObs] += 
+               adSplitCode[iCurrentNode]; // add the prediction
+         } // iObs
+         iTree++;
+      } // iTree
+    } // iPredIteration
+    
 Cleanup:
     UNPROTECT(1); // radPredF
     return radPredF;
@@ -674,7 +694,7 @@ SEXP gbm_shrink_pred
          cNodeStack = 1;
          for(i=0; i<cMaxNodes; i++)
          {
-            adNodePred[i] = NAN;
+             adNodePred[i] = NAN;
          }
          while(cNodeStack>0)
          {
@@ -1072,3 +1092,4 @@ Error:
 
 
 } // end extern "C"
+

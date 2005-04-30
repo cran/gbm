@@ -8,7 +8,7 @@
 #include "node_search.h"
 
 CNodeSearch::CNodeSearch()
-    :k_cMaxClasses(256)
+    :k_cMaxClasses(1024)
 {
     iBestSplitVar = 0;
     dBestSplitValue = 0.0;
