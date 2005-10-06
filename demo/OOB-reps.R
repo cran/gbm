@@ -437,13 +437,8 @@ for(i.data in i.datasets)
          cv.loss[,i.cv] <- gbm1$valid.error
       }
       cat("\n")
-      if(dataset[[i.data]]$distribution=="gaussian")
-      {
-         best.iter.cv <- which.min(apply(cv.loss,1,weighted.mean,w=table(cv.group)))
-      } else
-      {
-         best.iter.cv <- which.max(apply(cv.loss,1,weighted.mean,w=table(cv.group)))
-      }
+
+      best.iter.cv <- which.min(apply(cv.loss,1,weighted.mean,w=table(cv.group)))
       gbm1 <- gbm(formula.fit,
                   data=dataset[[i.data]]$data[i.train,],
                   distribution=dataset[[i.data]]$distribution,

@@ -1,12 +1,21 @@
 Changes in version 1.5
+- Fixed the OOB-reps.R demo. For non-Gaussian cases it was maximizing the 
+deviance rather than minimizing.
 
 - Increased the largest factor variable allowed from 256 levels to 1024
 levels. gbm stops if any factor variable exceeds 1024. Will try to make this
 cleaner in the future.
 
-- predict.gbm now allows n.trees to be a vector and efficiently computes 
+- predict.gbm now allows n.trees to be a vector and efficiently computes
 predictions for each indicated model. Avoids having to call predict.gbm
 several times for different choices of n.trees.
+
+- fixed a bug that occurred when using cross-validation for coxph. Was
+computing length(y) when y is a Surv object which return 2*N rather than N.
+This generated out-of-range indices for the training dataset.
+
+- Changed the method for extracting the name of the outcome variable to work 
+around a a change in terms.formula() when using "." in formulas.
 
 Changes in version 1.4
 

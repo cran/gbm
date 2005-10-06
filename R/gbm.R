@@ -742,7 +742,7 @@ gbm <- function(formula = formula(data),
                     na.action=na.pass)
 
    # get the character name of the response variable
-   response.name <- dimnames(attr(terms(formula),"factors"))[[1]][1]
+   response.name <- as.character(formula[[2]])
 
    cv.error <- NULL
    if(cv.folds>1)

@@ -268,7 +268,7 @@ $\displaystyle p_i = \frac{1}{1+\exp(-(o_i+f_0))}$.
 Deviance & $\frac{1}{\sum w_i} \sum w_i|y_i-f(\mathbf{x}_i)|$ \\
 Initial value & $\mbox{median}_w(y)$ \\
 Gradient & $z_i=\mbox{sign}(y_i-f(\mathbf{x}_i))$ \\
-Terminal node estimates & $\mbox{median}_w(y)$
+Terminal node estimates & $\mbox{median}_w(z)$
 \end{tabular}
 
 Notes:
