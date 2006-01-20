@@ -8,7 +8,7 @@ optionally plots various performance measures
 \usage{
 gbm.perf(object, 
          plot.it = TRUE, 
-         oobag.curve = TRUE, 
+         oobag.curve = FALSE, 
          overlay = TRUE, 
          method)
 }

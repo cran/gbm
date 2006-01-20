@@ -3,7 +3,6 @@
      library.dynam("gbm", pkg, lib)
      require(survival)
      require(mgcv)
-     require(stats)
      require(lattice)
      cat("Loaded gbm",installed.packages()["gbm","Version"],"\n")
 }
@@ -800,7 +799,7 @@ gbm <- function(formula = formula(data),
 
 gbm.perf <- function(object,
             plot.it=TRUE,
-            oobag.curve=TRUE,
+            oobag.curve=FALSE,
             overlay=TRUE,
             method)
 {
@@ -808,6 +807,10 @@ gbm.perf <- function(object,
 
    if((method == "OOB") || oobag.curve)
    {
+      if(object$bag.fraction==1)
+         stop("Cannot compute OOB estimate or the OOB curve when bag.fraction is 1")
+      if(all(!is.finite(object$oobag.improve)))
+         stop("Cannot compute OOB estimate or the OOB curve. No finite OOB estimates of improvement")
       x <- 1:object$n.trees
       smoother <- loess(object$oobag.improve~x,
                         enp.target=min(max(4,length(x)/10),50))
@@ -993,7 +996,7 @@ summary.gbm <- function(object,
    }
    if(n.trees > object$n.trees)
    {
-      warning("Exceeded total number of GBM terms. Results use",object$n.trees,"terms.\n")
+      warning("Exceeded total number of GBM terms. Results use n.trees=",object$n.trees," terms.\n")
       n.trees <- object$n.trees
    }
 
