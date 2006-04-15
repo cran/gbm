@@ -334,14 +334,7 @@ gbm.more <- function(object,
       }
 
       # create index upfront... subtract one for 0 based order
-      if(ncol(x) > 1)
-      {
-         x.order <- apply(x[1:object$nTrain,],2,order,na.last=FALSE)-1
-      }
-      else
-      {
-         x.order <- order(x[1:object$nTrain,],na.last=FALSE)-1
-      }
+      x.order <- apply(x[1:object$nTrain,,drop=FALSE],2,order,na.last=FALSE)-1
       x <- data.matrix(x)
       cRows <- nrow(x)
       cCols <- ncol(x)
@@ -613,14 +606,8 @@ gbm.fit <- function(x,y,
    }
 
    # create index upfront... subtract one for 0 based order
-   if(ncol(x) > 1)
-   {
-      x.order <- apply(x[1:nTrain,],2,order,na.last=FALSE)-1
-   }
-   else
-   {
-      x.order <- order(x[1:nTrain,],na.last=FALSE)-1
-   }
+   x.order <- apply(x[1:nTrain,,drop=FALSE],2,order,na.last=FALSE)-1
+
    x <- as.vector(data.matrix(x))
    predF <- rep(0,length(y))
    train.error <- rep(0,n.trees)
@@ -755,7 +742,8 @@ gbm <- function(formula = formula(data),
       {
          if(verbose) cat("CV:",i.cv,"\n")
          i <- order(cv.group==i.cv)
-         gbm.obj <- gbm.fit(x[i.train,][i,], y[i.train][i],
+         gbm.obj <- gbm.fit(x[i.train,,drop=FALSE][i,,drop=FALSE], 
+                            y[i.train][i],
                             offset = offset[i.train][i],
                             distribution = distribution,
                             w = ifelse(w==NULL,NULL,w[i.train][i]),
@@ -808,7 +796,7 @@ gbm.perf <- function(object,
    if((method == "OOB") || oobag.curve)
    {
       if(object$bag.fraction==1)
-         stop("Cannot compute OOB estimate or the OOB curve when bag.fraction is 1")
+         stop("Cannot compute OOB estimate or the OOB curve when bag.fraction=1")
       if(all(!is.finite(object$oobag.improve)))
          stop("Cannot compute OOB estimate or the OOB curve. No finite OOB estimates of improvement")
       x <- 1:object$n.trees

@@ -52,6 +52,6 @@ Machine," Annals of Statistics 29(4).
 }
 \author{Greg Ridgeway \email{gregr@rand.org}}
 
-\seealso{ \code{\link{gbm}}, \code{\link{gbm.object}}, \code{\link[base]{plot}} }
+\seealso{ \code{\link{gbm}}, \code{\link{gbm.object}}, \code{\link[graphics]{plot}} }
 
 \keyword{ hplot }

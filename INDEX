@@ -1,6 +1,7 @@
 basehaz.gbm             Baseline hazard function
 calibrate.plot          Calibration plot
 gbm                     Generalized Boosted Regression Modeling
+gbm-package             Generalized Boosted Regression Models
 gbm.object              Generalized Boosted Regression Model Object
 gbm.perf                GBM performance
 plot.gbm                Marginal plots of fitted gbm objects

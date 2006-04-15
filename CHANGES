@@ -1,4 +1,13 @@
 Changes in version 1.5
+- gbm would fail if there was only one x. Now drop=FALSE is set in all
+data.frame subsetting (thanks to Gregg Keller for noticing this).
+
+- Corrected gbm.perf() to check if bag.fraction=1 and skips trying to
+create the OOB plots and estimates.
+
+- Corrected a typo in the vignette specifying the gradient for the Cox
+model.
+
 - Fixed the OOB-reps.R demo. For non-Gaussian cases it was maximizing the 
 deviance rather than minimizing.
 

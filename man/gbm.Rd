@@ -83,7 +83,7 @@ Also known as the learning rate or step-size reduction.}
 selected to propose the next tree in the expansion. This introduces randomnesses
 into the model fit. If \code{bag.fraction}<1 then running the same model twice
 will result in similar but different fits. \code{gbm} uses the R random number
-generator so \code{set.seed} (see \link[base]{Random}) can ensure that the model can be
+generator so \code{set.seed} can ensure that the model can be
 reconstructed. Preferably, the user can save the returned
 \code{\link{gbm.object}} using \code{\link{save}}.}
 \item{train.fraction}{The first \code{train.fraction * nrows(data)}
@@ -116,7 +116,12 @@ number of columns of \code{x} containing the names of the predictor variables.}
 variable.}
 
 }
-\details{This package implements the generalized boosted modeling framework.
+\details{
+
+See \code{vignette("gbm")} for technical details of the package. Also available 
+at \url{../doc/gbm.pdf} (if you are using HTML help).
+
+This package implements the generalized boosted modeling framework.
 Boosting is the process of iteratively adding basis functions in a greedy
 fashion so that each additional basis function further reduces the selected
 loss function. This implementation closely follows Friedman's Gradient
@@ -133,7 +138,7 @@ function.
 
 \code{gbm.fit} provides the link between R and the C++ gbm engine. \code{gbm}
 is a front-end to \code{gbm.fit} that uses the familiar R modeling formulas.
-However, \code{\link[base]{model.frame}} is very slow if there are many
+However, \code{\link[stats]{model.frame}} is very slow if there are many
 predictor variables. For power-users with many variables use \code{gbm.fit}.
 For general practice \code{gbm} is preferable.
 
@@ -143,24 +148,21 @@ For general practice \code{gbm} is preferable.
 \code{\link{gbm.object}}.
 }
 \references{
-Y. Freund and R.E. Schapire (1997) "A decision-theoretic generalization of
-on-line learning and an application to boosting," Journal of Computer and
-System Sciences, 55(1):119-139.
+Y. Freund and R.E. Schapire (1997) \dQuote{A decision-theoretic generalization of
+on-line learning and an application to boosting,} \emph{Journal of Computer and
+System Sciences,} 55(1):119-139.
 
-G. Ridgeway (1999). "The state of boosting," Computing Science and
-Statistics 31:172-181.
+G. Ridgeway (1999). \dQuote{The state of boosting,} \emph{Computing Science and
+Statistics} 31:172-181.
 
-J.H. Friedman, T. Hastie, R. Tibshirani (2000). "Additive Logistic Regression:
-a Statistical View of Boosting," Annals of Statistics 28(2):337-374.
+J.H. Friedman, T. Hastie, R. Tibshirani (2000). \dQuote{Additive Logistic Regression:
+a Statistical View of Boosting,} \emph{Annals of Statistics} 28(2):337-374.
 
-J.H. Friedman (2001). "Greedy Function Approximation: A Gradient Boosting
-Machine," Annals of Statistics 29(5):1189-1232.
+J.H. Friedman (2001). \dQuote{Greedy Function Approximation: A Gradient Boosting
+Machine,} \emph{Annals of Statistics} 29(5):1189-1232.
 
-J.H. Friedman (2002). "Stochastic Gradient Boosting," Computational Statistics
-and Data Analysis 38(4):367-378.
-
-G. Ridgeway (2003). "An out-of-bag estimator for the optimal number of
-boosting iterations," technical report due out soon.
+J.H. Friedman (2002). \dQuote{Stochastic Gradient Boosting,} \emph{Computational Statistics
+and Data Analysis} 38(4):367-378.
 
 \url{http://www.i-pensieri.com/gregr/gbm.shtml}
 

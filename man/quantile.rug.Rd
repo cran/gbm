@@ -15,10 +15,10 @@ quantile.rug(x,prob=(0:10)/10,...)
 \references{\url{http://www.i-pensieri.com/gregr/gbm.shtml}}
 \author{Greg Ridgeway \email{gregr@rand.org}}
 \seealso{
-\code{\link[base]{plot}}, 
-\code{\link[base]{quantile}}, 
+\code{\link[graphics]{plot}}, 
+\code{\link[stats]{quantile}}, 
 \code{\link[base]{jitter}}, 
-\code{\link[base]{rug}}.
+\code{\link[graphics]{rug}}.
 }
 \examples{
 x <- rnorm(100)

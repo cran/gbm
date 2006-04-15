@@ -1,3 +1,6 @@
+% setwd("c:/dev/gbm/inst/doc")
+% Sweave("gbm.rnw"); system("texify gbm.tex"); system("c:\\MiKTeX\\texmf\\miktex\\bin\\yap.exe gbm.dvi",wait=FALSE)
+
 \documentclass{article}
 \bibliographystyle{plain}
 \usepackage[active]{srcltx}
@@ -281,8 +284,8 @@ Notes:
 
 \begin{tabular}{ll}
 Deviance & $-2\sum w_i(\delta_i(f(\mathbf{x}_i)-\log(R_i/w_i)))$\\
-Gradient & $\displaystyle z_i=\delta_i - \delta_j
-            \frac{\sum_j w_jI(t_i\geq t_j)e^{f(\mathbf{x}_i)}}
+Gradient & $\displaystyle z_i=\delta_i - \sum_j \delta_j
+            \frac{w_jI(t_i\geq t_j)e^{f(\mathbf{x}_i)}}
                  {\sum_k w_kI(t_k\geq t_j)e^{f(\mathbf{x}_k)}}$ \\
 Initial value & 0 \\
 Terminal node estimates & Newton-Raphson algorithm

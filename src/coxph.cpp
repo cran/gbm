@@ -41,7 +41,7 @@ GBMRESULT CCoxPH::ComputeWorkingResponse
     }
 
     dTot = 0.0;
-    for(i=nTrain-1; (i>=0) && (i<ULONG_MAX); i--)
+    for(i=nTrain-1; i!=ULONG_MAX; i--) // i is unsigned so wraps to ULONG_MAX
     {
         if(afInBag[i])
         {
