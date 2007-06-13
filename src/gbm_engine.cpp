@@ -355,7 +355,6 @@ GBMRESULT CGBM::iterate
     {
         goto Error;
     }
-
     ptreeTemp->SetShrinkage(dLambda);
 
     dOOBagImprove = pDist->BagImprovement(pData->adY,

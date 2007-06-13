@@ -32,7 +32,7 @@ N. Breslow (1974). "Covariance analysis of censored survival data," Biometrics 3
 
 
 
-\seealso{ \code{\link{survfit}}, \code{\link{gbm}} }
+\seealso{ \code{\link[survival]{survfit}}, \code{\link{gbm}} }
 
 \keyword{ methods }
 \keyword{ survival }

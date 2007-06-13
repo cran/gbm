@@ -16,6 +16,7 @@ calibrate.plot(y,p,
                xlab="Predicted value",
                ylab="Observed average",
                xlim=NULL,ylim=NULL,
+               knots=NULL,df=6,
                ...)
 }
 \arguments{
@@ -37,10 +38,13 @@ calibrate.plot(y,p,
   \item{ylab}{y-axis label corresponding to the observed average}
   \item{xlim,ylim}{x and y-axis limits. If not specified te function will select
                    limits}
+  \item{knots,df}{these parameters are passed directly to 
+                  \code{\link[splines]{ns}} for constructing a natural spline 
+                  smoother for the calibration curve}
   \item{...}{ other graphics parameters passed on to the plot function }
 }
 \details{
-Uses \code{\link[mgcv]{gam}} to estimate E(y|p). Well-calibrated predictions
+Uses natural splines to estimate E(y|p). Well-calibrated predictions
 imply that E(y|p) = p. The plot also includes a pointwise 95% confidence
 band.
 }

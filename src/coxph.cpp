@@ -53,6 +53,7 @@ GBMRESULT CCoxPH::ComputeWorkingResponse
             adZ[i] = adDelta[i] - exp(dF)*dTot;
         }
     }
+
     return GBM_OK;
 }
 
@@ -133,7 +134,6 @@ GBMRESULT CCoxPH::FitBestConstant
 
     double dTemp = 0.0;
     bool fTemp = false;
-
     unsigned long K = 0;
     veciK2Node.resize(cTermNodes);
     veciNode2K.resize(cTermNodes);
@@ -141,7 +141,7 @@ GBMRESULT CCoxPH::FitBestConstant
     for(i=0; i<cTermNodes; i++)
     {
         veciNode2K[i] = 0;
-        if(vecpTermNodes[i]->cN > cMinObsInNode)
+        if(vecpTermNodes[i]->cN >= cMinObsInNode)
         {
             veciK2Node[K] = i;
             veciNode2K[i] = K;
@@ -165,13 +165,13 @@ GBMRESULT CCoxPH::FitBestConstant
     }
 
     // get the gradient & Hessian, Ridgeway (1999) pp. 100-101
-    // correction from Ridgeway (1999): fix terminal node K-1 to be 0
+    // correction from Ridgeway (1999): fix terminal node K-1 prediction to 0.0
     //      for identifiability
     dRiskTot = 0.0;
     vecdP.assign(K,0.0);
     for(i=0; i<nTrain; i++)
     {
-        if(afInBag[i] && (vecpTermNodes[aiNodeAssign[i]]->cN > cMinObsInNode))
+        if(afInBag[i] && (vecpTermNodes[aiNodeAssign[i]]->cN >= cMinObsInNode))
         {
             dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
             vecdP[veciNode2K[aiNodeAssign[i]]] += adW[i]*exp(dF);
@@ -219,17 +219,23 @@ GBMRESULT CCoxPH::FitBestConstant
     {
         vecpTermNodes[k]->dPrediction = 0.0;
     }
-    for(k=0; k<K-1; k++)
+    for(m=0; m<K-1; m++)
     {
-        for(m=0; m<K-1; m++)
+        for(k=0; k<K-1; k++)
         {
             matH.getvalue(k,m,dTemp,fTemp);
-            vecpTermNodes[veciK2Node[k]]->dPrediction -= dTemp*vecdG[m];
-            dTemp = vecdG[m];
-        }
-        dTemp = vecpTermNodes[veciK2Node[k]]->dPrediction;
+            if(isinf(dTemp) || isnan(dTemp)) // occurs if matH was not invertible
+            {
+                vecpTermNodes[veciK2Node[k]]->dPrediction = 0.0;
+                break;
+            } 
+            else
+            {
+                vecpTermNodes[veciK2Node[k]]->dPrediction -= dTemp*vecdG[m];
+            }
+          }
     }
-    // vecpTermNodes[veciK2Node[K-1]]->dPrediction = 0.0;
+    // vecpTermNodes[veciK2Node[K-1]]->dPrediction = 0.0; // already set to 0.0
 
     return hr;
 }

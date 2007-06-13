@@ -1,19 +1,19 @@
 //  GBM by Greg Ridgeway  Copyright (C) 2003
 
-#include "laplace.h"
+#include "quantile.h"
 
-CLaplace::CLaplace()
+CQuantile::CQuantile(double dAlpha)
+{
+    this->dAlpha = dAlpha;
+}
+
+CQuantile::~CQuantile()
 {
 
 }
 
-CLaplace::~CLaplace()
-{
 
-}
-
-
-GBMRESULT CLaplace::ComputeWorkingResponse
+GBMRESULT CQuantile::ComputeWorkingResponse
 (
     double *adY,
     double *adMisc,
@@ -26,19 +26,19 @@ GBMRESULT CLaplace::ComputeWorkingResponse
 )
 {
     unsigned long i = 0;
-
+    
     if(adOffset == NULL)
     {
         for(i=0; i<nTrain; i++)
         {
-            adZ[i] = (adY[i] - adF[i]) > 0.0 ? 1.0 : -1.0;
+            adZ[i] = (adY[i] > adF[i]) ? dAlpha : -(1.0-dAlpha);
         }
     }
     else
     {
         for(i=0; i<nTrain; i++)
         {
-            adZ[i] = (adY[i] - adOffset[i] - adF[i]) > 0.0 ? 1.0 : -1.0;
+            adZ[i] = (adY[i] > adF[i]+adOffset[i]) ? dAlpha : -(1.0-dAlpha);
         }
     }
 
@@ -47,12 +47,12 @@ GBMRESULT CLaplace::ComputeWorkingResponse
 
 
 
-// DEBUG: needs weighted median
-GBMRESULT CLaplace::InitF
+// DEBUG: needs weighted quantile
+GBMRESULT CQuantile::InitF
 (
     double *adY,
     double *adMisc,
-    double *adOffset, 
+    double *adOffset,
     double *adWeight,
     double &dInitF, 
     unsigned long cLength
@@ -60,7 +60,7 @@ GBMRESULT CLaplace::InitF
 {
     double dOffset=0.0;
     unsigned long i=0;
-
+    
     vecd.resize(cLength);
     for(i=0; i<cLength; i++)
     {
@@ -68,14 +68,20 @@ GBMRESULT CLaplace::InitF
         vecd[i] = adY[i] - dOffset;
     }
 
-    nth_element(vecd.begin(), vecd.begin() + int(cLength/2.0), vecd.end());
-    dInitF = *(vecd.begin() + int(cLength/2.0));
-
+    if(dAlpha==1.0)
+    {
+        dInitF = *max_element(vecd.begin(), vecd.end());
+    } else
+    {
+        nth_element(vecd.begin(), vecd.begin() + int(cLength*dAlpha), vecd.end());
+        dInitF = *(vecd.begin() + int(cLength*dAlpha));
+    }
+    
     return GBM_OK;
 }
 
 
-double CLaplace::Deviance
+double CQuantile::Deviance
 (
     double *adY,
     double *adMisc,
@@ -88,12 +94,19 @@ double CLaplace::Deviance
     unsigned long i=0;
     double dL = 0.0;
     double dW = 0.0;
-
+    
     if(adOffset == NULL)
     {
         for(i=0; i<cLength; i++)
         {
-            dL += adWeight[i]*fabs(adY[i]-adF[i]);
+            if(adY[i] > adF[i])
+            {
+                dL += adWeight[i]*dAlpha      *(adY[i] - adF[i]);
+            }
+            else
+            {
+                dL += adWeight[i]*(1.0-dAlpha)*(adF[i] - adY[i]);
+            }
             dW += adWeight[i];
         }
     }
@@ -101,7 +114,14 @@ double CLaplace::Deviance
     {
         for(i=0; i<cLength; i++)
         {
-            dL += adWeight[i]*fabs(adY[i]-adOffset[i]-adF[i]);
+            if(adY[i] > adF[i] + adOffset[i])
+            {
+                dL += adWeight[i]*dAlpha      *(adY[i] - adF[i]-adOffset[i]);
+            }
+            else
+            {
+                dL += adWeight[i]*(1.0-dAlpha)*(adF[i]+adOffset[i] - adY[i]);
+            }
             dW += adWeight[i];
         }
     }
@@ -110,8 +130,8 @@ double CLaplace::Deviance
 }
 
 
-// DEBUG: needs weighted median
-GBMRESULT CLaplace::FitBestConstant
+// DEBUG: needs weighted quantile
+GBMRESULT CQuantile::FitBestConstant
 (
     double *adY,
     double *adMisc,
@@ -134,7 +154,7 @@ GBMRESULT CLaplace::FitBestConstant
     unsigned long iObs = 0;
     unsigned long iVecd = 0;
     double dOffset;
-
+    
     vecd.resize(nTrain); // should already be this size from InitF
     for(iNode=0; iNode<cTermNodes; iNode++)
     {
@@ -146,13 +166,25 @@ GBMRESULT CLaplace::FitBestConstant
                 if(afInBag[iObs] && (aiNodeAssign[iObs] == iNode))
                 {
                     dOffset = (adOffset==NULL) ? 0.0 : adOffset[iObs];
+
                     vecd[iVecd] = adY[iObs] - dOffset - adF[iObs];
                     iVecd++;
                 }
             }
-            nth_element(vecd.begin(), vecd.begin() + int(iVecd/2.0), vecd.end());
-            vecpTermNodes[iNode]->dPrediction = *(vecd.begin() + int(iVecd/2.0));
-        }
+
+            if(dAlpha==1.0)
+            {
+                vecpTermNodes[iNode]->dPrediction = 
+                    *max_element(vecd.begin(), vecd.begin()+iVecd);
+            } else
+            {
+                nth_element(vecd.begin(), 
+                            vecd.begin() + int(iVecd*dAlpha), 
+                            vecd.end());
+                vecpTermNodes[iNode]->dPrediction = 
+                    *(vecd.begin() + int(iVecd*dAlpha));
+            }
+         }
     }
 
     return hr;
@@ -160,7 +192,7 @@ GBMRESULT CLaplace::FitBestConstant
 
 
 
-double CLaplace::BagImprovement
+double CQuantile::BagImprovement
 (
     double *adY,
     double *adMisc,
@@ -174,6 +206,7 @@ double CLaplace::BagImprovement
 )
 {
     double dReturnValue = 0.0;
+
     double dF = 0.0;
     double dW = 0.0;
     unsigned long i = 0;
@@ -183,16 +216,29 @@ double CLaplace::BagImprovement
         if(!afInBag[i])
         {
             dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
+            if(adY[i] > dF)
+            {
+                dReturnValue += adWeight[i]*dAlpha*(adY[i]-dF);
+            }
+            else
+            {
+                dReturnValue += adWeight[i]*(1-dAlpha)*(dF-adY[i]);
+            }
             
-            dReturnValue += 
-                adWeight[i]*(fabs(adY[i]-dF) - fabs(adY[i]-dF-dStepSize*adFadj[i]));
+            if(adY[i] > dF+dStepSize*adFadj[i])
+            {
+                dReturnValue -= adWeight[i]*dAlpha*
+                                (adY[i] - dF-dStepSize*adFadj[i]);
+            }
+            else
+            {
+                dReturnValue -= adWeight[i]*(1-dAlpha)*
+                                (dF+dStepSize*adFadj[i] - adY[i]);
+            }
             dW += adWeight[i];
         }
     }
 
     return dReturnValue/dW;
 }
-
-
-
 

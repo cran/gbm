@@ -2,7 +2,7 @@
 {
      library.dynam("gbm", pkg, lib)
      require(survival)
-     require(mgcv)
+     require(splines)
      require(lattice)
      cat("Loaded gbm",installed.packages()["gbm","Version"],"\n")
 }
@@ -68,11 +68,11 @@ predict.gbm <- function(object,newdata,n.trees,
 
    if(type=="response")
    {
-      if(object$distribution=="bernoulli")
+      if(object$distribution$name=="bernoulli")
       {
          predF <- 1/(1+exp(-predF))
       } else
-      if(object$distribution=="poisson")
+      if(object$distribution$name=="poisson")
       {
          predF <- exp(predF)
       }
@@ -214,7 +214,7 @@ plot.gbm <- function(x,
       else if(f.factor[1] && !f.factor[2])
       {
          xyplot(y~X2|X1,data=X,
-                xlab=x$var.names[i.var[1]],
+                xlab=x$var.names[i.var[2]],
                 ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
                 type="l",
                 ...)
@@ -222,7 +222,7 @@ plot.gbm <- function(x,
       else if(!f.factor[1] && f.factor[2])
       {
          xyplot(y~X1|X2,data=X,
-                xlab=x$var.names[i.var[2]],
+                xlab=x$var.names[i.var[1]],
                 ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
                 type="l",
                 ...)
@@ -315,7 +315,7 @@ gbm.more <- function(object,
       }
       Misc <- NA
 
-      if(object$distribution == "coxph")
+      if(object$distribution$name == "coxph")
       {
          Misc <- as.numeric(y)[-(1:cRows)]
          y <- as.numeric(y)[1:cRows]
@@ -349,7 +349,7 @@ gbm.more <- function(object,
       w           <- object$data$w
       cRows <- length(y)
       cCols <- length(x)/cRows
-      if(object$distribution == "coxph")
+      if(object$distribution$name == "coxph")
       {
          i.timeorder <- object$data$i.timeorder
          object$fit <- object$fit[i.timeorder]
@@ -373,7 +373,7 @@ gbm.more <- function(object,
                     cCols = as.integer(cCols),
                     var.type = as.integer(object$var.type),
                     var.monotone = as.integer(object$var.monotone),
-                    distribution = as.character(object$distribution),
+                    distribution = as.character(object$distribution$name),
                     n.trees = as.integer(n.new.trees),
                     interaction.depth = as.integer(object$interaction.depth),
                     n.minobsinnode = as.integer(object$n.minobsinnode),
@@ -413,7 +413,7 @@ gbm.more <- function(object,
    gbm.obj$var.levels        <- object$var.levels
    gbm.obj$verbose           <- verbose
 
-   if(object$distribution == "coxph")
+   if(object$distribution$name == "coxph")
    {
       gbm.obj$fit[i.timeorder] <- gbm.obj$fit
    }
@@ -545,34 +545,59 @@ gbm.fit <- function(x,y,
 
    nTrain <- as.integer(train.fraction*cRows)
 
-   supported.distributions <-
-      c("bernoulli","gaussian","poisson","adaboost","laplace","coxph")
-   # check potential problems with the distributions
-   if(!is.element(distribution,supported.distributions))
+   if(is.character(distribution)) distribution <- list(name=distribution)
+   if(!("name" %in% names(distribution)))
    {
-      stop("Distribution ",distribution," is not supported")
+      stop("The distribution is missing a 'name' component, for example list(name=\"gaussian\")")
    }
-   if((distribution == "bernoulli") && !all(is.element(y,0:1)))
+   supported.distributions <-
+      c("bernoulli","gaussian","poisson","adaboost","laplace","coxph","quantile")
+   # check potential problems with the distributions
+   if(!is.element(distribution$name,supported.distributions))
+   {
+      stop("Distribution ",distribution$name," is not supported")
+   }
+   if(!is.numeric(y))
+   {
+      stop("The response ",response.name," must be numeric. Factors must be converted to numeric")
+   }
+   if((distribution$name == "bernoulli") && !all(is.element(y,0:1)))
    {
       stop("Bernoulli requires the response to be in {0,1}")
    }
-   if((distribution == "poisson") && any(y<0))
+   if((distribution$name == "poisson") && any(y<0))
    {
       stop("Poisson requires the response to be positive")
    }
-   if((distribution == "poisson") && any(y != trunc(y)))
+   if((distribution$name == "poisson") && any(y != trunc(y)))
    {
       stop("Poisson requires the response to be a positive integer")
    }
-   if((distribution == "adaboost") && !all(is.element(y,0:1)))
+   if((distribution$name == "adaboost") && !all(is.element(y,0:1)))
    {
       stop("This version of AdaBoost requires the response to be in {0,1}")
    }
-   if((distribution == "laplace") && (length(unique(w)) > 1))
+   if((distribution$name == "laplace") && (length(unique(w)) > 1))
    {
       stop("This version of gbm for the Laplace loss lacks a weighted median. For now the weights must be constant.")
    }
-   if(distribution == "coxph")
+   if(distribution$name == "quantile")
+   {
+      if(length(unique(w)) > 1)
+      {
+         stop("This version of gbm for the quantile regression lacks a weighted quantile. For now the weights must be constant.")
+      }
+      if(is.null(distribution$alpha))
+      {
+         stop("For quantile regression, the distribution parameter must be a list with a parameter 'alpha' indicating the quantile, for example list(name=\"quantile\",alpha=0.95).")
+      } else
+      if((distribution$alpha<0) || (distribution$alpha>1))
+      {
+         stop("alpha must be between 0 and 1.")
+      }
+      Misc <- c(alpha=distribution$alpha)
+   }
+   if(distribution$name == "coxph")
    {
       if(class(y)!="Surv")
       {
@@ -635,7 +660,7 @@ gbm.fit <- function(x,y,
                     cCols=as.integer(cCols),
                     var.type=as.integer(var.type),
                     var.monotone=as.integer(var.monotone),
-                    distribution=as.character(distribution),
+                    distribution=as.character(distribution$name),
                     n.trees=as.integer(n.trees),
                     interaction.depth=as.integer(interaction.depth),
                     n.minobsinnode=as.integer(n.minobsinnode),
@@ -666,14 +691,14 @@ gbm.fit <- function(x,y,
    gbm.obj$verbose <- verbose
    gbm.obj$Terms <- NULL
 
-   if(distribution == "coxph")
+   if(distribution$name == "coxph")
    {
       gbm.obj$fit[i.timeorder] <- gbm.obj$fit
    }
 
    if(keep.data)
    {
-      if(distribution == "coxph")
+      if(distribution$name == "coxph")
       {
          # put the observations back in order
          gbm.obj$data <- list(y=y,x=x,x.order=x.order,offset=offset,Misc=Misc,w=w,
@@ -729,14 +754,14 @@ gbm <- function(formula = formula(data),
 
    # get the character name of the response variable
    response.name <- as.character(formula[[2]])
+   if(is.character(distribution)) distribution <- list(name=distribution)
 
    cv.error <- NULL
    if(cv.folds>1)
    {
-      if(distribution=="coxph") i.train <- 1:floor(train.fraction*nrow(y))
+      if(distribution$name=="coxph") i.train <- 1:floor(train.fraction*nrow(y))
       else                      i.train <- 1:floor(train.fraction*length(y))
-      cv.group <- sample(rep(1:cv.folds,
-                             length=length(i.train)))
+      cv.group <- sample(rep(1:cv.folds, length=length(i.train)))
       cv.error <- rep(0, n.trees)
       for(i.cv in 1:cv.folds)
       {
@@ -780,6 +805,7 @@ gbm <- function(formula = formula(data),
                       response.name = response.name)
    gbm.obj$Terms <- Terms
    gbm.obj$cv.error <- cv.error
+   gbm.obj$cv.folds <- cv.folds
 
    return(gbm.obj)
 }
@@ -836,12 +862,14 @@ gbm.perf <- function(object,
    if(plot.it)
    {
       par(mar=c(5,4,4,4)+.1)
-      ylab <- switch(substring(object$distribution,1,2),
+      ylab <- switch(substring(object$distribution$name,1,2),
                                ga="Squared error loss",
-                               be="Bernoulli log-likelihood",
-                               po="Poisson log-likelihood",
+                               be="Bernoulli deviance",
+                               po="Poisson deviance",
                                ad="AdaBoost exponential bound",
-                               co="Cox partial log-likelihood")
+                               co="Cox partial deviance",
+                               la="Absolute loss",
+                               qu="Quantile loss")
       if(object$train.fraction==1)
       {
          ylim <- range(object$train.error)
@@ -925,7 +953,7 @@ gbm.loss <- function(y,f,w,offset,dist,baseline)
           bernoulli = -2*weighted.mean(y*f - log(1+exp(f)),w) - baseline,
           laplace = weighted.mean(abs(y-f),w) - baseline,
           adaboost = weighted.mean(exp(-(2*y-1)*f),w) - baseline,
-          poisson = -2*weighted.mean(y*f-exp(f)) - baseline,
+          poisson = -2*weighted.mean(y*f-exp(f),w) - baseline,
           stop(paste("Distribution",dist,"is not yet supported for method=permutation.test.gbm")))
 }
 
@@ -960,7 +988,7 @@ permutation.test.gbm <- function(object,
 
       new.pred <- predict.gbm(object,newdata=x,n.trees=n.trees)
       rel.inf[i.vars[i]] <- gbm.loss(y,new.pred,w,os,
-                                     object$distribution,
+                                     object$distribution$name,
                                      object$train.error[n.trees])
 
       x[j,i.vars[i]] <- x[ ,i.vars[i]]
@@ -976,6 +1004,7 @@ summary.gbm <- function(object,
                         plotit=TRUE,
                         order=TRUE,
                         method=relative.influence,
+                        normalize=TRUE,
                         ...)
 {
    if(n.trees < 1)
@@ -1002,7 +1031,7 @@ summary.gbm <- function(object,
    if(cBars==0) cBars <- min(10,length(object$var.names))
    if(cBars>length(object$var.names)) cBars <- length(object$var.names)
 
-   rel.inf <- 100*rel.inf/sum(rel.inf)
+   if(normalize) rel.inf <- 100*rel.inf/sum(rel.inf)
 
    if(plotit)
    {
@@ -1037,10 +1066,16 @@ calibrate.plot <- function(y,p,
                            xlab="Predicted value",
                            ylab="Observed average",
                            xlim=NULL,ylim=NULL,
+                           knots=NULL,df=6,
                            ...)
 {
    data <- data.frame(y=y,p=p)
 
+   if(is.null(knots) && is.null(df))
+      stop("Either knots or df must be specified")
+   if((df != round(df)) || (df<1))
+      stop("df must be a positive integer")
+   
    if(distribution=="bernoulli")
    {
       family1 = binomial
@@ -1051,7 +1086,7 @@ calibrate.plot <- function(y,p,
    {
       family1 = gaussian
    }
-   gam1 <- gam(y~s(p),data=data,family=family1)
+   gam1 <- glm(y~ns(p,df=df,knots=knots),data=data,family=family1)
 
    x <- seq(min(p),max(p),length=200)
    yy <- predict(gam1,newdata=data.frame(p=x),se.fit=TRUE,type="response")
@@ -1278,4 +1313,83 @@ basehaz.gbm <- function(t,delta,f.x,
    }
 
    return(obj)
+}
+
+
+# Compute Friedman's H statistic for interaction effects
+interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees) 
+{
+    if (all(is.character(i.var)))
+    {
+        i <- match(i.var, x$var.names)
+        if (any(is.na(i))) {
+            stop("Variables given are not used in gbm model fit: ", 
+                i.var[is.na(i)])
+        }
+        else
+        {
+            i.var <- i
+        }
+    }
+    if ((min(i.var) < 1) || (max(i.var) > length(x$var.names)))
+    {
+        warning("i.var must be between 1 and ", length(x$var.names))
+    }
+    if (n.trees > x$n.trees)
+    {
+        warning(paste("n.trees exceeds the number of trees in the model, ", 
+            x$n.trees,". Using ", x$n.trees, " trees.", sep = ""))
+        n.trees <- x$n.trees
+    }
+     
+    unique.tab <- function(z,i.var)
+    {
+        a <- unique(z[,i.var,drop=FALSE])
+        a$n <- table(factor(apply(z[,i.var,drop=FALSE],1,paste,collapse="\r"),
+                     levels=apply(a,1,paste,collapse="\r")))
+        return(a)
+    }
+
+   # convert factors
+   for(j in i.var)
+   {
+      if(is.factor(mydata[,x$var.names[j]]))
+         mydata[,x$var.names[j]] <- 
+            as.numeric(mydata[,x$var.names[j]])-1
+   }
+   
+   # generate a list with all combinations of variables
+   a <- apply(expand.grid(rep(list(c(FALSE,TRUE)), length(i.var)))[-1,],1,
+              function(x) as.numeric(which(x)))
+   F <- vector("list",length(a))
+   for(j in 1:length(a))
+   {
+      F[[j]]$Z <- data.frame(unique.tab(mydata, x$var.names[i.var[a[[j]]]]))
+      F[[j]]$n <- as.numeric(F[[j]]$Z$n)
+      F[[j]]$Z$n <- NULL
+      F[[j]]$f <- .Call("gbm_plot", 
+                        X = as.double(data.matrix(F[[j]]$Z)), 
+                        cRows = as.integer(nrow(F[[j]]$Z)), 
+                        cCols = as.integer(ncol(F[[j]]$Z)), 
+                        i.var = as.integer(i.var[a[[j]]] - 1),
+                        n.trees = as.integer(n.trees), 
+                        initF = as.double(x$initF), 
+                        trees = x$trees, c.splits = x$c.splits,
+                        var.type = as.integer(x$var.type), PACKAGE = "gbm")
+      # center the values
+      F[[j]]$f <- with(F[[j]], f - weighted.mean(f,n))
+      # precompute the sign of these terms to appear in H
+      F[[j]]$sign <- ifelse(length(a[[j]]) %% 2 == length(i.var) %% 2, 1, -1)
+   }
+
+   H <- F[[length(a)]]$f
+   for(j in 1:(length(a)-1))
+   {
+      i <- match(apply(F[[length(a)]]$Z[,a[[j]],drop=FALSE],1,paste,collapse="\r"),
+                 apply(F[[j]]$Z,1,paste,collapse="\r"))
+      H <- H + with(F[[j]], sign*f[i])
+   }
+   H <- weighted.mean(H^2, F[[length(a)]]$n)/
+        weighted.mean((F[[length(a)]]$f)^2,F[[length(a)]]$n) 
+   return(sqrt(H))
 }

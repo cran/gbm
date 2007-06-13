@@ -522,7 +522,7 @@ SEXP gbm_plot
                 }
                 else // non-terminal node
                 {
-                    // which split variable am I interested in it?
+                    // is this a split variable that interests me?
                     iPredVar = -1;
                     for(i=0; (iPredVar == -1) && (i < cCols); i++)
                     {
@@ -532,11 +532,17 @@ SEXP gbm_plot
                         }
                     }
 
-                    if(iPredVar != -1)
+                    if(iPredVar != -1) // this split is among raiWhichVar
                     {
                         dX = REAL(radX)[iPredVar*cRows + iObs];
+                        // missing?
+                        if(ISNA(dX))
+                        {
+                            aiNodeStack[cStackNodes] = aiMissingNode[iCurrentNode];
+                            cStackNodes++;                            
+                        }
                         // continuous?
-                        if(INTEGER(raiVarType)[aiSplitVar[iCurrentNode]] == 0)
+                        else if(INTEGER(raiVarType)[aiSplitVar[iCurrentNode]] == 0)
                         {
                             if(dX < adSplitCode[iCurrentNode])
                             {

@@ -1,3 +1,40 @@
+
+Changes in version 1.6
+
+- Quantile regression is now available thanks to a contribution from
+Brian Kriegler. Use list(name="quantile",alpha=0.05) as the
+distribution parameter to construct a predictor of the 5% of the
+conditional distribution
+
+- gbm() now stores cv.folds in the returned gbm object
+
+- Added a normalize parameter to summary.gbm that allows one to
+choose whether or not to normalize the variable influence to sum to
+100 or not
+
+- Corrected a minor bug in plot.gbm that put the wrong variable
+label on the x axis when plotting a numeric variable and a factor
+variable
+
+- the C function gbm_plot can now handle missing values. This does
+not effect the R function plot.gbm(), but it makes gbm_plot
+potentially more useful for computing partial dependence plots
+
+- mgcv is no longer a required package, but the splines package is
+needed for calibrate.plot()
+
+- minor changes for compatibility with R 2.6.0 (thanks to Seth
+Falcon)
+
+- corrected a bug in the cox model computation when all terminal
+nodes had exactly the minimum number of observations permitted,
+which caused gbm and R to crash ungracefully. This was likely to
+occur with small datasets (thanks to Brian Ring)
+
+- corrected a bug in Laplace that always made the terminal node
+predictions slightly larger than the median
+
+
 Changes in version 1.5
 - gbm would fail if there was only one x. Now drop=FALSE is set in all
 data.frame subsetting (thanks to Gregg Keller for noticing this).
@@ -8,7 +45,7 @@ create the OOB plots and estimates.
 - Corrected a typo in the vignette specifying the gradient for the Cox
 model.
 
-- Fixed the OOB-reps.R demo. For non-Gaussian cases it was maximizing the 
+- Fixed the OOB-reps.R demo. For non-Gaussian cases it was maximizing the
 deviance rather than minimizing.
 
 - Increased the largest factor variable allowed from 256 levels to 1024
@@ -23,8 +60,8 @@ several times for different choices of n.trees.
 computing length(y) when y is a Surv object which return 2*N rather than N.
 This generated out-of-range indices for the training dataset.
 
-- Changed the method for extracting the name of the outcome variable to work 
-around a a change in terms.formula() when using "." in formulas.
+- Changed the method for extracting the name of the outcome variable to work
+around a change in terms.formula() when using "." in formulas.
 
 Changes in version 1.4
 

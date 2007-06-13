@@ -6,10 +6,12 @@
 //  License:    GNU GPL (version 2 or later)
 //
 //  Contents:   Entry point for gbm.dll
-//        	  
+//            
 //  Owner:      gregr@rand.org
 //
 //  History:    2/14/2003   gregr created
+//              6/11/2007   gregr added quantile regression
+//                          written by Brian Kriegler
 //
 //------------------------------------------------------------------------------
 
@@ -22,6 +24,7 @@
 #include "gaussian.h"
 #include "coxph.h"
 #include "laplace.h"
+#include "quantile.h"
 #include "gbm_engine.h"
 
 typedef vector<char> VEC_CATEGORIES;
@@ -39,7 +42,7 @@ GBMRESULT gbm_setup
     int cCols,
     int *acVarClasses,
     int *alMonotoneVar,
-    char *pszFamily,
+    const char *pszFamily,
     int cTrees,
     int cLeaves,
     int cMinObsInNode,

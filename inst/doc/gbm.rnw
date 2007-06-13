@@ -188,7 +188,18 @@ where $k(\mathbf{x})$ indicates the index of the terminal node into which an obs
 This section discusses the options to gbm that most users will need to change or tune.
 
 \subsection{Loss function}
-The first and foremost choice is \texttt{distribution}. This should be easily dictated by the application. For most classification problems either \texttt{bernoulli} or \texttt{adaboost} will be appropriate, the former being recommended. For continuous outcomes the choices are \texttt{gaussian} (for minimizing squared error) or \texttt{laplace} (for minimizing absolute error). Censored survival outcomes should require \texttt{coxph}. Count outcomes may use \texttt{poisson} although one might also consider \texttt{gaussian} or \texttt{laplace} depending on the analytical goals.
+
+The first and foremost choice is \texttt{distribution}. This should
+be easily dictated by the application. For most classification
+problems either \texttt{bernoulli} or \texttt{adaboost} will be
+appropriate, the former being recommended. For continuous outcomes
+the choices are \texttt{gaussian} (for minimizing squared error),
+\texttt{laplace} (for minimizing absolute error), and quantile
+regression (for estimating percentiles of the conditional
+distribution of the outcome). Censored survival outcomes should
+require \texttt{coxph}. Count outcomes may use \texttt{poisson}
+although one might also consider \texttt{gaussian} or
+\texttt{laplace} depending on the analytical goals.
 
 \subsection{The relationship between shrinkage and number of iterations}
 The issues that most new users of gbm struggle with are the choice of \texttt{n.trees} and \texttt{shrinkage}. It is important to know that smaller values of \texttt{shrinkage} (almost) always give improved predictive performance. That is, setting \texttt{shrinkage=0.001} will almost certainly result in a model with better out-of-sample predictive performance than setting \texttt{shrinkage=0.01}. However, there are computational costs, both storage and CPU time, associated with setting \texttt{shrinkage} to be low. The model with \texttt{shrinkage=0.001} will likely require ten times as many iterations as the model with \texttt{shrinkage=0.01}, increasing storage and computation time by a factor of 10. Figure~\ref{fig:shrinkViters} shows the relationship between predictive performance, the number of iterations, and the shrinkage parameter. Note that the increase in the optimal number of iterations between two choices for shrinkage is roughly equal to the ratio of the shrinkage parameters. It is generally the case that for small shrinkage parameters, 0.001 for example, there is a fairly long plateau in which predictive performance is at its best. My rule of thumb is to set \texttt{shrinkage} as small as possible while still being able to fit the model in a reasonable amount of time and storage. I usually aim for 3,000 to 10,000 iterations with shrinkage rates between 0.01 and 0.001.
@@ -280,6 +291,31 @@ Notes:
 \item \texttt{gbm()} currently does not implement the weighted median and issues a warning when the user uses weighted data with \texttt{distribution="laplace"}.
 \end{itemize}
 
+
+\subsection{Quantile regression}
+
+Contributed by Brian Kriegler.
+
+\begin{tabular}{ll}
+Deviance & $\frac{1}{\sum w_i}
+   \left(\alpha\sum_{y_i>f(\mathbf{x}_i)} w_i(y_i-f(\mathbf{x}_i))\right. +$ \\
+         & \hspace{0.5in}$\left.(1-\alpha)\sum_{y_i\leq f(\mathbf{x}_i)} w_i(f(\mathbf{x}_i)-y_i)\right)$ \\
+Initial value & $\mathrm{quantile}^{(\alpha)}_w(y)$ \\
+Gradient & $z_i=\alpha I(y_i>f(\mathbf{x}_i))-(1-\alpha)I(y_i\leq f(\mathbf{x}_i))$ \\
+Terminal node estimates & $\mathrm{quantile}^{(\alpha)}_w(z)$
+\end{tabular}
+
+Notes:
+\begin{itemize}
+\item $\mathrm{quantile}^{(\alpha)}_w(y)$ denotes the weighted quantile, defined
+as the solution to the equation
+$\frac{\sum w_iI(y_i\leq q)}{\sum w_i}=\alpha$
+\item \texttt{gbm()} currently does not implement the weighted median and
+issues a warning when the user uses weighted data with
+\texttt{distribution=list(name="quantile")}.
+\end{itemize}
+
+
 \subsection{Cox Proportional Hazard}
 
 \begin{tabular}{ll}
@@ -320,7 +356,7 @@ Notes:
 Deviance & -2$\frac{1}{\sum w_i} \sum w_i(y_if(\mathbf{x}_i)-\exp(f(\mathbf{x}_i)))$ \\
 Initial value & $\displaystyle f(\mathbf{x})= \log\left(\frac{\sum w_iy_i}{\sum w_ie^{o_i}}\right)$ \\
 Gradient & $z_i=y_i - \exp(f(\mathbf{x}_i))$ \\
-Terminal node estimates & $\displaystyle \log\frac{\sum w_iy_i}{\sum w_i\exp(\mathbf{x}_i)}$
+Terminal node estimates & $\displaystyle \log\frac{\sum w_iy_i}{\sum w_i\exp(f(\mathbf{x}_i))}$
 \end{tabular}
 
 The Poisson class includes special safeguards so that the most extreme predicted values are $e^{-19}$ and $e^{+19}$. This

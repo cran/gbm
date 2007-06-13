@@ -20,7 +20,7 @@ unsigned long gbm_setup
     int cCols,
     int *acVarClasses,
     int *alMonotoneVar,
-    char *pszFamily,
+    const char *pszFamily,
     int cTrees,
     int cDepth,
     int cMinObsInNode,
@@ -89,6 +89,15 @@ unsigned long gbm_setup
     else if(strncmp(pszFamily,"laplace",2) == 0)
     {
         pDist = new CLaplace();
+        if(pDist==NULL)
+        {
+            hr = GBM_OUTOFMEMORY;
+            goto Error;
+        }
+    }
+    else if(strncmp(pszFamily,"quantile",2) == 0)
+    {
+        pDist = new CQuantile(adMisc[0]);
         if(pDist==NULL)
         {
             hr = GBM_OUTOFMEMORY;

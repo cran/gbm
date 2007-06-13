@@ -1,33 +1,33 @@
 //------------------------------------------------------------------------------
 //  GBM by Greg Ridgeway  Copyright (C) 2003
-//
-//  File:       bernoulli.h
+//  File:       quantile.h
 //
 //  License:    GNU GPL (version 2 or later)
 //
-//  Contents:   bernoulli object
-//        	  
+//  Contents:   laplace object
+//            
 //  Owner:      gregr@rand.org
 //
-//  History:    3/26/2001   gregr created
-//              2/14/2003   gregr: adapted for R implementation
-//
+//  History:    10/8/2006   Created by Brian Kriegler (bk@stat.ucla.edu)
+//              6/11/2007   gregr merged with official gbm 
+//        
 //------------------------------------------------------------------------------
 
-#ifndef BERNOULLI_H
-#define BERNOULLI_H
+#ifndef QUANTILE_H
+#define QUANTILE_H
 
+#include <algorithm>
 #include "distribution.h"
-#include "buildinfo.h"
 
-class CBernoulli : public CDistribution
+
+class CQuantile: public CDistribution
 {
 
 public:
 
-    CBernoulli();
+    CQuantile(double dAlpha);
 
-    virtual ~CBernoulli();
+    virtual ~CQuantile();
 
     GBMRESULT ComputeWorkingResponse(double *adY,
                                    double *adMisc,
@@ -38,33 +38,33 @@ public:
                                    bool *afInBag,
                                    unsigned long nTrain);
 
+    GBMRESULT InitF(double *adY, 
+                    double *adMisc,
+                    double *adOffset,
+                    double *adWeight,
+                    double &dInitF, 
+                    unsigned long cLength);
+
+    GBMRESULT FitBestConstant(double *adY,
+                              double *adMisc,
+                              double *adOffset,
+                              double *adW,
+                              double *adF,
+                              double *adZ,
+                              unsigned long *aiNodeAssign,
+                              unsigned long nTrain,
+                              VEC_P_NODETERMINAL vecpTermNodes,
+                              unsigned long cTermNodes,
+                              unsigned long cMinObsInNode,
+                              bool *afInBag,
+                              double *adFadj);
+
     double Deviance(double *adY,
                     double *adMisc,
                     double *adOffset,
                     double *adWeight,
                     double *adF,
                     unsigned long cLength);
-
-    GBMRESULT InitF(double *adY,
-                  double *adMisc,
-                  double *adOffset,
-                  double *adWeight,
-                  double &dInitF, 
-                  unsigned long cLength);
-
-    GBMRESULT FitBestConstant(double *adY,
-                            double *adMisc,
-                            double *adOffset,
-                            double *adW,
-                            double *adF,
-                            double *adZ,
-                            unsigned long *aiNodeAssign,
-                            unsigned long nTrain,
-                            VEC_P_NODETERMINAL vecpTermNodes,
-                            unsigned long cTermNodes,
-                            unsigned long cMinObsInNode,
-                            bool *afInBag,
-                            double *adFadj);
 
     double BagImprovement(double *adY,
                           double *adMisc,
@@ -77,11 +77,11 @@ public:
                           unsigned long nTrain);
 
 private:
-    vector<double> vecdNum;
-    vector<double> vecdDen;
+    vector<double> vecd;
+    double dAlpha;
 };
 
-#endif // BERNOULLI_H
+#endif // QUANTILE_H
 
 
 

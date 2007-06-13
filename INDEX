@@ -4,6 +4,7 @@ gbm                     Generalized Boosted Regression Modeling
 gbm-package             Generalized Boosted Regression Models
 gbm.object              Generalized Boosted Regression Model Object
 gbm.perf                GBM performance
+interact.gbm            Estimate the strength of interaction effects
 plot.gbm                Marginal plots of fitted gbm objects
 predict.gbm             Predict method for GBM Model Fits
 pretty.gbm.tree         Print gbm tree components

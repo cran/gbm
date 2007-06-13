@@ -11,6 +11,7 @@ Computes the relative influence of each variable in the gbm object.
         plotit=TRUE,
         order=TRUE,
         method=relative.influence,
+        normalize=TRUE,
         ...)
 }
 \arguments{
@@ -34,15 +35,17 @@ variable at a time and computes the associated reduction in predictive
 performance. This is similar to the variable importance measures Breiman uses
 for random forests, but \code{gbm} currently computes using the entire training
 dataset (not the out-of-bag observations.}
+\item{normalize}{ if \code{FALSE} then \code{summary.gbm} returns the 
+unnormalized influence. }
 \item{...}{ other arguments passed to the plot function. }
 }
 \details{
-For \code{distribution="gaussian"} this returns exactly a set of
-Type III sum of squares for each variable normalized to sum to 100. For other
-loss functions this returns the reduction attributeable to each varaible in sum
-of squared error in predicting the gradient on each iteration. It describes the
-relative influence of each variable in reducing the loss function. See the
-references below for exact details on the computation.
+For \code{distribution="gaussian"} this returns exactly the reduction 
+of squared error attributable to each variable. For other loss functions this 
+returns the reduction attributeable to each varaible in sum of squared error in 
+predicting the gradient on each iteration. It describes the relative influence 
+of each variable in reducing the loss function. See the references below for 
+exact details on the computation.
 }
 \value{
 Returns a data frame where the first component is the variable name and the

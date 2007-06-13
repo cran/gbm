@@ -45,24 +45,32 @@ gbm.more(object,
          verbose = NULL)
 }
 \arguments{
-\item{formula}{a symbolic description of the model to be fit. The formula may include an offset term (e.g. y~offset(n)+x). If \code{keep.data=FALSE} in the initial call to \code{gbm} then it is the user's responsibility to resupply the offset to \code{\link{gbm.more}}.}
-\item{distribution}{a description of the error distribution to be used in the
-model. Currently available options are "gaussian" (squared error), "laplace"
-(absolute loss), "bernoulli" (logistic regression for 0-1 outcomes), "adaboost"
-(the AdaBoost exponential loss for 0-1 outcomes), "poisson" (count outcomes),
-and "coxph" (censored observations). The current version's Laplace distribution
-does not handle non-constant weights and will stop.}
+\item{formula}{a symbolic description of the model to be fit. The formula may 
+   include an offset term (e.g. y~offset(n)+x). If \code{keep.data=FALSE} in 
+   the initial call to \code{gbm} then it is the user's responsibility to 
+   resupply the offset to \code{\link{gbm.more}}.}
+\item{distribution}{a character string specifying the name of the distribution 
+   to use or a list with a component \code{name} specifying the distribution 
+   and any additional parameters needed. 
+   Currently available options are "gaussian" (squared error), "laplace"
+   (absolute loss), "bernoulli" (logistic regression for 0-1 outcomes), 
+   "adaboost" (the AdaBoost exponential loss for 0-1 outcomes), "poisson" 
+   (count outcomes), and "coxph" (right censored observations). Quantile 
+   regression is also available and \code{distribution} must a list of the form 
+   \code{list(name="quantile",alpha=0.25)} where \code{alpha} is the quantile 
+   to estimate. The current version's Laplace and quantile regression methods do 
+   not handle non-constant weights and will stop.}
 \item{data}{an optional data frame containing the variables in the model. By
-default the variables are taken from \code{environment(formula)}, typically the
-environment from which \code{gbm} is called. If \code{keep.data=TRUE} in the
-initial call to \code{gbm} then \code{gbm} stores a copy with the object. If
-\code{keep.data=FALSE} then subsequent calls to \code{\link{gbm.more}} must
-resupply the same dataset. It becomes the user's responsibility to resupply
-the same data at this point.}
-\item{weights}{an optional vector of weights to be used in the fitting
-process. Must be positive but do not need to be normalized. If
-\code{keep.data=FALSE} in the initial call to \code{gbm} then it
-is the user's responsibility to resupply the weights to \code{\link{gbm.more}}.}
+   default the variables are taken from \code{environment(formula)}, typically 
+   the environment from which \code{gbm} is called. If \code{keep.data=TRUE} in 
+   the initial call to \code{gbm} then \code{gbm} stores a copy with the 
+   object. If \code{keep.data=FALSE} then subsequent calls to 
+   \code{\link{gbm.more}} must resupply the same dataset. It becomes the user's 
+   responsibility to resupply the same data at this point.}
+\item{weights}{an optional vector of weights to be used in the fitting process. 
+   Must be positive but do not need to be normalized. If \code{keep.data=FALSE} 
+   in the initial call to \code{gbm} then it is the user's responsibility to 
+   resupply the weights to \code{\link{gbm.more}}.}
 \item{var.monotone}{an optional vector, the same length as the number of
 predictors, indicating which variables have a monotone increasing (+1),
 decreasing (-1), or arbitrary (0) relationship with the outcome.}
@@ -164,12 +172,19 @@ Machine,} \emph{Annals of Statistics} 29(5):1189-1232.
 J.H. Friedman (2002). \dQuote{Stochastic Gradient Boosting,} \emph{Computational Statistics
 and Data Analysis} 38(4):367-378.
 
+B. Kriegler (2007). \emph{Cost-Sensitive Stochastic Gradient Boosting Within a 
+Quantitative Regression Framework}. PhD dissertation, UCLA Statistics. 
+\url{http://theses.stat.ucla.edu/57/KrieglerDissertation.pdf}
+
 \url{http://www.i-pensieri.com/gregr/gbm.shtml}
 
 \url{http://www-stat.stanford.edu/~jhf/R-MART.html}
 }
 
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregr@rand.org}
+
+Quantile regression code developed by Brian Kriegler \email{bk@stat.ucla.edu}}
+
 \seealso{
 \code{\link{gbm.object}},
 \code{\link{gbm.perf}},
@@ -227,7 +242,7 @@ gbm1 <- gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
 best.iter <- gbm.perf(gbm1,method="OOB")
 print(best.iter)
 
-# check performance using a 50% heldout test set
+# check performance using a 50\% heldout test set
 best.iter <- gbm.perf(gbm1,method="test")
 print(best.iter)
 
