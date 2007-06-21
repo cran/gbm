@@ -1,6 +1,6 @@
 Package: gbm
-Version: 1.6-1
-Date: 2007-06-13
+Version: 1.6-2
+Date: 2007-06-21
 Title: Generalized Boosted Regression Models
 Author: Greg Ridgeway <gregr@rand.org>
 Maintainer: Greg Ridgeway <gregr@rand.org>
@@ -13,4 +13,4 @@ Description: This package implements extensions
   exponential loss.
 License: GPL (version 2 or newer)
 URL: http://www.i-pensieri.com/gregr/gbm.shtml
-Packaged: Wed Jun 13 13:46:23 2007; gregr
+Packaged: Thu Jun 21 11:03:51 2007; gregr

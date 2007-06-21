@@ -224,7 +224,7 @@ gbm1 <- gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
                                  # +1: monotone increase,
                                  #  0: no monotone restrictions
     distribution="gaussian",     # bernoulli, adaboost, gaussian,
-                                 # poisson, and coxph available
+                                 # poisson, coxph, and quantile available
     n.trees=3000,                # number of trees
     shrinkage=0.005,             # shrinkage or learning rate,
                                  # 0.001 to 0.1 usually work
@@ -238,7 +238,7 @@ gbm1 <- gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
     verbose=TRUE)                # print out progress
 
 # check performance using an out-of-bag estimator
-# OOB underestimates the optimal number of iterations, performance is competitive
+# OOB underestimates the optimal number of iterations
 best.iter <- gbm.perf(gbm1,method="OOB")
 print(best.iter)
 

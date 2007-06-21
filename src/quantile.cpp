@@ -180,7 +180,7 @@ GBMRESULT CQuantile::FitBestConstant
             {
                 nth_element(vecd.begin(), 
                             vecd.begin() + int(iVecd*dAlpha), 
-                            vecd.end());
+                            vecd.begin() + int(iVecd));
                 vecpTermNodes[iNode]->dPrediction = 
                     *(vecd.begin() + int(iVecd*dAlpha));
             }

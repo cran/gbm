@@ -1,4 +1,6 @@
 
+
+
 Changes in version 1.6
 
 - Quantile regression is now available thanks to a contribution from
@@ -32,7 +34,8 @@ which caused gbm and R to crash ungracefully. This was likely to
 occur with small datasets (thanks to Brian Ring)
 
 - corrected a bug in Laplace that always made the terminal node
-predictions slightly larger than the median
+predictions slightly larger than the median. Corrected again in a
+minor release due to a bug caught by Jon McAuliffe
 
 
 Changes in version 1.5

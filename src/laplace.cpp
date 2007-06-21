@@ -136,6 +136,7 @@ GBMRESULT CLaplace::FitBestConstant
     double dOffset;
 
     vecd.resize(nTrain); // should already be this size from InitF
+    
     for(iNode=0; iNode<cTermNodes; iNode++)
     {
         if(vecpTermNodes[iNode]->cN >= cMinObsInNode)
@@ -150,7 +151,9 @@ GBMRESULT CLaplace::FitBestConstant
                     iVecd++;
                 }
             }
-            nth_element(vecd.begin(), vecd.begin() + int(iVecd/2.0), vecd.end());
+            nth_element(vecd.begin(), 
+                        vecd.begin() + int(iVecd/2.0), 
+                        vecd.begin() + int(iVecd));
             vecpTermNodes[iNode]->dPrediction = *(vecd.begin() + int(iVecd/2.0));
         }
     }

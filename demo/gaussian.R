@@ -32,7 +32,8 @@ data <- data.frame(Y=Y,X1=X1,X2=X2,X3=X3,X4=X4,X5=X5,X6=X6)
 gbm1 <- gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
             data=data,                   # dataset
             var.monotone=c(0,0,0,0,0,0), # -1: monotone decrease, +1: monotone increase, 0: no monotone restrictions
-            distribution="gaussian",     # bernoulli, adaboost, gaussian, poisson, and coxph available
+            distribution="gaussian",     # bernoulli, adaboost, gaussian, poisson, coxph, or
+                                         # list(name="quantile",alpha=0.05) for quantile regression
             n.trees=2000,                 # number of trees
             shrinkage=0.005,             # shrinkage or learning rate, 0.001 to 0.1 usually work
             interaction.depth=3,         # 1: additive model, 2: two-way interactions, etc
