@@ -888,6 +888,10 @@ gbm.perf <- function(object,
       {
          lines(object$valid.error,col="red")
       }
+      if(method=="cv")
+      {
+         lines(object$cv.error,col="green")
+      }
 
       if(oobag.curve)
       {
@@ -1353,9 +1357,9 @@ interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees)
    # convert factors
    for(j in i.var)
    {
-      if(is.factor(mydata[,x$var.names[j]]))
-         mydata[,x$var.names[j]] <- 
-            as.numeric(mydata[,x$var.names[j]])-1
+      if(is.factor(data[,x$var.names[j]]))
+         data[,x$var.names[j]] <- 
+            as.numeric(data[,x$var.names[j]])-1
    }
    
    # generate a list with all combinations of variables
@@ -1364,7 +1368,7 @@ interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees)
    F <- vector("list",length(a))
    for(j in 1:length(a))
    {
-      F[[j]]$Z <- data.frame(unique.tab(mydata, x$var.names[i.var[a[[j]]]]))
+      F[[j]]$Z <- data.frame(unique.tab(data, x$var.names[i.var[a[[j]]]]))
       F[[j]]$n <- as.numeric(F[[j]]$Z$n)
       F[[j]]$Z$n <- NULL
       F[[j]]$f <- .Call("gbm_plot", 

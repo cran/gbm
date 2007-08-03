@@ -76,7 +76,7 @@ data2 <- data.frame(Y=Y,X1=X1,X2=X2,X3=X3,X4=X4,X5=X5,X6=X6)
 print(data2[1:10,])
 
 # predict on the new data using "best" number of trees
-f.predict <- predict.gbm(gbm1,data2,best.iter) # f.predict will be on the canonical scale (logit,log,etc.)
+f.predict <- predict(gbm1,data2,best.iter) # f.predict will be on the canonical scale (logit,log,etc.)
 
 print(f.predict[1:10])
 # least squares error
@@ -85,15 +85,23 @@ print(sum((data2$Y-f.predict)^2))
 # create marginal plots
 # plot variable X1,X2,X3 after "best" iterations
 par(mfrow=c(1,3))
-plot.gbm(gbm1,1,best.iter)
-plot.gbm(gbm1,2,best.iter)
-plot.gbm(gbm1,3,best.iter)
+plot(gbm1,1,best.iter)
+plot(gbm1,2,best.iter)
+plot(gbm1,3,best.iter)
 par(mfrow=c(1,1))
-plot.gbm(gbm1,1:2,best.iter) # contour plot of variables 1 and 2 after "best" number iterations
-plot.gbm(gbm1,2:3,best.iter) # lattice plot of variables 2 and 3 after "best" number iterations
-plot.gbm(gbm1,3:4,best.iter) # lattice plot of variables 2 and 3 after "best" number iterations
+plot(gbm1,1:2,best.iter) # contour plot of variables 1 and 2 after "best" number iterations
+plot(gbm1,2:3,best.iter) # lattice plot of variables 2 and 3 after "best" number iterations
+plot(gbm1,3:4,best.iter) # lattice plot of variables 2 and 3 after "best" number iterations
 
-plot.gbm(gbm1,c(1,2,6),best.iter,cont=20) # 3-way plots
-plot.gbm(gbm1,1:3,best.iter)
-plot.gbm(gbm1,2:4,best.iter)
-plot.gbm(gbm1,3:5,best.iter)
+plot(gbm1,c(1,2,6),best.iter,cont=20) # 3-way plots
+plot(gbm1,1:3,best.iter)
+plot(gbm1,2:4,best.iter)
+plot(gbm1,3:5,best.iter)
+
+# check interactions
+interact.gbm(gbm1,data=data,i.var=1:2,n.trees=best.iter)
+# get all two way interactions
+i.var <- subset(expand.grid(x1=1:6,x2=1:6), x1<x2)
+rownames(i.var) <- apply(i.var,1,paste,collapse=":",sep="")
+apply(i.var,1,
+      function(i.var) interact.gbm(gbm1,data=data,i.var=i.var,n.trees=best.iter))
