@@ -31,6 +31,5 @@ This function is currently experimental. Used in conjunction with a gradient asc
 \section{Warning}{This function is experimental.}
 
 \seealso{ \code{\link{shrink.gbm.pred}}, \code{\link{gbm}} }
-\examples{}
 \keyword{ methods}% at least one, from doc/KEYWORDS
 

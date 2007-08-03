@@ -30,5 +30,4 @@ A vector with length equal to the number of observations in newdata containing t
 \section{Warning}{This function is experimental}
 
 \seealso{ \code{\link{shrink.gbm}}, \code{\link{gbm}} }
-\examples{}
 \keyword{ methods }

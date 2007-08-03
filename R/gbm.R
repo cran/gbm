@@ -1,11 +1,6 @@
-.First.lib <- function(lib, pkg)
-{
-     library.dynam("gbm", pkg, lib)
-     require(survival)
-     require(splines)
-     require(lattice)
-     cat("Loaded gbm",installed.packages()["gbm","Version"],"\n")
-}
+.onAttach <- function(libname, pkgname)
+     packageStartupMessage("Loaded gbm ",
+                           utils::packageVersion(pkgname, libname),"\n")
 
 
 predict.gbm <- function(object,newdata,n.trees,
@@ -53,7 +48,7 @@ predict.gbm <- function(object,newdata,n.trees,
       warning("Number of trees not specified or exceeded number fit so far. Using ",paste(n.trees,collapse=" "),".")
    }
    i.ntree.order <- order(n.trees)
-      
+
    predF <- .Call("gbm_pred",
                   X=as.double(x),
                   cRows=as.integer(cRows),
@@ -77,14 +72,14 @@ predict.gbm <- function(object,newdata,n.trees,
          predF <- exp(predF)
       }
    }
-   
-   if(length(n.trees)>1) 
+
+   if(length(n.trees)>1)
    {
       predF <- matrix(predF,ncol=length(n.trees),byrow=FALSE)
       colnames(predF) <- n.trees
       predF[,i.ntree.order] <- predF
    }
-   
+
    if(!is.null(attr(object$Terms,"offset")))
    {
       warning("predict.gbm does not add the offset to the predicted values.")
@@ -734,7 +729,7 @@ gbm <- function(formula = formula(data),
                 keep.data = TRUE,
                 verbose = TRUE)
 {
-   mf <- match.call(expand.dots = FALSE)    
+   mf <- match.call(expand.dots = FALSE)
    m <- match(c("formula", "data", "weights", "offset"), names(mf), 0)
    mf <- mf[c(1, m)]
    mf$drop.unused.levels <- TRUE
@@ -746,7 +741,7 @@ gbm <- function(formula = formula(data),
    y <- model.response(mf, "numeric")
    w <- model.weights(mf)
    offset <- model.offset(mf)
-   
+
    var.names <- attributes(Terms)$term.labels
    x <- model.frame(terms(reformulate(var.names)),
                     data,
@@ -767,7 +762,7 @@ gbm <- function(formula = formula(data),
       {
          if(verbose) cat("CV:",i.cv,"\n")
          i <- order(cv.group==i.cv)
-         gbm.obj <- gbm.fit(x[i.train,,drop=FALSE][i,,drop=FALSE], 
+         gbm.obj <- gbm.fit(x[i.train,,drop=FALSE][i,,drop=FALSE],
                             y[i.train][i],
                             offset = offset[i.train][i],
                             distribution = distribution,
@@ -1079,7 +1074,7 @@ calibrate.plot <- function(y,p,
       stop("Either knots or df must be specified")
    if((df != round(df)) || (df<1))
       stop("df must be a positive integer")
-   
+
    if(distribution=="bernoulli")
    {
       family1 = binomial
@@ -1321,13 +1316,13 @@ basehaz.gbm <- function(t,delta,f.x,
 
 
 # Compute Friedman's H statistic for interaction effects
-interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees) 
+interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees)
 {
     if (all(is.character(i.var)))
     {
         i <- match(i.var, x$var.names)
         if (any(is.na(i))) {
-            stop("Variables given are not used in gbm model fit: ", 
+            stop("Variables given are not used in gbm model fit: ",
                 i.var[is.na(i)])
         }
         else
@@ -1341,11 +1336,11 @@ interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees)
     }
     if (n.trees > x$n.trees)
     {
-        warning(paste("n.trees exceeds the number of trees in the model, ", 
+        warning(paste("n.trees exceeds the number of trees in the model, ",
             x$n.trees,". Using ", x$n.trees, " trees.", sep = ""))
         n.trees <- x$n.trees
     }
-     
+
     unique.tab <- function(z,i.var)
     {
         a <- unique(z[,i.var,drop=FALSE])
@@ -1358,10 +1353,10 @@ interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees)
    for(j in i.var)
    {
       if(is.factor(data[,x$var.names[j]]))
-         data[,x$var.names[j]] <- 
+         data[,x$var.names[j]] <-
             as.numeric(data[,x$var.names[j]])-1
    }
-   
+
    # generate a list with all combinations of variables
    a <- apply(expand.grid(rep(list(c(FALSE,TRUE)), length(i.var)))[-1,],1,
               function(x) as.numeric(which(x)))
@@ -1371,13 +1366,13 @@ interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees)
       F[[j]]$Z <- data.frame(unique.tab(data, x$var.names[i.var[a[[j]]]]))
       F[[j]]$n <- as.numeric(F[[j]]$Z$n)
       F[[j]]$Z$n <- NULL
-      F[[j]]$f <- .Call("gbm_plot", 
-                        X = as.double(data.matrix(F[[j]]$Z)), 
-                        cRows = as.integer(nrow(F[[j]]$Z)), 
-                        cCols = as.integer(ncol(F[[j]]$Z)), 
+      F[[j]]$f <- .Call("gbm_plot",
+                        X = as.double(data.matrix(F[[j]]$Z)),
+                        cRows = as.integer(nrow(F[[j]]$Z)),
+                        cCols = as.integer(ncol(F[[j]]$Z)),
                         i.var = as.integer(i.var[a[[j]]] - 1),
-                        n.trees = as.integer(n.trees), 
-                        initF = as.double(x$initF), 
+                        n.trees = as.integer(n.trees),
+                        initF = as.double(x$initF),
                         trees = x$trees, c.splits = x$c.splits,
                         var.type = as.integer(x$var.type), PACKAGE = "gbm")
       # center the values
@@ -1394,6 +1389,6 @@ interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees)
       H <- H + with(F[[j]], sign*f[i])
    }
    H <- weighted.mean(H^2, F[[length(a)]]$n)/
-        weighted.mean((F[[length(a)]]$f)^2,F[[length(a)]]$n) 
+        weighted.mean((F[[length(a)]]$f)^2,F[[length(a)]]$n)
    return(sqrt(H))
 }

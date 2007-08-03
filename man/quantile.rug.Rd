@@ -10,7 +10,6 @@ quantile.rug(x,prob=(0:10)/10,...)
 \item{prob}{the quantiles of x to mark on the x-axis.}
 \item{...}{additional graphics parameters currently ignored.}
 }
-\details{}
 \value{No return values}
 \references{\url{http://www.i-pensieri.com/gregr/gbm.shtml}}
 \author{Greg Ridgeway \email{gregr@rand.org}}
