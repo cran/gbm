@@ -700,7 +700,7 @@ SEXP gbm_shrink_pred
          cNodeStack = 1;
          for(i=0; i<cMaxNodes; i++)
          {
-             adNodePred[i] = NAN;
+             adNodePred[i] = R_NaN;
          }
          while(cNodeStack>0)
          {
