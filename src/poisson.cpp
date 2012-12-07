@@ -20,7 +20,8 @@ GBMRESULT CPoisson::ComputeWorkingResponse
     double *adZ, 
     double *adWeight,
     bool *afInBag,
-    unsigned long nTrain
+    unsigned long nTrain,
+	int cIdxOff
 )
 {
     unsigned long i = 0;
@@ -84,7 +85,8 @@ double CPoisson::Deviance
     double *adOffset,
     double *adWeight,
     double *adF,
-    unsigned long cLength
+    unsigned long cLength,
+	int cIdxOff
 )
 {
     unsigned long i=0;
@@ -93,7 +95,7 @@ double CPoisson::Deviance
 
     if(adOffset == NULL)
     {
-        for(i=0; i<cLength; i++)
+        for(i=cIdxOff; i<cLength+cIdxOff; i++)
         {
             dL += adWeight[i]*(adY[i]*adF[i] - exp(adF[i]));
             dW += adWeight[i];
@@ -101,7 +103,7 @@ double CPoisson::Deviance
     }
     else
     {
-        for(i=0; i<cLength; i++)
+        for(i=cIdxOff; i<cLength+cIdxOff; i++)
         {
             dL += adWeight[i]*(adY[i]*(adOffset[i]+adF[i]) - 
                                exp(adOffset[i]+adF[i]));
@@ -127,7 +129,8 @@ GBMRESULT CPoisson::FitBestConstant
     unsigned long cTermNodes,
     unsigned long cMinObsInNode,
     bool *afInBag,
-    double *adFadj
+    double *adFadj,
+	int cIdxOff
 )
 {
     GBMRESULT hr = GBM_OK;

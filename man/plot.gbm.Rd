@@ -10,6 +10,7 @@ Plots the marginal effect of the selected variables by "integrating" out the oth
      n.trees = x$n.trees,
      continuous.resolution = 100,
      return.grid = FALSE,
+     type = "link",
      ...)
 }
 \arguments{
@@ -27,6 +28,8 @@ Plots the marginal effect of the selected variables by "integrating" out the oth
   the grid of evaluation points and their average predictions. This is useful for
   customizing the graphics for special variable types or for dimensions greater
   than 3 }
+  \item{type}{ the type of prediction to plot on the vertical axis. See
+  \code{predict.gbm}}
   \item{\dots}{ other arguments passed to the plot function }
 }
 \details{
@@ -50,7 +53,7 @@ predictions.
 J.H. Friedman (2001). "Greedy Function Approximation: A Gradient Boosting
 Machine," Annals of Statistics 29(4).
 }
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregridgeway@gmail.com}}
 
 \seealso{ \code{\link{gbm}}, \code{\link{gbm.object}}, \code{\link[graphics]{plot}} }
 

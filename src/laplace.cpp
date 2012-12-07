@@ -4,12 +4,15 @@
 
 CLaplace::CLaplace()
 {
-
+   mpLocM = NULL;
 }
 
 CLaplace::~CLaplace()
 {
-
+   if(mpLocM != NULL)
+   {
+      delete mpLocM;
+   }
 }
 
 
@@ -22,7 +25,8 @@ GBMRESULT CLaplace::ComputeWorkingResponse
     double *adZ, 
     double *adWeight,
     bool *afInBag,
-    unsigned long nTrain
+    unsigned long nTrain,
+    int cIdxOff
 )
 {
     unsigned long i = 0;
@@ -47,7 +51,6 @@ GBMRESULT CLaplace::ComputeWorkingResponse
 
 
 
-// DEBUG: needs weighted median
 GBMRESULT CLaplace::InitF
 (
     double *adY,
@@ -58,20 +61,42 @@ GBMRESULT CLaplace::InitF
     unsigned long cLength
 )
 {
-    double dOffset=0.0;
-    unsigned long i=0;
+    GBMRESULT hr = GBM_OK;
 
-    vecd.resize(cLength);
-    for(i=0; i<cLength; i++)
+    double dOffset = 0.0;
+    unsigned long ii = 0;
+    int nLength = int(cLength);
+
+    double *adArr = NULL;
+
+    // Create a new LocationM object (for weighted medians)
+    double *pTemp = NULL;
+    mpLocM = new CLocationM("Other", 0, pTemp);
+    if(mpLocM == NULL)
     {
-        dOffset = (adOffset==NULL) ? 0.0 : adOffset[i];
-        vecd[i] = adY[i] - dOffset;
+        hr = GBM_OUTOFMEMORY;
+        goto Error;
+    }
+    
+    adArr = new double[cLength];
+    if(adArr == NULL)
+    {
+        hr = GBM_OUTOFMEMORY;
+        goto Error;
     }
 
-    nth_element(vecd.begin(), vecd.begin() + int(cLength/2.0), vecd.end());
-    dInitF = *(vecd.begin() + int(cLength/2.0));
+    for (ii = 0; ii < cLength; ii++)
+    {
+        dOffset = (adOffset==NULL) ? 0.0 : adOffset[ii];
+        adArr[ii] = adY[ii] - dOffset;
+    }
 
-    return GBM_OK;
+    dInitF = mpLocM->Median(nLength, adArr, adWeight);
+
+Cleanup:
+    return hr;
+Error:
+    goto Cleanup;
 }
 
 
@@ -82,7 +107,8 @@ double CLaplace::Deviance
     double *adOffset, 
     double *adWeight,
     double *adF,
-    unsigned long cLength
+    unsigned long cLength,
+   int cIdxOff
 )
 {
     unsigned long i=0;
@@ -91,7 +117,7 @@ double CLaplace::Deviance
 
     if(adOffset == NULL)
     {
-        for(i=0; i<cLength; i++)
+        for(i=cIdxOff; i<cLength+cIdxOff; i++)
         {
             dL += adWeight[i]*fabs(adY[i]-adF[i]);
             dW += adWeight[i];
@@ -99,7 +125,7 @@ double CLaplace::Deviance
     }
     else
     {
-        for(i=0; i<cLength; i++)
+        for(i=cIdxOff; i<cLength+cIdxOff; i++)
         {
             dL += adWeight[i]*fabs(adY[i]-adOffset[i]-adF[i]);
             dW += adWeight[i];
@@ -125,7 +151,8 @@ GBMRESULT CLaplace::FitBestConstant
     unsigned long cTermNodes,
     unsigned long cMinObsInNode,
     bool *afInBag,
-    double *adFadj
+    double *adFadj,
+   int cIdxOff
 )
 {
     GBMRESULT hr = GBM_OK;
@@ -135,26 +162,31 @@ GBMRESULT CLaplace::FitBestConstant
     unsigned long iVecd = 0;
     double dOffset;
 
-    vecd.resize(nTrain); // should already be this size from InitF
-    
+//    vecd.resize(nTrain); // should already be this size from InitF
+  
+   double *adArr = new double[nTrain];
+   double *adW2 = new double[nTrain];
+
     for(iNode=0; iNode<cTermNodes; iNode++)
     {
         if(vecpTermNodes[iNode]->cN >= cMinObsInNode)
         {
-            iVecd = 0;
+         iVecd = 0;
             for(iObs=0; iObs<nTrain; iObs++)
             {
                 if(afInBag[iObs] && (aiNodeAssign[iObs] == iNode))
                 {
                     dOffset = (adOffset==NULL) ? 0.0 : adOffset[iObs];
-                    vecd[iVecd] = adY[iObs] - dOffset - adF[iObs];
-                    iVecd++;
-                }
+                    adArr[iVecd] = adY[iObs] - dOffset - adF[iObs];
+               adW2[iVecd] = adW[iObs];
+                iVecd++;
             }
-            nth_element(vecd.begin(), 
-                        vecd.begin() + int(iVecd/2.0), 
-                        vecd.begin() + int(iVecd));
-            vecpTermNodes[iNode]->dPrediction = *(vecd.begin() + int(iVecd/2.0));
+
+            
+            }
+
+         vecpTermNodes[iNode]->dPrediction = mpLocM->Median(iVecd, adArr, adW2);
+
         }
     }
 
@@ -195,7 +227,3 @@ double CLaplace::BagImprovement
 
     return dReturnValue/dW;
 }
-
-
-
-

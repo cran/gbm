@@ -58,6 +58,10 @@ GBMRESULT CNodeCategorical::PrintSubtree
     Rprintf("\n");
     hr = pRightNode->PrintSubtree(cIndent+1);
 
+    for(i=0; i< cIndent; i++) Rprintf("  ");
+    Rprintf("missing\n");
+    hr = pMissingNode->PrintSubtree(cIndent+1);
+
     return hr;
 }
 

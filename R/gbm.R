@@ -1,14 +1,183 @@
-.onAttach <- function(libname, pkgname)
-     packageStartupMessage("Loaded gbm ",
-                           utils::packageVersion(pkgname, libname),"\n")
+# TODO
+# 4. Document the tests of the new functionality.
+# 5. Document the tests comparing the new build to the old for the old methods.
+# 6. Test gbm.more with t-dist (ensure Misc gets used properly).
 
+.onAttach <- function(lib, pkg)
+{
+   library.dynam("gbm", pkg, lib)
+#   require(survival)
+#   require(splines)
+#   require(lattice)
+   vers <- library(help=gbm)$info[[1]]
+   vers <- vers[grep("Version:",vers)]
+   vers <- rev(strsplit(vers," ")[[1]])[1]
+   packageStartupMessage(paste("Loaded gbm",vers))
+}
+
+
+reconstructGBMdata <- function(x)
+{
+   if(class(x) != "gbm")
+   {
+      stop( "This function is for use only with objects having class 'gbm'" )
+   } else
+   if (is.null(x$data))
+   {
+      stop("Cannot reconstruct data from gbm object. gbm() was called with keep.data=FALSE")
+   } else
+   if (x$distribution$name=="multinomial")
+   {
+      y <- matrix(x$data$y, ncol=x$num.classes, byrow=FALSE)
+      yn <- apply(y, 1, function(z,nc) {(1:nc)[z == 1]},
+                  nc = x$num.classes)
+      y <- factor(yn, labels=x$classes)
+      xdat <- matrix(x$data$x, ncol=ncol(x$data$x.order), byrow=FALSE)
+      d <- data.frame(y, xdat)
+      names(d) <- c(x$response.name, x$var.names)
+   } else
+   if (x$distribution$name == "coxph")
+   {
+      xdat <- matrix(x$data$x, ncol=ncol(x$data$x.order), byrow=FALSE)
+      status <- x$data$Misc
+      y <- x$data$y[order(x$data$i.timeorder)]
+      d <- data.frame(y, status, xdat)
+      names(d) <- c(x$response.name[-1], colnames(x$data$x.order))
+   }
+   else
+   {
+      y <- x$data$y
+      xdat <- matrix(x$data$x, ncol=ncol(x$data$x.order), byrow=FALSE)
+      d <- data.frame(y, xdat)
+      rn <- ifelse(length(x$response.name) > 1, x$response.name[2], x$response.name)
+      names(d) <- c(rn, colnames(x$data$x.order))
+   }
+   invisible(d)
+}
+
+print.gbm <- function(x, ... )
+{
+   print( x$call )
+   dist.name <- x$distribution$name
+   if (dist.name == "pairwise")
+   {
+      if (!is.null(x$distribution$max.rank) && x$distribution$max.rank > 0)
+      {
+           dist.name <- sprintf("pairwise (metric=%s, max.rank=%d)", x$distribution$metric,  x$distribution$max.rank)
+      }
+      else
+      {
+           dist.name <- sprintf("pairwise (metric=%s)", x$distribution$metric)
+      }
+   }
+   cat( paste( "A gradient boosted model with", dist.name, "loss function.\n" ))
+   cat( paste( length( x$train.error ), "iterations were performed.\n" ) )
+   best <- length( x$train.error )
+   if ( !is.null( x$cv.error ) )
+   {
+      best <- gbm.perf( x, plot.it = FALSE, method="cv" )
+      cat( paste("The best cross-validation iteration was ", best, ".\n", sep = "" ) )
+   }
+   if ( x$train.fraction < 1 )
+   {
+      best <- gbm.perf( x, plot.it = FALSE, method="test" )
+      cat( paste("The best test-set iteration was ", best, ".\n", sep = "" ) )
+   }
+   if ( is.null( best ) )
+   {
+      best <- length( x$train.error )
+   }
+   ri <- relative.influence( x, n.trees=best )
+   cat( "There were", length( x$var.names ), "predictors of which",
+       sum( ri > 0 ), "had non-zero influence.\n" )
+
+   if (x$distribution$name != "pairwise" && (!is.null(x$data)))
+   {
+      d <- reconstructGBMdata( x )
+      if (x$distribution$name == "multinomial")
+      {
+         n.class <- x$num.classes
+
+         yn <- as.numeric( d[, x$response.name ] )
+
+         p <- predict( x, n.trees=best , type = "response", newdata=d )
+         p <- apply( p, 1, function( x , labels ){ labels[ x == max( x ) ] },
+                    labels = colnames( p ))
+         p <- as.numeric(as.factor( p ))
+         r <- yn
+
+         conf.mat <- matrix(table(c(r + n.class * p, (n.class + (1:(n.class^2))))),
+                            nrow = n.class)
+         conf.mat <- conf.mat - 1
+
+         pred.acc <- round(100 * sum(diag(conf.mat)) / sum(conf.mat),2)
+
+         conf.mat <- cbind(conf.mat, round(100*diag(conf.mat)/rowSums(conf.mat),2))
+         dimnames(conf.mat) <- list(x$classes, c(x$classes, "Pred. Acc."))
+
+         cat("\nConfusion matrix:\n")
+         print(conf.mat)
+
+         cat("\nPrediction Accuracy = ", pred.acc, "%\n", sep = "")
+      }
+      else if (x$distribution$name %in% c("bernoulli", "adaboost", "huberized"))
+      {
+         p <- predict( x , newdata=d, n.tree=best , type = "response")
+         p <- ifelse( p < .5, 0, 1 )
+
+         conf.mat <- matrix( table( c( d[,x$response.name] + 2 * p , 0:3 )), ncol=2 )
+         conf.mat <- conf.mat - 1
+
+         pred.acc <- round(100 * sum(diag(conf.mat)) / sum(conf.mat),2)
+
+         conf.mat <- cbind(conf.mat,  round(100*diag(conf.mat)/rowSums(conf.mat),2))
+         dimnames(conf.mat) <- list(c("0","1"), c("0", "1", "Pred. Acc."))
+
+         cat("\nConfusion matrix:\n")
+         print(conf.mat)
+
+         cat("\nPrediction Accuracy = ", pred.acc, "%\n", sep = "")
+      }
+      else if (x$distribution$name %in%
+               c("gaussian", "laplace", "poisson", "quantile", "tdist" ) )
+      {
+         r <- d[, 1] - predict( x, type="response", newdata=d, n.tree=best )
+         if ( x$distribution$name == "poisson" )
+         {
+            cat( "Summary of response residuals:\n" )
+         }
+         else {
+            cat( "Summary of residuals:\n" )
+         }
+         print( quantile( r ) )
+         cat( "\n" )
+      }
+   }
+   invisible()
+}
+
+show.gbm <- print.gbm
 
 predict.gbm <- function(object,newdata,n.trees,
                         type="link",
                         single.tree = FALSE,
                         ...)
 {
-   if(!is.element(type, c("link","response")))
+   if ( missing( newdata ) ){
+      newdata <- reconstructGBMdata( object )
+   }
+   if ( missing( n.trees ) ) {
+      if ( object$train.fraction < 1 ){
+         n.trees <- gbm.perf( object, method="test", plot.it = FALSE )
+      }
+      else if ( !is.null( object$cv.error ) ){
+         n.trees <- gbm.perf( object, method="cv", plot.it = FALSE )
+      }
+      else{ best <- length( object$train.error ) }
+      cat( paste( "Using", n.trees, "trees...\n" ) )
+   }
+
+   if(!is.element(type, c("link","response" )))
    {
       stop("type must be either 'link' or 'response'")
    }
@@ -34,8 +203,8 @@ predict.gbm <- function(object,newdata,n.trees,
          if(any(is.na(j)))
          {
             stop(paste("New levels for variable ",
-                        object$var.names[i],": ",
-                        levels(x[,i])[is.na(j)],sep=""))
+                       object$var.names[i],": ",
+                       levels(x[,i])[is.na(j)],sep=""))
          }
          x[,i] <- as.numeric(x[,i])-1
       }
@@ -53,6 +222,7 @@ predict.gbm <- function(object,newdata,n.trees,
                   X=as.double(x),
                   cRows=as.integer(cRows),
                   cCols=as.integer(cCols),
+                  cNumClasses = as.integer(object$num.classes),
                   n.trees=as.integer(n.trees[i.ntree.order]),
                   initF=object$initF,
                   trees=object$trees,
@@ -61,15 +231,41 @@ predict.gbm <- function(object,newdata,n.trees,
                   single.tree = as.integer(single.tree),
                   PACKAGE = "gbm")
 
+   if((length(n.trees) > 1) || (object$num.classes > 1))
+   {
+      if(object$distribution$name=="multinomial")
+      {
+         predF <- array(predF, dim=c(cRows,object$num.classes,length(n.trees)))
+         dimnames(predF) <- list(NULL, object$classes, n.trees)
+         predF[,,i.ntree.order] <- predF
+      } else
+      {
+         predF <- matrix(predF, ncol=length(n.trees), byrow=FALSE)
+         colnames(predF) <- n.trees
+         predF[,i.ntree.order] <- predF
+      }
+   }
+
    if(type=="response")
    {
-      if(object$distribution$name=="bernoulli")
+      if(is.element(object$distribution$name, c("bernoulli", "pairwise")))
       {
          predF <- 1/(1+exp(-predF))
       } else
       if(object$distribution$name=="poisson")
       {
          predF <- exp(predF)
+      }
+      if(object$distribution$name=="multinomial")
+      {
+         pexp  <- apply(predF, 2, exp)
+         psum  <- apply(pexp,  1, sum)
+         predF <- pexp / psum
+      }
+
+      if((length(n.trees)==1) && (object$distribution$name!="multinomial"))
+      {
+         predF <- as.vector(predF)
       }
    }
 
@@ -93,9 +289,14 @@ plot.gbm <- function(x,
                      i.var=1,
                      n.trees=x$n.trees,
                      continuous.resolution=100,
-                     return.grid = FALSE,
+                     return.grid=FALSE,
+                     type="link",
                      ...)
 {
+   if (!is.element(type, c("link", "response"))){
+      stop( "type must be either 'link' or 'response'")
+   }
+
    if(all(is.character(i.var)))
    {
       i <- match(i.var,x$var.names)
@@ -121,8 +322,8 @@ plot.gbm <- function(x,
 
    if(length(i.var) > 3)
    {
-     warning("plot.gbm creates up to 3-way interaction plots.\nplot.gbm will only return the plotting data structure.")
-     return.grid = TRUE
+      warning("gbm.int.plot creates up to 3-way interaction plots.\nplot.gbm will only return the plotting data structure.")
+      return.grid = TRUE
    }
 
    # generate grid to evaluate gbm model
@@ -143,21 +344,46 @@ plot.gbm <- function(x,
                                                levels=x$var.levels[[i.var[i]]]))-1
       }
    }
+
    X <- expand.grid(grid.levels)
    names(X) <- paste("X",1:length(i.var),sep="")
 
    # evaluate at each data point
-   X$y <- .Call("gbm_plot",
-                X=as.double(data.matrix(X)),
-                cRows=as.integer(nrow(X)),
-                cCols=as.integer(ncol(X)),
-                i.var=as.integer(i.var-1),
-                n.trees=as.integer(n.trees),
-                initF=as.double(x$initF),
-                trees=x$trees,
-                c.splits=x$c.splits,
-                var.type=as.integer(x$var.type),
-                PACKAGE = "gbm")
+   y <- .Call("gbm_plot",
+              X = as.double(data.matrix(X)),
+              cRows = as.integer(nrow(X)),
+              cCols = as.integer(ncol(X)),
+              n.class = as.integer(x$num.classes),
+              i.var = as.integer(i.var-1),
+              n.trees = as.integer(n.trees) ,
+              initF = as.double(x$initF),
+              trees = x$trees,
+              c.splits = x$c.splits,
+              var.type = as.integer(x$var.type),
+              PACKAGE = "gbm")
+
+   if (x$distribution$name=="multinomial")
+   {
+      ## Put result into matrix form
+      X$y <- matrix(y, ncol = x$num.classes)
+      colnames(X$y) <- x$classes
+
+      ## Use class probabilities
+      if (type=="response"){
+         X$y <- exp(X$y)
+         X$y <- X$y / matrix(rowSums(X$y), ncol=ncol(X$y), nrow=nrow(X$y))
+      }
+   }
+   else if(is.element(x$distribution$name, c("bernoulli", "pairwise")) && type=="response") {
+      X$y <- 1/(1+exp(-y))
+   }
+   else if ((x$distribution$name=="poisson") && (type=="response")){
+      X$y <- exp(y)
+   }
+   else if (type=="response"){
+      warning("type 'response' only implemented for 'bernoulli', 'poisson', 'multinomial', and 'pairwise'. Ignoring" )
+   }
+   else { X$y <- y }
 
    # transform categorical variables back to factors
    f.factor <- rep(FALSE,length(i.var))
@@ -177,57 +403,180 @@ plot.gbm <- function(x,
       return(X)
    }
 
-
    # create the plots
    if(length(i.var)==1)
    {
       if(!f.factor)
       {
          j <- order(X$X1)
-         plot(X$X1,X$y,
-              type="l",
-              xlab=x$var.names[i.var],
-              ylab=paste("f(",x$var.names[i.var],")",sep=""),...)
+
+         if (x$distribution$name == "multinomial") {
+            if ( type == "response" ){
+               ylabel <- "Predicted class probability"
+            }
+            else { ylabel <- paste("f(",x$var.names[i.var],")",sep="") }
+            plot(range(X$X1), range(X$y), type = "n", xlab = x$var.names[i.var],
+                 ylab = ylabel)
+
+            for (ii in 1:x$num.classes){
+               lines(X$X1,X$y[,ii],
+                     xlab=x$var.names[i.var],
+                     ylab=paste("f(",x$var.names[i.var],")",sep=""),
+                     col = ii, ...)
+            }
+         }
+         else if (is.element(x$distribution$name, c("bernoulli", "pairwise"))) {
+            if ( type == "response" ){
+               ylabel <- "Predicted probability"
+            }
+            else {
+               ylabel <- paste("f(",x$var.names[i.var],")",sep="")
+            }
+            plot( X$X1, X$y , type = "l", xlab = x$var.names[i.var], ylab=ylabel )
+         }
+         else if ( x$distribution$name == "poisson" ){
+            if (type == "response" ){
+               ylabel <- "Predicted count"
+            }
+            else{
+               ylabel <- paste("f(",x$var.names[i.var],")",sep="")
+            }
+            plot( X$X1, X$y , type = "l", xlab = x$var.names[i.var], ylab=ylabel )
+         }
+         else {
+            plot(X$X1,X$y,
+                 type="l",
+                 xlab=x$var.names[i.var],
+                 ylab=paste("f(",x$var.names[i.var],")",sep=""),...)
+         }
       }
       else
       {
-         plot(X$X1,
-              X$y,
-              xlab=x$var.names[i.var],
-              ylab=paste("f(",x$var.names[i.var],")",sep=""),
-              ...)
+         if (x$distribution$name == "multinomial") {
+            nX <- length(X$X1)
+            dim.y <- dim(X$y)
+            if (type == "response" ){
+               ylabel <- "Predicted probability"
+            }
+            else{ ylabel <- paste("f(",x$var.names[i.var],")",sep="") }
+
+            plot(c(0,nX), range(X$y), axes = FALSE, type = "n",
+                 xlab = x$var.names[i.var], ylab = ylabel)
+            axis(side = 1, labels = FALSE, at = 0:nX)
+            axis(side = 2)
+
+            mtext(as.character(X$X1), side = 1, at = 1:nX - 0.5)
+
+            segments(x1 = rep(1:nX - 0.75, each = dim.y[2]), y1 = as.vector(t(X$y)),
+                     x2 = rep(1:nX - 0.25, each = dim.y[2]), col = 1:dim.y[2])
+         }
+         else if (is.element(x$distribution$name, c("bernoulli", "pairwise")) && type == "response" ){
+            ylabel <- "Predicted probability"
+            plot( X$X1, X$y, type = "l", xlab=x$var.names[i.var], ylab=ylabel )
+         }
+         else if ( x$distribution$name == "poisson" & type == "response" ){
+            ylabel <- "Predicted count"
+            plot( X$X1, X$y, type = "l", xlab=x$var.names[i.var], ylab=ylabel )
+         }
+         else {
+            plot(X$X1,X$y,
+                 type="l",
+                 xlab=x$var.names[i.var],
+                 ylab=paste("f(",x$var.names[i.var],")",sep=""),...)
+         }
       }
    }
    else if(length(i.var)==2)
    {
       if(!f.factor[1] && !f.factor[2])
       {
-         levelplot(y~X1*X2,data=X,
-                     xlab=x$var.names[i.var[1]],
-                     ylab=x$var.names[i.var[2]],...)
+         if (x$distribution$name == "multinomial")
+         {
+            for (ii in 1:x$num.classes){
+               X$temp <- X$y[, ii]
+               print(levelplot(temp~X1*X2,data=X,
+                               xlab=x$var.names[i.var[1]],
+                               ylab=x$var.names[i.var[2]],...))
+               title(paste("Class:", dimnames(X$y)[[2]][ii]))
+            }
+            X$temp <- NULL
+         }
+         else {
+            levelplot(y~X1*X2,data=X,
+                      xlab=x$var.names[i.var[1]],
+                      ylab=x$var.names[i.var[2]],...)
+         }
       }
       else if(f.factor[1] && !f.factor[2])
       {
-         xyplot(y~X2|X1,data=X,
-                xlab=x$var.names[i.var[2]],
-                ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
-                type="l",
-                ...)
+         if (x$distribution$name == "multinomial")
+         {
+            for (ii in 1:x$num.classes){
+               X$temp <- X$y[, ii]
+               print( xyplot(temp~X2|X1,data=X,
+                             xlab=x$var.names[i.var[2]],
+                             ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
+                             type="l",
+                             panel = panel.xyplot,
+                             ...) )
+               title(paste("Class:", dimnames(X$y)[[2]][ii]))
+            }
+            X$temp <- NULL
+         }
+         else {
+            xyplot(y~X2|X1,data=X,
+                   xlab=x$var.names[i.var[2]],
+                   ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
+                   type="l",
+                   panel = panel.xyplot,
+                   ...)
+         }
       }
       else if(!f.factor[1] && f.factor[2])
       {
-         xyplot(y~X1|X2,data=X,
-                xlab=x$var.names[i.var[1]],
-                ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
-                type="l",
-                ...)
+         if (x$distribution$name == "multinomial")
+         {
+            for (ii in 1:x$num.classes){
+               X$temp <- X$y[, ii]
+               print( xyplot(temp~X1|X2,data=X,
+                             xlab=x$var.names[i.var[1]],
+                             ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
+                             type="l",
+                             panel = panel.xyplot,
+                             ...) )
+               title(paste("Class:", dimnames(X$y)[[2]][ii]))
+            }
+            X$temp <- NULL
+         }
+         else {
+            xyplot(y~X1|X2,data=X,
+                   xlab=x$var.names[i.var[1]],
+                   ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
+                   type="l",
+                   panel = panel.xyplot,
+                   ...)
+         }
       }
       else
       {
-         stripplot(y~X1|X2,data=X,
-                   xlab=x$var.names[i.var[2]],
-                   ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
-                   ...)
+         if (x$distribution$name == "multinomial")
+         {
+            for (ii in 1:x$num.classes){
+               X$temp <- X$y[, ii]
+               print( stripplot(X1~temp|X2,data=X,
+                                xlab=x$var.names[i.var[2]],
+                                ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
+                                ...) )
+               title(paste("Class:", dimnames(X$y)[[2]][ii]))
+            }
+            X$temp <- NULL
+         }
+         else {
+            stripplot(X1~y|X2,data=X,
+                      xlab=x$var.names[i.var[2]],
+                      ylab=paste("f(",x$var.names[i.var[1]],",",x$var.names[i.var[2]],")",sep=""),
+                      ...)
+         }
       }
    }
    else if(length(i.var)==3)
@@ -241,37 +590,93 @@ plot.gbm <- function(x,
       if(sum(f.factor)==0)
       {
          X.new$X3 <- equal.count(X.new$X3)
-         levelplot(y~X1*X2|X3,data=X.new,
-                     xlab=x$var.names[i.var[i[1]]],
-                     ylab=x$var.names[i.var[i[2]]],...)
+         if (x$distribution$name == "multinomial")
+         {
+            for (ii in 1:x$num.classes){
+               X.new$temp <- X.new$y[, ii]
+               print( levelplot(temp~X1*X2|X3,data=X.new,
+                                xlab=x$var.names[i.var[i[1]]],
+                                ylab=x$var.names[i.var[i[2]]],...) )
+               title(paste("Class:", dimnames(X.new$y)[[2]][ii]))
+            }
+            X.new$temp <- NULL
+         }
+         else {
+            levelplot(y~X1*X2|X3,data=X.new,
+                      xlab=x$var.names[i.var[i[1]]],
+                      ylab=x$var.names[i.var[i[2]]],...)
+         }
       }
       # 1 factor, 2 continuous
       else if(sum(f.factor)==1)
       {
-         levelplot(y~X1*X2|X3,data=X.new,
-                     xlab=x$var.names[i.var[i[1]]],
-                     ylab=x$var.names[i.var[i[2]]],...)
+         if (x$distribution$name == "multinomial")
+         {
+            for (ii in 1:x$num.classes){
+               X.new$temp <- X.new$y[, ii]
+               print( levelplot(temp~X1*X2|X3,data=X.new,
+                                xlab=x$var.names[i.var[i[1]]],
+                                ylab=x$var.names[i.var[i[2]]],...))
+               title(paste("Class:", dimnames(X.new$y)[[2]][ii]) )
+            }
+            X.new$temp <- NULL
+         }
+         else {
+            levelplot(y~X1*X2|X3,data=X.new,
+                      xlab=x$var.names[i.var[i[1]]],
+                      ylab=x$var.names[i.var[i[2]]],...)
+         }
       }
       # 2 factors, 1 continuous
       else if(sum(f.factor)==2)
       {
-         xyplot(y~X1|X2*X3,data=X.new,
-                type="l",
-                xlab=x$var.names[i.var[i[1]]],
-                ylab=paste("f(",paste(x$var.names[i.var[1:3]],collapse=","),")",sep=""),
-                ...)
+         if (x$distribution$name == "multinomial")
+         {
+            for (ii in 1:x$num.classes){
+               X.new$temp <- X.new$y[, ii]
+               print( xyplot(temp~X1|X2*X3,data=X.new,
+                             type="l",
+                             xlab=x$var.names[i.var[i[1]]],
+                             ylab=paste("f(",paste(x$var.names[i.var[1:3]],collapse=","),")",sep=""),
+                             panel = panel.xyplot,
+                             ...) )
+               title(paste("Class:", dimnames(X.new$y)[[2]][ii]) )
+            }
+            X.new$temp <- NULL
+         }
+         else {
+            xyplot(y~X1|X2*X3,data=X.new,
+                   type="l",
+                   xlab=x$var.names[i.var[i[1]]],
+                   ylab=paste("f(",paste(x$var.names[i.var[1:3]],collapse=","),")",sep=""),
+                   panel = panel.xyplot,
+                   ...)
+         }
       }
       # 3 factors, 0 continuous
       else if(sum(f.factor)==3)
       {
-         stripplot(y~X1|X2*X3,data=X.new,
-                   xlab=x$var.names[i.var[i[1]]],
-                   ylab=paste("f(",paste(x$var.names[i.var[1:3]],collapse=","),")",sep=""),
-                   ...)
+         if (x$distribution$name == "multinomial")
+         {
+            for (ii in 1:x$num.classes){
+               X.new$temp <- X.new$y[, ii]
+               print( stripplot(X1~temp|X2*X3,data=X.new,
+                                xlab=x$var.names[i.var[i[1]]],
+                                ylab=paste("f(",paste(x$var.names[i.var[1:3]],collapse=","),")",sep=""),
+                                ...) )
+               title(paste("Class:", dimnames(X.new$y)[[2]][ii]) )
+            }
+            X.new$temp <- NULL
+         }
+         else {
+            stripplot(X1~y|X2*X3,data=X.new,
+                      xlab=x$var.names[i.var[i[1]]],
+                      ylab=paste("f(",paste(x$var.names[i.var[1:3]],collapse=","),")",sep=""),
+                      ...)
+         }
       }
    }
 }
-
 
 gbm.more <- function(object,
                      n.new.trees = 100,
@@ -280,6 +685,18 @@ gbm.more <- function(object,
                      offset = NULL,
                      verbose = NULL)
 {
+   theCall <- match.call()
+   nTrain  <- object$nTrain
+
+   if (object$distribution$name != "pairwise")
+   {
+      distribution.call.name <- object$distribution$name
+   }
+   else
+   {
+      distribution.call.name <- sprintf("pairwise_%s", object$distribution$metric)
+   }
+
    if(is.null(object$Terms) && is.null(object$data))
    {
       stop("The gbm model was fit using gbm.fit (rather than gbm) and keep.data was set to FALSE. gbm.more cannot locate the dataset.")
@@ -291,10 +708,11 @@ gbm.more <- function(object,
    else if(is.null(object$data))
    {
       m <- eval(object$m, parent.frame())
+
       Terms <- attr(m, "terms")
       a <- attributes(Terms)
 
-      y <- as.vector(model.extract(m, response))
+      y <- as.vector(model.extract(m, "response"))
       offset <- model.extract(m,offset)
       x <- model.frame(delete.response(Terms),
                        data,
@@ -302,7 +720,11 @@ gbm.more <- function(object,
 
       w <- weights
       if(length(w)==0) w <- rep(1, nrow(x))
-      w <- w*length(w)/sum(w) # normalize to N
+
+      if (object$distribution$name != "pairwise")
+      {
+         w <- w*length(w)/sum(w) # normalize to N
+      }
 
       if(is.null(offset) || (offset==0))
       {
@@ -316,8 +738,8 @@ gbm.more <- function(object,
          y <- as.numeric(y)[1:cRows]
 
          # reverse sort the failure times to compute risk sets on the fly
-         i.train <- order(-y[1:object$nTrain])
-         i.test <- order(-y[(object$nTrain+1):cRows]) + object$nTrain
+         i.train <- order(-y[1:nTrain])
+         i.test <- order(-y[(nTrain+1):cRows]) + nTrain
          i.timeorder <- c(i.train,i.test)
 
          y <- y[i.timeorder]
@@ -327,27 +749,108 @@ gbm.more <- function(object,
          if(!is.na(offset)) offset <- offset[i.timeorder]
          object$fit <- object$fit[i.timeorder]
       }
+      else if(object$distribution$name == "tdist" ){
+         Misc <- object$distribution$df
+      }
+      else if (object$distribution$name == "pairwise"){
+
+         # Check if group names are valid
+         distribution.group <- object$distribution$group
+         i <- match(distribution.group, colnames(data))
+         if (any(is.na(i)))
+         {
+            stop("Group column does not occur in data: ", distribution.group[is.na(i)])
+         }
+
+         # construct group index
+         group <- factor(do.call(paste, c(data[,distribution.group, drop=FALSE], sep=":")))
+
+         # Check that weights are constant across groups
+         if ((!missing(weights)) && (!is.null(weights)))
+         {
+            w.min <- tapply(w, INDEX=group, FUN=min)
+            w.max <- tapply(w, INDEX=group, FUN=max)
+
+            if (any(w.min != w.max))
+            {
+               stop("For distribution 'pairwise', all instances for the same group must have the same weight")
+            }
+
+            # Normalize across groups
+            w <- w * length(w.min) / sum(w.min)
+         }
+
+         # Shuffle groups, to remove bias when splitting into train/test set and/or CV folds
+         perm.levels  <- levels(group)[sample(1:nlevels(group))]
+         group        <- factor(group, levels=perm.levels)
+
+         # The C function expects instances to be sorted by group and descending by target
+
+         ord.group    <- object$ord.group
+         group        <- group[ord.group]
+         y            <- y[ord.group]
+         x            <- x[ord.group,,drop=FALSE]
+         object$fit   <- object$fit[ord.group] # object$fit is stored in the original order
+
+         # Split into train and validation set, at group boundary
+         num.groups.train <- max(1, round(object$train.fraction * nlevels(group)))
+
+         # include all groups up to the num.groups.train
+         nTrain           <- max(which(group==levels(group)[num.groups.train]))
+
+         metric <- object$distribution[["metric"]]
+
+         if (is.element(metric, c("mrr", "map")) && (!all(is.element(y, 0:1))))
+         {
+            stop("Metrics 'map' and 'mrr' require the response to be in {0,1}")
+         }
+
+         # Cut-off rank for metrics
+         # We pass this argument as the last element in the Misc vector
+         # Default of 0 means no cutoff
+
+         max.rank <- 0
+         if (!is.null(object$distribution[["max.rank"]]) && object$distribution[["max.rank"]] > 0)
+         {
+            if (is.element(metric, c("ndcg", "mrr")))
+            {
+               max.rank <- object$distribution[["max.rank"]]
+            }
+            else
+            {
+               stop("Parameter 'max.rank' cannot be specified for metric '", metric, "', only supported for 'ndcg' and 'mrr'")
+            }
+         }
+
+         Misc <- c(group, max.rank)
+
+      }
 
       # create index upfront... subtract one for 0 based order
-      x.order <- apply(x[1:object$nTrain,,drop=FALSE],2,order,na.last=FALSE)-1
+      x.order <- apply(x[1:nTrain,,drop=FALSE],2,order,na.last=FALSE)-1
       x <- data.matrix(x)
       cRows <- nrow(x)
       cCols <- ncol(x)
    }
    else
    {
-      y           <- object$data$y
-      x           <- object$data$x
-      x.order     <- object$data$x.order
-      offset      <- object$data$offset
-      Misc        <- object$data$Misc
-      w           <- object$data$w
-      cRows <- length(y)
-      cCols <- length(x)/cRows
+      y       <- object$data$y
+      x       <- object$data$x
+      x.order <- object$data$x.order
+      offset  <- object$data$offset
+      Misc    <- object$data$Misc
+      w       <- object$data$w
+      nTrain  <- object$nTrain
+      cRows   <- length(y)
+      cCols   <- length(x)/cRows
       if(object$distribution$name == "coxph")
       {
          i.timeorder <- object$data$i.timeorder
-         object$fit <- object$fit[i.timeorder]
+         object$fit  <- object$fit[i.timeorder]
+      }
+      if (object$distribution$name == "pairwise") 
+      {
+         object$fit   <- object$fit[object$ord.group] # object$fit is stored in the original order
       }
    }
 
@@ -368,15 +871,16 @@ gbm.more <- function(object,
                     cCols = as.integer(cCols),
                     var.type = as.integer(object$var.type),
                     var.monotone = as.integer(object$var.monotone),
-                    distribution = as.character(object$distribution$name),
+                    distribution = as.character(distribution.call.name),
                     n.trees = as.integer(n.new.trees),
                     interaction.depth = as.integer(object$interaction.depth),
                     n.minobsinnode = as.integer(object$n.minobsinnode),
+                    n.classes = as.integer(object$num.classes),
                     shrinkage = as.double(object$shrinkage),
                     bag.fraction = as.double(object$bag.fraction),
-                    nTrain = as.integer(object$nTrain),
+                    nTrain = as.integer(nTrain),
                     fit.old = as.double(object$fit),
-                    n.cat.splits.old = length(object$c.splits),
+                    n.cat.splits.old = as.integer(length(object$c.splits)),
                     n.trees.old = as.integer(object$n.trees),
                     verbose = as.integer(verbose),
                     PACKAGE = "gbm")
@@ -392,6 +896,7 @@ gbm.more <- function(object,
 
    # cv.error not updated when using gbm.more
    gbm.obj$cv.error      <- object$cv.error
+   gbm.obj$cv.folds      <- object$cv.folds
 
    gbm.obj$n.trees        <- length(gbm.obj$trees)
    gbm.obj$distribution   <- object$distribution
@@ -403,7 +908,9 @@ gbm.more <- function(object,
    gbm.obj$var.names      <- object$var.names
    gbm.obj$interaction.depth <- object$interaction.depth
    gbm.obj$n.minobsinnode    <- object$n.minobsinnode
+   gbm.obj$num.classes       <- object$num.classes
    gbm.obj$nTrain            <- object$nTrain
+   gbm.obj$response.name     <- object$response.name
    gbm.obj$Terms             <- object$Terms
    gbm.obj$var.levels        <- object$var.levels
    gbm.obj$verbose           <- verbose
@@ -412,6 +919,17 @@ gbm.more <- function(object,
    {
       gbm.obj$fit[i.timeorder] <- gbm.obj$fit
    }
+
+   if (object$distribution$name == "pairwise")
+   {
+      # Data has been reordered according to queries.
+      # We need to permute the fitted values to correspond
+      # to the original order.
+      gbm.obj$fit <- gbm.obj$fit[order(object$ord.group)]
+      object$fit  <- object$fit[order(object$ord.group)]
+      gbm.obj$ord.group <- object$ord.group
+   }  
+
    if(!is.null(object$data))
    {
       gbm.obj$data <- object$data
@@ -419,8 +937,9 @@ gbm.more <- function(object,
    else
    {
       gbm.obj$data <- NULL
-      gbm.obj$m <- object$m
    }
+   gbm.obj$m <- object$m
+   gbm.obj$call <- theCall
 
    class(gbm.obj) <- "gbm"
    return(gbm.obj)
@@ -438,14 +957,16 @@ gbm.fit <- function(x,y,
                     n.minobsinnode = 10,
                     shrinkage = 0.001,
                     bag.fraction = 0.5,
-                    train.fraction = 1.0,
+                    nTrain,
                     keep.data = TRUE,
                     verbose = TRUE,
                     var.names = NULL,
-                    response.name = NULL)
+                    response.name = NULL,
+                    group = NULL)
 {
    cRows <- nrow(x)
    cCols <- ncol(x)
+
    if(is.null(var.names))
    {
       if(is.matrix(x))
@@ -461,13 +982,20 @@ gbm.fit <- function(x,y,
          var.names <- paste("X",1:cCols,sep="")
       }
    }
+   j <- apply(x, 2, function(z) any(is.nan(z)))
+   if(any(j))
+   {
+      stop("Use NA for missing values. NaN found in predictor variables:",
+           paste(var.names[j],collapse=","))
+   }
+
    if(is.null(response.name))
    {
       response.name <- "y"
    }
 
    # check dataset size
-   if(cRows*train.fraction*bag.fraction <= 2*n.minobsinnode+1)
+   if(nTrain * bag.fraction <= 2*n.minobsinnode+1)
    {
       stop("The dataset size is too small or subsampling rate is too large: cRows*train.fraction*bag.fraction <= n.minobsinnode")
    }
@@ -481,13 +1009,21 @@ gbm.fit <- function(x,y,
    {
       stop("interaction.depth must be at least 1.")
    }
+   if(interaction.depth>49)
+   {
+      stop("interaction.depth must be less than 50. You should also ask yourself why you want such large interaction terms. A value between 1 and 5 should be sufficient for most applications.")
+   }
 
    if(length(w)==0) w <- rep(1, cRows)
    else if(any(w < 0)) stop("negative weights not allowed")
-   w <- w*length(w)/sum(w) # normalize to N
 
    if(any(is.na(y))) stop("Missing values are not allowed in the response, ",
                           response.name)
+
+   if (distribution$name != "pairwise")
+   {
+      w <- w*length(w)/sum(w) # normalize to N
+   }
 
    if(is.null(offset) || (offset==0))
    {
@@ -497,6 +1033,7 @@ gbm.fit <- function(x,y,
    {
       stop("The length of offset does not equal the length of y.")
    }
+
    Misc <- NA
 
    # setup variable types
@@ -538,7 +1075,7 @@ gbm.fit <- function(x,y,
       }
    }
 
-   nTrain <- as.integer(train.fraction*cRows)
+   nClass <- 1
 
    if(is.character(distribution)) distribution <- list(name=distribution)
    if(!("name" %in% names(distribution)))
@@ -546,19 +1083,23 @@ gbm.fit <- function(x,y,
       stop("The distribution is missing a 'name' component, for example list(name=\"gaussian\")")
    }
    supported.distributions <-
-      c("bernoulli","gaussian","poisson","adaboost","laplace","coxph","quantile")
+   c("bernoulli","gaussian","poisson","adaboost","laplace","coxph","quantile",
+     "tdist", "multinomial", "huberized", "pairwise")
+
+   distribution.call.name <- distribution$name
+
    # check potential problems with the distributions
    if(!is.element(distribution$name,supported.distributions))
    {
       stop("Distribution ",distribution$name," is not supported")
    }
-   if(!is.numeric(y))
-   {
-      stop("The response ",response.name," must be numeric. Factors must be converted to numeric")
-   }
    if((distribution$name == "bernoulli") && !all(is.element(y,0:1)))
    {
       stop("Bernoulli requires the response to be in {0,1}")
+   }
+   if((distribution$name == "huberized") && !all(is.element(y,0:1)))
+   {
+      stop("Huberized square hinged loss requires the response to be in {0,1}")
    }
    if((distribution$name == "poisson") && any(y<0))
    {
@@ -571,10 +1112,6 @@ gbm.fit <- function(x,y,
    if((distribution$name == "adaboost") && !all(is.element(y,0:1)))
    {
       stop("This version of AdaBoost requires the response to be in {0,1}")
-   }
-   if((distribution$name == "laplace") && (length(unique(w)) > 1))
-   {
-      stop("This version of gbm for the Laplace loss lacks a weighted median. For now the weights must be constant.")
    }
    if(distribution$name == "quantile")
    {
@@ -624,6 +1161,104 @@ gbm.fit <- function(x,y,
       w <- w[i.timeorder]
       if(!is.na(offset)) offset <- offset[i.timeorder]
    }
+   if(distribution$name == "tdist")
+   {
+      if (is.null(distribution$df) || !is.numeric(distribution$df)){
+         Misc <- 4
+      }
+      else {
+         Misc <- distribution$df[1]
+      }
+   }
+   if (distribution$name == "multinomial")
+   {
+      ## Ensure that the training set contains all classes
+      classes <- attr(factor(y), "levels")
+      nClass <- length(classes)
+
+      if (nClass > nTrain){
+         stop(paste("Number of classes (", nClass,
+                    ") must be less than the size of the training set (", nTrain, ")",
+                    sep = ""))
+      }
+
+      #    f <- function(a,x){
+      #       min((1:length(x))[x==a])
+      #    }
+
+      new.idx <- as.vector(sapply(classes, function(a,x){ min((1:length(x))[x==a]) }, y))
+
+      all.idx <- 1:length(y)
+      new.idx <- c(new.idx, all.idx[!(all.idx %in% new.idx)])
+
+      y <- y[new.idx]
+      x <- x[new.idx, ]
+      w <- w[new.idx]
+      if (!is.null(offset)){
+         offset <- offset[new.idx]
+      }
+
+      ## Get the factors
+      y <- as.numeric(as.vector(outer(y, classes, "==")))
+
+      ## Fill out the weight and offset
+      w <- rep(w, nClass)
+      if (!is.null(offset)){
+         offset <- rep(offset, nClass)
+      }
+   } # close if (dist... == "multinomial"
+
+   if(distribution$name == "pairwise")
+   {
+      distribution.metric <- distribution[["metric"]]
+      if (!is.null(distribution.metric))
+      {
+         distribution.metric <- tolower(distribution.metric)
+         supported.metrics <- c("conc", "ndcg", "map", "mrr")
+         if (!is.element(distribution.metric, supported.metrics))
+         {
+            stop("Metric '", distribution.metric, "' is not supported, use either 'conc', 'ndcg', 'map', or 'mrr'")
+         }
+         metric <- distribution.metric
+      }
+      else
+      {
+         warning("No metric specified, using 'ndcg'")
+         metric <- "ndcg" # default
+         distribution[["metric"]] <- metric
+      }
+
+      if (any(y<0))
+      {
+         stop("targets for 'pairwise' should be non-negative")
+      }
+
+      if (is.element(metric, c("mrr", "map")) && (!all(is.element(y, 0:1))))
+      {
+         stop("Metrics 'map' and 'mrr' require the response to be in {0,1}")
+      }
+
+      # Cut-off rank for metrics
+      # Default of 0 means no cutoff
+
+      max.rank <- 0
+      if (!is.null(distribution[["max.rank"]]) && distribution[["max.rank"]] > 0)
+      {
+         if (is.element(metric, c("ndcg", "mrr")))
+         {
+            max.rank <- distribution[["max.rank"]]
+         }
+         else
+         {
+            stop("Parameter 'max.rank' cannot be specified for metric '", distribution.metric, "', only supported for 'ndcg' and 'mrr'")
+         }
+      }
+
+      # We pass the cut-off rank to the C function as the last element in the Misc vector
+      Misc <- c(group, max.rank)
+
+      distribution.call.name <- sprintf("pairwise_%s", metric)
+   } # close if (dist... == "pairwise"
 
    # create index upfront... subtract one for 0 based order
    x.order <- apply(x[1:nTrain,,drop=FALSE],2,order,na.last=FALSE)-1
@@ -644,6 +1279,7 @@ gbm.fit <- function(x,y,
       stop("var.monotone must be -1, 0, or 1")
    }
    fError <- FALSE
+
    gbm.obj <- .Call("gbm",
                     Y=as.double(y),
                     Offset=as.double(offset),
@@ -655,10 +1291,11 @@ gbm.fit <- function(x,y,
                     cCols=as.integer(cCols),
                     var.type=as.integer(var.type),
                     var.monotone=as.integer(var.monotone),
-                    distribution=as.character(distribution$name),
+                    distribution=as.character(distribution.call.name),
                     n.trees=as.integer(n.trees),
                     interaction.depth=as.integer(interaction.depth),
                     n.minobsinnode=as.integer(n.minobsinnode),
+                    n.classes = as.integer(nClass),
                     shrinkage=as.double(shrinkage),
                     bag.fraction=as.double(bag.fraction),
                     nTrain=as.integer(nTrain),
@@ -667,6 +1304,7 @@ gbm.fit <- function(x,y,
                     n.trees.old=as.integer(0),
                     verbose=as.integer(verbose),
                     PACKAGE = "gbm")
+
    names(gbm.obj) <- c("initF","fit","train.error","valid.error",
                        "oobag.improve","trees","c.splits")
 
@@ -674,11 +1312,11 @@ gbm.fit <- function(x,y,
    gbm.obj$distribution <- distribution
    gbm.obj$interaction.depth <- interaction.depth
    gbm.obj$n.minobsinnode <- n.minobsinnode
-   gbm.obj$n.trees <- length(gbm.obj$trees)
+   gbm.obj$num.classes <- nClass
+   gbm.obj$n.trees <- length(gbm.obj$trees) / nClass
    gbm.obj$nTrain <- nTrain
    gbm.obj$response.name <- response.name
    gbm.obj$shrinkage <- shrinkage
-   gbm.obj$train.fraction <- train.fraction
    gbm.obj$var.levels <- var.levels
    gbm.obj$var.monotone <- var.monotone
    gbm.obj$var.names <- var.names
@@ -690,6 +1328,17 @@ gbm.fit <- function(x,y,
    {
       gbm.obj$fit[i.timeorder] <- gbm.obj$fit
    }
+   ## If K-Classification is used then split the fit and tree components
+   if (distribution$name == "multinomial"){
+      gbm.obj$fit <- matrix(gbm.obj$fit, ncol = nClass)
+      dimnames(gbm.obj$fit)[[2]] <- classes
+      gbm.obj$classes <- classes
+
+      ## Also get the class estimators
+      exp.f <- exp(gbm.obj$fit)
+      denom <- matrix(rep(rowSums(exp.f), nClass), ncol = nClass)
+      gbm.obj$estimator <- exp.f/denom
+   }
 
    if(keep.data)
    {
@@ -698,6 +1347,15 @@ gbm.fit <- function(x,y,
          # put the observations back in order
          gbm.obj$data <- list(y=y,x=x,x.order=x.order,offset=offset,Misc=Misc,w=w,
                               i.timeorder=i.timeorder)
+      }
+      else if ( distribution$name == "multinomial" ){
+         # Restore original order of the data
+         new.idx <- order( new.idx )
+         gbm.obj$data <- list( y=as.vector(matrix(y, ncol=length(classes),byrow=FALSE)[new.idx,]),
+                              x=as.vector(matrix(x, ncol=length(var.names), byrow=FALSE)[new.idx,]),
+                              x.order=x.order,
+                              offset=offset[new.idx],
+                              Misc=Misc, w=w[new.idx] )
       }
       else
       {
@@ -727,18 +1385,38 @@ gbm <- function(formula = formula(data),
                 train.fraction = 1.0,
                 cv.folds=0,
                 keep.data = TRUE,
-                verbose = TRUE)
+                verbose = TRUE,
+                class.stratify.cv)
 {
+   theCall <- match.call()
+
    mf <- match.call(expand.dots = FALSE)
    m <- match(c("formula", "data", "weights", "offset"), names(mf), 0)
    mf <- mf[c(1, m)]
    mf$drop.unused.levels <- TRUE
    mf$na.action <- na.pass
    mf[[1]] <- as.name("model.frame")
+   m <- mf
    mf <- eval(mf, parent.frame())
    Terms <- attr(mf, "terms")
 
-   y <- model.response(mf, "numeric")
+   y <- model.response( mf )
+   # If distribution is not given, try to guess it
+   if ( missing( distribution ) ){
+      if ( length( unique( y ) ) == 2 ){ distribution <- "bernoulli" }
+      else if ( class( y ) == "Surv" ){ distribution <- "coxph" }
+      else if ( is.factor( y ) ){ distribution <- "multinomial" }
+      else{
+         distribution <- "gaussian"
+      }
+      cat( paste( "Distribution not specified, assuming", distribution, "...\n" ) )
+   }
+
+   #   if ( length( distribution ) == 1 && distribution != "multinomial" ){
+   #      y <- model.response(mf, "numeric")
+   #   }
+   #   else { y <- model.response( mf ) }
+
    w <- model.weights(mf)
    offset <- model.offset(mf)
 
@@ -751,33 +1429,135 @@ gbm <- function(formula = formula(data),
    response.name <- as.character(formula[[2]])
    if(is.character(distribution)) distribution <- list(name=distribution)
 
+   if ( missing( class.stratify.cv ) ){
+      if ( distribution$name == "multinomial" ){ class.stratify.cv <- TRUE }
+      else class.stratify.cv <- FALSE
+   }
+   else {
+      if ( !is.element( distribution$name, c( "bernoulli", "multinomial" ) ) ){
+         warning("You can only use class.stratify.cv when distribution is bernoulli or multinomial. Ignored.")
+         class.stratify.cv <- FALSE
+      }
+   }
+
+   # groups (for pairwise distribution only)
+   group      <- NULL
+   num.groups <- 0
+
+   # determine number of training instances
+   if(distribution$name=="coxph")
+   {
+      nTrain <- floor(train.fraction*nrow(y))
+   }
+   else if (distribution$name != "pairwise")
+   {
+      nTrain <- floor(train.fraction*length(y))
+   }
+   else
+   {
+      # distribution$name == "pairwise":
+      # Sampling is by group, so we need to calculate them here
+      distribution.group <- distribution[["group"]]
+      if (is.null(distribution.group))
+      {
+         stop("For pairwise regression, the distribution parameter must be a list with a parameter 'group' for the a list of the column names indicating groups, for example list(name=\"pairwise\",group=c(\"date\",\"session\",\"category\",\"keywords\")).")
+      }
+
+      # Check if group names are valid
+      i <- match(distribution.group, colnames(data))
+      if (any(is.na(i)))
+      {
+         stop("Group column does not occur in data: ", distribution.group[is.na(i)])
+      }
+
+      # Construct group index
+      group <- factor(do.call(paste, c(data[,distribution.group, drop=FALSE], sep=":")))
+
+      # Check that weights are constant across groups
+      if ((!missing(weights)) && (!is.null(weights)))
+      {
+         w.min <- tapply(w, INDEX=group, FUN=min)
+         w.max <- tapply(w, INDEX=group, FUN=max)
+
+         if (any(w.min != w.max))
+         {
+            stop("For distribution 'pairwise', all instances for the same group must have the same weight")
+         }
+
+         # Normalize across groups
+         w <- w * length(w.min) / sum(w.min)
+      }
+
+      # Shuffle groups, to remove bias when splitting into train/test set and/or CV folds
+      perm.levels  <- levels(group)[sample(1:nlevels(group))]
+      group        <- factor(group, levels=perm.levels)
+
+      # The C function expects instances to be sorted by group and descending by target
+      ord.group    <- order(group, -y)
+      group        <- group[ord.group]
+      y            <- y[ord.group]
+      x            <- x[ord.group,,drop=FALSE]
+
+      # Split into train and validation set, at group boundary
+      num.groups.train <- max(1, round(train.fraction * nlevels(group)))
+
+      # include all groups up to the num.groups.train
+      nTrain           <- max(which(group==levels(group)[num.groups.train]))
+      Misc             <- group
+   } # close if(distribution$name=="coxph") ...
+
    cv.error <- NULL
    if(cv.folds>1)
    {
-      if(distribution$name=="coxph") i.train <- 1:floor(train.fraction*nrow(y))
-      else                      i.train <- 1:floor(train.fraction*length(y))
-      cv.group <- sample(rep(1:cv.folds, length=length(i.train)))
+      i.train <- 1:nTrain
+
+      if ( distribution$name %in% c( "bernoulli", "multinomial" ) & class.stratify.cv )
+      {
+         nc <- table(y[i.train]) # Number in each class
+         uc <- names(nc)
+         if ( min( nc ) < cv.folds ){
+            stop( paste("The smallest class has only", min(nc), "objects in the training set. Can't do", cv.folds, "fold cross-validation."))
+         }
+         cv.group <- vector( length = length( i.train ) )
+         for ( i in 1:length( uc ) ){
+            cv.group[ y[i.train] == uc[i] ] <- sample( rep( 1:cv.folds , length = nc[i] ) )
+         }
+      }
+      else if (distribution$name == "pairwise")
+      {
+         # Split into CV folds at group boundaries
+         s <- sample(rep(1:cv.folds, length=nlevels(group)))
+         cv.group <- s[as.integer(group[i.train])]
+      }
+      else
+      {
+         cv.group <- sample(rep(1:cv.folds, length=length(i.train)))
+      }
+
       cv.error <- rep(0, n.trees)
       for(i.cv in 1:cv.folds)
       {
          if(verbose) cat("CV:",i.cv,"\n")
+
          i <- order(cv.group==i.cv)
+
          gbm.obj <- gbm.fit(x[i.train,,drop=FALSE][i,,drop=FALSE],
                             y[i.train][i],
                             offset = offset[i.train][i],
                             distribution = distribution,
-                            w = ifelse(w==NULL,NULL,w[i.train][i]),
+                            w = if(is.null(w)) logical(0) else w[i.train][i],
                             var.monotone = var.monotone,
                             n.trees = n.trees,
                             interaction.depth = interaction.depth,
                             n.minobsinnode = n.minobsinnode,
                             shrinkage = shrinkage,
                             bag.fraction = bag.fraction,
-                            train.fraction = mean(cv.group!=i.cv),
+                            nTrain = length(which(cv.group!=i.cv)),
                             keep.data = FALSE,
                             verbose = verbose,
                             var.names = var.names,
-                            response.name = response.name)
+                            response.name = response.name,
+                            group = group[i.train][i])
          cv.error <- cv.error + gbm.obj$valid.error*sum(cv.group==i.cv)
       }
       cv.error <- cv.error/length(i.train)
@@ -793,33 +1573,58 @@ gbm <- function(formula = formula(data),
                       n.minobsinnode = n.minobsinnode,
                       shrinkage = shrinkage,
                       bag.fraction = bag.fraction,
-                      train.fraction = train.fraction,
+                      nTrain = nTrain,
                       keep.data = keep.data,
                       verbose = verbose,
                       var.names = var.names,
-                      response.name = response.name)
+                      response.name = response.name,
+                      group = group)
+
+   gbm.obj$train.fraction <- train.fraction
    gbm.obj$Terms <- Terms
    gbm.obj$cv.error <- cv.error
    gbm.obj$cv.folds <- cv.folds
+   gbm.obj$call <- theCall
+   gbm.obj$m <- m
+
+   if (distribution$name == "pairwise")
+   {
+      # Data has been reordered according to queries.
+      # We need to permute the fitted values to correspond
+      # to the original order.
+      gbm.obj$ord.group <- ord.group
+      gbm.obj$fit <- gbm.obj$fit[order(ord.group)]
+   }  
 
    return(gbm.obj)
 }
 
 
 gbm.perf <- function(object,
-            plot.it=TRUE,
-            oobag.curve=FALSE,
-            overlay=TRUE,
-            method)
+                     plot.it=TRUE,
+                     oobag.curve=FALSE,
+                     overlay=TRUE,
+                     method)
 {
    smoother <- NULL
+
+   if ( missing( method ) ){
+      if ( object$train.fraction < 1 ){
+         method <- "test"
+      }
+      else if ( !is.null( object$cv.error ) ){
+         method <- "cv"
+      }
+      else { method <- "OOB" }
+      cat( paste( "Using", method, "method...\n" ) )
+   }
 
    if((method == "OOB") || oobag.curve)
    {
       if(object$bag.fraction==1)
-         stop("Cannot compute OOB estimate or the OOB curve when bag.fraction=1")
+      stop("Cannot compute OOB estimate or the OOB curve when bag.fraction=1")
       if(all(!is.finite(object$oobag.improve)))
-         stop("Cannot compute OOB estimate or the OOB curve. No finite OOB estimates of improvement")
+      stop("Cannot compute OOB estimate or the OOB curve. No finite OOB estimates of improvement")
       x <- 1:object$n.trees
       smoother <- loess(object$oobag.improve~x,
                         enp.target=min(max(4,length(x)/10),50))
@@ -844,30 +1649,49 @@ gbm.perf <- function(object,
    if(method == "cv")
    {
       if(is.null(object$cv.error))
-         stop("In order to use method=\"cv\" gbm must be called with cv.folds>1.")
+      stop("In order to use method=\"cv\" gbm must be called with cv.folds>1.")
       if(length(object$cv.error) < object$n.trees)
-         warning("cross-validation error is not computed for any additional iterations run using gbm.more().")
+      warning("cross-validation error is not computed for any additional iterations run using gbm.more().")
       best.iter.cv <- which.min(object$cv.error)
       best.iter <- best.iter.cv
    }
 
    if(!is.element(method,c("OOB","test","cv")))
-      stop("method must be cv, test, or OOB")
+   stop("method must be cv, test, or OOB")
 
    if(plot.it)
    {
       par(mar=c(5,4,4,4)+.1)
-      ylab <- switch(substring(object$distribution$name,1,2),
-                               ga="Squared error loss",
-                               be="Bernoulli deviance",
-                               po="Poisson deviance",
-                               ad="AdaBoost exponential bound",
-                               co="Cox partial deviance",
-                               la="Absolute loss",
-                               qu="Quantile loss")
-      if(object$train.fraction==1)
+      if (object$distribution$name !="pairwise")
       {
-         ylim <- range(object$train.error)
+         ylab <- switch(substring(object$distribution$name,1,2),
+                        ga="Squared error loss",
+                        be="Bernoulli deviance",
+                        po="Poisson deviance",
+                        ad="AdaBoost exponential bound",
+                        co="Cox partial deviance",
+                        la="Absolute loss",
+                        qu="Quantile loss",
+                        mu="Multinomial deviance",
+                        td="t-distribution deviance"
+                        )
+      }
+      else # object$distribution$name =="pairwise"
+      {
+         ylab <- switch(object$distribution$metric,
+                        conc ="Fraction of concordant pairs",
+                        ndcg="Normalized discounted cumulative gain",
+                        map ="Mean average precision",
+                        mrr ="Mean reciprocal rank"
+                        )
+      }
+
+      if(object$train.fraction==1)
+      {  # HS Next line changed to scale axis to include other error
+         #         ylim <- range(object$train.error)
+         if ( method=="cv" ){ ylim <- range(object$train.error, object$cv.error) }
+         else if ( method == "test" ){ ylim <- range( object$train.error, object$valid.error) }
+         else { ylim <- range(object$train.error) }
       }
       else
       {
@@ -887,7 +1711,7 @@ gbm.perf <- function(object,
       {
          lines(object$cv.error,col="green")
       }
-
+      if(!is.na(best.iter)) abline(v=best.iter,col="blue",lwd=2,lty=2)
       if(oobag.curve)
       {
          if(overlay)
@@ -903,7 +1727,6 @@ gbm.perf <- function(object,
             at <- mean(range(smoother$y))
             mtext(paste("OOB improvement in",ylab),side=4,srt=270,line=2)
             abline(h=0,col="blue",lwd=2)
-            if(!is.na(best.iter)) abline(v=best.iter,col="blue",lwd=2)
          }
 
          plot(object$oobag.improve,type="l",
@@ -921,8 +1744,23 @@ gbm.perf <- function(object,
 
 
 relative.influence <- function(object,
-                               n.trees)
+                               n.trees,
+                               scale. = FALSE,
+                               sort. = FALSE )
 {
+
+   if( missing( n.trees ) ){
+      if ( object$train.fraction < 1 ){
+         n.trees <- gbm.perf( object, method="test", plot.it=FALSE )
+      }
+      else if ( !is.null( object$cv.error ) ){
+         n.trees <- gbm.perf( object, method="cv", plot.it = FALSE )
+      }
+      else{
+         best <- length( object$train.error )
+      }
+      cat( paste( "n.trees not given. Using", n.trees, "trees.\n" ) )
+   }
    get.rel.inf <- function(obj)
    {
       lapply(split(obj[[6]],obj[[1]]),sum) # 6 - Improvement, 1 - var name
@@ -938,22 +1776,238 @@ relative.influence <- function(object,
    i <- as.numeric(names(rel.inf.compact))+1
    rel.inf[i] <- rel.inf.compact
 
+   if (scale.){
+      rel.inf <- rel.inf / max( rel.inf )
+   }
+   if ( sort. ){
+      rel.inf <- rev(sort( rel.inf) )
+   }
+
+   names( rel.inf ) <- object$var.names
    return(rel.inf=rel.inf)
 }
 
-gbm.loss <- function(y,f,w,offset,dist,baseline)
+# Functions to compute IR measures for pairwise loss for
+# a single group
+# Notes:
+# * Inputs are passed as a 2-elemen (y,f) list, to
+#   facilitate the 'by' iteration
+# * Return the respective metric, or a negative value if
+#   it is undefined for the given group
+# * For simplicity, we have no special handling for ties;
+#   instead, we break ties randomly. This is slightly
+#   inaccurate for individual groups, but should have
+#   a small effect on the overall measure.
+
+
+# Area under ROC curve = ratio of correctly ranking pairs
+gbm.roc.area <- function(obs, pred)
 {
-   if(!is.na(offset))
+   n1 <- sum(obs)
+   n <- length(obs)
+   if (n==n1) { return(1) }
+   # Fraction of concordant pairs
+   # = sum_{pos}(rank-1) / #pairs with different labels
+   # #pairs = n1 * (n-n1)
+   return ((mean(rank(pred)[obs > 0]) - (n1 + 1)/2)/(n - n1))
+}
+
+# Concordance Index:
+# Fraction of all pairs (i,j) with i<j, x[i] != x[j], such that x[j] < x[i]
+# Invariant: if obs is binary, then
+#      gbm.roc.area(obs, pred) = gbm.conc(obs[order(-pred)])
+# gbm.conc is more general as it allows non-binary targets,
+# but is significantly slower
+gbm.conc <- function(x)
+{
+   lx <- length(x)
+   return (sum(mapply(function(r) { sum(x[(r+1):lx]<x[r]) }, 1:(lx-1))))
+}
+
+ir.measure.conc <- function(y.f, max.rank=0)
+{
+   # Note: max.rank is meaningless for CONC
+
+   y           <- y.f[[1]]
+   f           <- y.f[[2]]
+
+   tab         <- table(y)
+   csum        <- cumsum(tab)
+   total.pairs <- sum(tab * (csum - tab))
+
+   if (total.pairs == 0)
+   {
+      return (-1.0)
+   }
+   else
+   {
+      return (gbm.conc(y[order(-f)]) / total.pairs)
+   }
+}
+
+ir.measure.auc <- function(y.f, max.rank=0)
+{
+   # Note: max.rank is meaningless for AUC
+   y       <- y.f[[1]]
+   f       <- y.f[[2]]
+   num.pos <- sum(y>0)
+
+   if (length(f) <= 1 || num.pos == 0 || num.pos == length(f))
+   {
+      return (-1.0)
+   }
+   else
+   {
+      return (gbm.roc.area(obs=y, pred=f))
+   }
+}
+
+ir.measure.mrr <- function(y.f, max.rank)
+{
+   y       <- y.f[[1]]
+   f       <- y.f[[2]]
+   num.pos <- sum(y>0)
+
+   if (length(f) <= 1 || num.pos == 0 || num.pos == length(f))
+   {
+      return (-1.0)
+   }
+
+   ord         <- order(f, decreasing=TRUE)
+   min.idx.pos <- min(which(y[ord]>0))
+
+   if (min.idx.pos <= max.rank)
+   {
+      return (1.0 / min.idx.pos)
+   }
+   else
+   {
+      return (0.0)
+   }
+}
+
+ir.measure.map <- function(y.f, max.rank=0)
+{
+   # Note: max.rank is meaningless for MAP
+
+   y         <- y.f[[1]]
+   f         <- y.f[[2]]
+   ord       <- order(f, decreasing=TRUE)
+   idx.pos   <- which(y[ord]>0)
+   num.pos   <- length(idx.pos)
+
+   if (length(f) <= 1 || num.pos == 0 || num.pos == length(f))
+   {
+      return (-1.0)
+   }
+
+   # Above and including the rank of the i-th positive result,
+   # there are exactly i positives and rank(i) total results
+   return (sum((1:length(idx.pos))/idx.pos) / num.pos)
+}
+
+ir.measure.ndcg <- function(y.f, max.rank)
+{
+   y         <- y.f[[1]]
+   f         <- y.f[[2]]
+
+   if (length(f) <= 1 || all(diff(y)==0))
+   {
+      return (-1.0)
+   }
+
+   num.items <- min(length(f), max.rank)
+   ord       <- order(f, decreasing=TRUE)
+
+   dcg       <- sum(y[ord][1:num.items] / log2(2:(num.items+1)))
+
+   # The best possible DCG: order by target
+   ord.max   <- order(y, decreasing=TRUE)
+   dcg.max   <- sum(y[ord.max][1:num.items] / log2(2:(num.items+1)))
+
+   # Normalize
+   return (dcg / dcg.max)
+}
+
+perf.pairwise <- function(y, f, group, metric="ndcg", w=NULL, max.rank=0)
+{
+   func.name <- switch(metric,
+                       conc = "ir.measure.conc",
+                       mrr  = "ir.measure.mrr",
+                       map  = "ir.measure.map",
+                       ndcg = "ir.measure.ndcg",
+                       stop(paste("Metric",metric,"is not supported"))
+                       )
+
+   # Optimization: for binary targets,
+   # AUC is equivalent but faster than CONC
+   if (metric == "conc" && all(is.element(y, 0:1)))
+   {
+      func.name <- "ir.measure.auc"
+   }
+
+   # Max rank = 0 means no cut off
+   if (max.rank <= 0)
+   {
+      max.rank <- length(y)+1
+   }
+
+   # Random tie breaking in case of duplicate scores.
+   # (Without tie breaking, we would overestimate if instances are
+   # sorted descending on target)
+   f <- f + 1E-10 * runif(length(f), min=-0.5, max=0.5)
+
+   measure.by.group <- as.matrix(by(list(y, f), INDICES=group, FUN=get(func.name), max.rank=max.rank))
+
+   # Exclude groups with single result or only negative or positive instances
+   idx <- which((!is.null(measure.by.group)) & measure.by.group >= 0)
+
+   if (is.null(w))
+   {
+      return (mean(measure.by.group[idx]))
+   }
+   else
+   {
+      # Assumption: weights are constant per group
+      w.by.group <- tapply(w, group, mean)
+      return (weighted.mean(measure.by.group[idx], w=w.by.group[idx]))
+   }
+}
+
+gbm.loss <- function(y, f, w, offset, dist, baseline, group=NULL, max.rank=NULL)
+{
+   if (!is.na(offset))
    {
       f <- offset+f
    }
-   switch(dist,
-          gaussian = weighted.mean((y - f)^2,w) - baseline,
-          bernoulli = -2*weighted.mean(y*f - log(1+exp(f)),w) - baseline,
-          laplace = weighted.mean(abs(y-f),w) - baseline,
-          adaboost = weighted.mean(exp(-(2*y-1)*f),w) - baseline,
-          poisson = -2*weighted.mean(y*f-exp(f),w) - baseline,
-          stop(paste("Distribution",dist,"is not yet supported for method=permutation.test.gbm")))
+
+   if (dist$name != "pairwise")
+   {
+      switch(dist$name,
+             gaussian = weighted.mean((y - f)^2,w) - baseline,
+             bernoulli = -2*weighted.mean(y*f - log(1+exp(f)),w) - baseline,
+             laplace = weighted.mean(abs(y-f),w) - baseline,
+             adaboost = weighted.mean(exp(-(2*y-1)*f),w) - baseline,
+             poisson = -2*weighted.mean(y*f-exp(f),w) - baseline,
+             stop(paste("Distribution",dist$name,"is not yet supported for method=permutation.test.gbm")))
+   }
+   else # dist$name == "pairwise"
+   {
+      if (is.null(dist$metric))
+      {
+         stop("No metric specified for distribution 'pairwise'")
+      }
+      if (!is.element(dist$metric, c("conc", "ndcg", "map", "mrr")))
+      {
+         stop("Invalid metric '", dist$metric, "' specified for distribution 'pairwise'")
+      }
+      if (is.null(group))
+      {
+         stop("For distribution 'pairwise', parameter 'group' has to be supplied")
+      }
+      # Loss = 1 - utility
+      (1 - perf.pairwise(y, f, group, dist$metric, w, max.rank)) - baseline
+   }
 }
 
 permutation.test.gbm <- function(object,
@@ -967,12 +2021,21 @@ permutation.test.gbm <- function(object,
 
    if(!is.null(object$data))
    {
-      y           <- object$data$y
-      os          <- object$data$offset
-      Misc        <- object$data$Misc
-      w           <- object$data$w
-      x <- matrix(object$data$x,ncol=length(object$var.names))
+      y            <- object$data$y
+      os           <- object$data$offset
+      Misc         <- object$data$Misc
+      w            <- object$data$w
+      x            <- matrix(object$data$x, ncol=length(object$var.names))
       object$Terms <- NULL # this makes predict.gbm take x as it is
+
+      if (object$distribution$name == "pairwise")
+      {
+         # group and cutoff are only relevant for distribution "pairwise"
+         # in this case, the last element specifies the max rank
+         # max rank = 0 means no cut off
+         group     <- Misc[1:length(y)]
+         max.rank  <- Misc[length(y)+1]
+      }
    }
    else
    {
@@ -987,8 +2050,10 @@ permutation.test.gbm <- function(object,
 
       new.pred <- predict.gbm(object,newdata=x,n.trees=n.trees)
       rel.inf[i.vars[i]] <- gbm.loss(y,new.pred,w,os,
-                                     object$distribution$name,
-                                     object$train.error[n.trees])
+                                     object$distribution,
+                                     object$train.error[n.trees],
+                                     group,
+                                     max.rank)
 
       x[j,i.vars[i]] <- x[ ,i.vars[i]]
    }
@@ -1047,12 +2112,12 @@ summary.gbm <- function(object,
 
 quantile.rug <- function(x,prob=(0:10)/10,...)
 {
-     quants <- quantile(x[!is.na(x)],prob=prob)
-     if(length(unique(quants)) < length(prob))
-     {
-          quants <- jitter(quants)
-     }
-     rug(quants,...)
+   quants <- quantile(x[!is.na(x)],prob=prob)
+   if(length(unique(quants)) < length(prob))
+   {
+      quants <- jitter(quants)
+   }
+   rug(quants,...)
 }
 
 calibrate.plot <- function(y,p,
@@ -1118,18 +2183,18 @@ calibrate.plot <- function(y,p,
    if(replace)
    {
       plot(0,0,
-         type="n",
-         xlab=xlab,ylab=ylab,
-         xlim=xlim,ylim=ylim,
-         ...)
+           type="n",
+           xlab=xlab,ylab=ylab,
+           xlim=xlim,ylim=ylim,
+           ...)
    }
    if(!is.na(shade.col))
    {
       polygon(c(x,rev(x),x[1]),
-               c(se.lower,rev(se.upper),se.lower[1]),
-               col=shade.col,
-               border=NA,
-               density=shade.density)
+              c(se.lower,rev(se.upper),se.lower[1]),
+              col=shade.col,
+              border=NA,
+              density=shade.density)
    }
    lines(x,yy$fit,col=line.par$col)
    quantile.rug(p,side=rug.par$side)
@@ -1188,8 +2253,8 @@ shrink.gbm.pred <- function(object,newdata,n.trees,
          if(any(is.na(j)))
          {
             stop(paste("New levels for variable ",
-                        object$var.names[i],": ",
-                        levels(x[,i])[is.na(j)],sep=""))
+                       object$var.names[i],": ",
+                       levels(x[,i])[is.na(j)],sep=""))
          }
          x[,i] <- as.numeric(x[,i])-1
       }
@@ -1251,18 +2316,18 @@ shrink.gbm <- function(object,n.trees,
    }
 
    result <- .Call("gbm_shrink_gradient",
-                  y=as.double(y),
-                  X=as.double(x),
-                  cRows=as.integer(cRows),
-                  cCols=as.integer(cCols),
-                  n.trees=as.integer(n.trees),
-                  initF=object$initF,
-                  trees=object$trees,
-                  c.split=object$c.split,
-                  var.type=as.integer(object$var.type),
-                  depth=as.integer(object$interaction.depth),
-                  lambda=as.double(lambda),
-                  PACKAGE = "gbm")
+                   y=as.double(y),
+                   X=as.double(x),
+                   cRows=as.integer(cRows),
+                   cCols=as.integer(cCols),
+                   n.trees=as.integer(n.trees),
+                   initF=object$initF,
+                   trees=object$trees,
+                   c.split=object$c.split,
+                   var.type=as.integer(object$var.type),
+                   depth=as.integer(object$interaction.depth),
+                   lambda=as.double(lambda),
+                   PACKAGE = "gbm")
 
    names(result) <- c("predF","objective","gradient")
 
@@ -1281,7 +2346,7 @@ basehaz.gbm <- function(t,delta,f.x,
    for(i in 1:length(t.unique))
    {
       alpha[i] <- sum(t[delta==1]==t.unique[i])/
-                  sum(exp(f.x[t>=t.unique[i]]))
+                     sum(exp(f.x[t>=t.unique[i]]))
    }
 
    if(!smooth && !cumulative)
@@ -1318,77 +2383,91 @@ basehaz.gbm <- function(t,delta,f.x,
 # Compute Friedman's H statistic for interaction effects
 interact.gbm <- function(x, data, i.var = 1, n.trees = x$n.trees)
 {
-    if (all(is.character(i.var)))
-    {
-        i <- match(i.var, x$var.names)
-        if (any(is.na(i))) {
-            stop("Variables given are not used in gbm model fit: ",
-                i.var[is.na(i)])
-        }
-        else
-        {
-            i.var <- i
-        }
-    }
-    if ((min(i.var) < 1) || (max(i.var) > length(x$var.names)))
-    {
-        warning("i.var must be between 1 and ", length(x$var.names))
-    }
-    if (n.trees > x$n.trees)
-    {
-        warning(paste("n.trees exceeds the number of trees in the model, ",
-            x$n.trees,". Using ", x$n.trees, " trees.", sep = ""))
-        n.trees <- x$n.trees
-    }
+   if (all(is.character(i.var)))
+   {
+      i <- match(i.var, x$var.names)
+      if (any(is.na(i))) {
+         stop("Variables given are not used in gbm model fit: ",
+              i.var[is.na(i)])
+      }
+      else
+      {
+         i.var <- i
+      }
+   }
+   if ((min(i.var) < 1) || (max(i.var) > length(x$var.names)))
+   {
+      warning("i.var must be between 1 and ", length(x$var.names))
+   }
+   if (n.trees > x$n.trees)
+   {
+      warning(paste("n.trees exceeds the number of trees in the model, ",
+                    x$n.trees,". Using ", x$n.trees, " trees.", sep = ""))
+      n.trees <- x$n.trees
+   }
 
-    unique.tab <- function(z,i.var)
-    {
-        a <- unique(z[,i.var,drop=FALSE])
-        a$n <- table(factor(apply(z[,i.var,drop=FALSE],1,paste,collapse="\r"),
-                     levels=apply(a,1,paste,collapse="\r")))
-        return(a)
-    }
+   unique.tab <- function(z,i.var)
+   {
+      a <- unique(z[,i.var,drop=FALSE])
+      a$n <- table(factor(apply(z[,i.var,drop=FALSE],1,paste,collapse="\r"),
+                          levels=apply(a,1,paste,collapse="\r")))
+      return(a)
+   }
 
    # convert factors
    for(j in i.var)
    {
       if(is.factor(data[,x$var.names[j]]))
-         data[,x$var.names[j]] <-
-            as.numeric(data[,x$var.names[j]])-1
+      data[,x$var.names[j]] <-
+      as.numeric(data[,x$var.names[j]])-1
    }
 
    # generate a list with all combinations of variables
    a <- apply(expand.grid(rep(list(c(FALSE,TRUE)), length(i.var)))[-1,],1,
               function(x) as.numeric(which(x)))
-   F <- vector("list",length(a))
+   FF <- vector("list",length(a))
    for(j in 1:length(a))
    {
-      F[[j]]$Z <- data.frame(unique.tab(data, x$var.names[i.var[a[[j]]]]))
-      F[[j]]$n <- as.numeric(F[[j]]$Z$n)
-      F[[j]]$Z$n <- NULL
-      F[[j]]$f <- .Call("gbm_plot",
-                        X = as.double(data.matrix(F[[j]]$Z)),
-                        cRows = as.integer(nrow(F[[j]]$Z)),
-                        cCols = as.integer(ncol(F[[j]]$Z)),
-                        i.var = as.integer(i.var[a[[j]]] - 1),
-                        n.trees = as.integer(n.trees),
-                        initF = as.double(x$initF),
-                        trees = x$trees, c.splits = x$c.splits,
-                        var.type = as.integer(x$var.type), PACKAGE = "gbm")
+      FF[[j]]$Z <- data.frame(unique.tab(data, x$var.names[i.var[a[[j]]]]))
+      FF[[j]]$n <- as.numeric(FF[[j]]$Z$n)
+      FF[[j]]$Z$n <- NULL
+      FF[[j]]$f <- .Call("gbm_plot",
+                         X = as.double(data.matrix(FF[[j]]$Z)),
+                         cRows = as.integer(nrow(FF[[j]]$Z)),
+                         cCols = as.integer(ncol(FF[[j]]$Z)),
+                         n.class = as.integer(x$num.classes),
+                         i.var = as.integer(i.var[a[[j]]] - 1),
+                         n.trees = as.integer(n.trees),
+                         initF = as.double(x$initF),
+                         trees = x$trees,
+                         c.splits = x$c.splits,
+                         var.type = as.integer(x$var.type),
+                         PACKAGE = "gbm")
       # center the values
-      F[[j]]$f <- with(F[[j]], f - weighted.mean(f,n))
+      FF[[j]]$f <- with(FF[[j]], f - weighted.mean(f,n))
       # precompute the sign of these terms to appear in H
-      F[[j]]$sign <- ifelse(length(a[[j]]) %% 2 == length(i.var) %% 2, 1, -1)
+      FF[[j]]$sign <- ifelse(length(a[[j]]) %% 2 == length(i.var) %% 2, 1, -1)
    }
 
-   H <- F[[length(a)]]$f
+   H <- FF[[length(a)]]$f
    for(j in 1:(length(a)-1))
    {
-      i <- match(apply(F[[length(a)]]$Z[,a[[j]],drop=FALSE],1,paste,collapse="\r"),
-                 apply(F[[j]]$Z,1,paste,collapse="\r"))
-      H <- H + with(F[[j]], sign*f[i])
+      i <- match(apply(FF[[length(a)]]$Z[,a[[j]],drop=FALSE],1,paste,collapse="\r"),
+                 apply(FF[[j]]$Z,1,paste,collapse="\r"))
+      H <- H + with(FF[[j]], sign*f[i])
    }
-   H <- weighted.mean(H^2, F[[length(a)]]$n)/
-        weighted.mean((F[[length(a)]]$f)^2,F[[length(a)]]$n)
+   if (is.null(dim(H)))
+   {
+      H <- weighted.mean(H^2, FF[[length(a)]]$n)/
+              weighted.mean((FF[[length(a)]]$f)^2,FF[[length(a)]]$n)
+   }
+   else {
+      H <- apply(H^2, 2, weighted.mean, w = FF[[length(a)]]$n, na.rm = TRUE)/
+              apply((FF[[length(a)]]$f)^2, 2, weighted.mean,
+                 w = FF[[length(a)]]$n, na.rm = TRUE)
+   }
+   if (x$distribution$name=="multinomial"){
+      names(H) <- x$classes
+   }
    return(sqrt(H))
 }

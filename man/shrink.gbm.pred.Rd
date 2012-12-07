@@ -25,9 +25,10 @@ shrink.gbm.pred(object,
 A vector with length equal to the number of observations in newdata containing the predictions
 }
 
-\author{ Greg Ridgeway \email{gregr@rand.org} }
+\author{ Greg Ridgeway \email{gregridgeway@gmail.com} }
 
 \section{Warning}{This function is experimental}
 
 \seealso{ \code{\link{shrink.gbm}}, \code{\link{gbm}} }
+
 \keyword{ methods }

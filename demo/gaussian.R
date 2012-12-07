@@ -41,8 +41,8 @@ gbm1 <- gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
             train.fraction = 0.5,        # fraction of data for training, first train.fraction*N used for training
             n.minobsinnode = 10,         # minimum number of obs needed in each node
             keep.data=TRUE,
-            cv.folds=10)                 # do 10-fold cross-validation
-
+            cv.folds=10,                 # do 10-fold cross-validation
+            verbose = FALSE)             # don't print progress
 
 # plot the performance
 best.iter <- gbm.perf(gbm1,method="OOB")  # returns out-of-bag estimated best number of trees
@@ -99,7 +99,7 @@ plot(gbm1,2:4,best.iter)
 plot(gbm1,3:5,best.iter)
 
 # check interactions
-interact.gbm(gbm1,data=data,i.var=1:2,n.trees=best.iter)
+interact.gbm(gbm1,data=data,i.var=1:2,n.trees=best.iter, verbose=FALSE)
 # get all two way interactions
 i.var <- subset(expand.grid(x1=1:6,x2=1:6), x1<x2)
 rownames(i.var) <- apply(i.var,1,paste,collapse=":",sep="")

@@ -36,7 +36,7 @@ Returns the value of \eqn{H}.
 J.H. Friedman and B.E. Popescu (2005). \dQuote{Predictive Learning via Rule
 Ensembles.} Section 8.1
 }
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregridgeway@gmail.com}}
 
 \seealso{ \code{\link{gbm}}, \code{\link{gbm.object}} }
 

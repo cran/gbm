@@ -39,13 +39,17 @@ public:
                          unsigned long nTrain,
                          double dBagFraction,
                          unsigned long cLeaves,
-                         unsigned long cMinObsInNode);
+                         unsigned long cMinObsInNode,
+			 unsigned long cNumClasses,
+                         int cGroups);
 
     GBMRESULT iterate(double *adF,
                     double &dTrainError,
                     double &dValidError,
                     double &dOOBagImprove,
-                    int &cNodes);
+                    int &cNodes,
+					int cNumClasses,
+					int cClassIdx);
     GBMRESULT TransferTreeToRList(int *aiSplitVar,
                                 double *adSplitPoint,
                                 int *aiLeftNode,
@@ -71,6 +75,7 @@ public:
                                     unsigned long cTrees);
     GBMRESULT PrintTree();
 
+    bool IsPairwise() const { return (cGroups >= 0); }
     CDataset *pData;            // the data
     CDistribution *pDist;       // the distribution
     bool fInitialized;          // indicates whether the GBM has been initialized
@@ -94,6 +99,7 @@ private:
     double dBagFraction;
     unsigned long cDepth;
     unsigned long cMinObsInNode;
+    int  cGroups;
 };
 
 #endif // GBM_ENGINGBM_H

@@ -30,6 +30,14 @@ public:
 
     virtual ~CCoxPH();
 
+	GBMRESULT UpdateParams(double *adF,
+	                       double *adOffset,
+						   double *adWeight,
+	                       unsigned long cLength)
+	{ 
+		return GBM_OK;
+	};
+
     GBMRESULT ComputeWorkingResponse(double *adT,
                                    double *adDelta,
                                    double *adOffset,
@@ -37,7 +45,8 @@ public:
                                    double *adZ, 
                                    double *adWeight,
                                    bool *afInBag,
-                                   unsigned long nTrain);
+                                   unsigned long nTrain,
+                                   int cIdxOff);
 
     GBMRESULT InitF(double *adT,
                   double *adDelta,
@@ -58,14 +67,16 @@ public:
                             unsigned long cTermNodes,
                             unsigned long cMinObsInNode,
                             bool *afInBag,
-                            double *adFadj);
+                            double *adFadj,
+	                        int cIdxOff);
 
     double Deviance(double *adT,
                     double *adDelta,
                     double *adOffset,
                     double *adWeight,
                     double *adF,
-                    unsigned long cLength);
+                    unsigned long cLength,
+	                int cIdxOff);
 
     double BagImprovement(double *adT,
                           double *adDelta,

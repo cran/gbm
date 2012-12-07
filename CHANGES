@@ -1,5 +1,51 @@
+Changes in version 2.0
 
+Lots of new features added so it warrants a change to the first digit
+of the version number.
 
+Major changes:
+- Several new distributions are now available thanks to Harry Southworth 
+and Daniel Edwards: multinomial and tdist.
+- New distribution 'pairwise' for Learning to Rank Applications (LambdaMART), 
+  including four different ranking measures, thanks to Stefan Schroedl.
+
+- The gbm package is now managed on R-Forge by Greg Ridgeway and 
+Harry Southworth. Visit http://r-forge.r-project.org/projects/gbm/
+to get the latest or to contribute to the package
+
+Minor changes:
+- the "quantile" distribution now handles weighted data
+
+- relative.influence changed to give names to the returned vector
+
+- Added print.gbm and show.gbm. These give basic summaries of the fitted 
+model
+
+- Added support function and reconstructGBMdata() to facilitate reconstituting
+the data for certain plots and summaries
+
+- gbm was not using the weights when using cross-validation due to 
+a bug. That's been fixed (Thanks to Trevor Hastie for catching this)
+
+- predict.gbm now tries to guess the number of trees, also defaults to using the training data if no newdata is given. 
+
+- relative.influence has has 2 new arguments, scale. and sort. that default to FALSE. The returned vector now has names. 
+
+- gbm now tries to guess what distribution you meant if you didn't specify. 
+
+- gbm has a new argument, class.stratifiy.cv, to control if cross-validation is stratified by class with distribution is "bernoulli" or "multinomial". Defaults to TRUE for multinomial, FALSE for bernoulli. The purpose is to avoid unusable training sets. 
+
+- gbm.perf now puts a vertical line at the best number of trees when method = "cv" or "test". Tries to guess what method you meant if you don't tell it. 
+
+- .First.lib had a bug that would crash gbm if gbm was installed as a local library. Fixed. 
+
+- plot.gbm has a new argument, type, defaulting to "link". For bernoulli, multinomial, poisson, "response" is allowed.
+
+- models with large interactions (>24) were using up all the terminal nodes in the stack. The stack has been increased to 101 nodes allowing interaction.depth up to 49. A more graceful error is now issued if interaction.depth exceeds 49. (Thanks to Tom Dietterich for catching this).
+
+- gbm now uses the R macro R_NaN in the C++ code rather than NAN, which would not compile on Sun OS.
+
+- If covariates marked missing values with NaN instead of NA, the model fit would not be consistent (Thanks to JR Lockwood for noting this)
 
 Changes in version 1.6
 

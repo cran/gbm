@@ -37,7 +37,8 @@ gbm1 <- gbm(Surv(tt,delta)~X1+X2+X3,       # formula
             train.fraction = 0.5,      # fraction of data for training, first train.fraction*N used for training
             cv.folds = 5,              # do 5-fold cross-validation
             n.minobsinnode = 10,       # minimum total weight needed in each node
-            keep.data = TRUE)
+            keep.data = TRUE,
+            verbose = FALSE)           # don't print progress
 
 # plot the performance
 best.iter <- gbm.perf(gbm1,method="OOB")  # returns out-of-bag estimated best number of trees

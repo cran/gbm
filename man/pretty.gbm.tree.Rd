@@ -8,8 +8,7 @@ tree and displays it in a slightly more readable form. This function is mostly
 for debugging purposes and to satisfy some users' curiosity.
 }
 \usage{
-pretty.gbm.tree(object, 
-                i.tree = 1)
+pretty.gbm.tree(object, i.tree = 1)
 }
 \arguments{
   \item{object}{ a \code{\link{gbm.object}} initially fit using \code{\link{gbm}}}
@@ -32,7 +31,7 @@ splitting this node.}
 \item{Weight}{the total weight of observations in the node. If weights are all
 equal to 1 then this is the number of observations in the node.}
 }
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregridgeway@gmail.com}}
 \seealso{
 \code{\link{gbm}}, \code{\link{gbm.object}}
 }

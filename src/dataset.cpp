@@ -49,8 +49,6 @@ Error:
 
 
 
-
-
 GBMRESULT CDataset::SetData
 (
     double *adX,

@@ -33,7 +33,7 @@ equal to the number of levels in the categorical split variable. -1 indicates
 left, +1 indicates right, and 0 indicates that the level was not present in the
 training data}
 }
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregridgeway@gmail.com}}
 \seealso{
 \code{\link{gbm}}
 }

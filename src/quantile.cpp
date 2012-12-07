@@ -22,7 +22,8 @@ GBMRESULT CQuantile::ComputeWorkingResponse
     double *adZ, 
     double *adWeight,
     bool *afInBag,
-    unsigned long nTrain
+    unsigned long nTrain,
+	int cIdxOff
 )
 {
     unsigned long i = 0;
@@ -88,7 +89,8 @@ double CQuantile::Deviance
     double *adOffset, 
     double *adWeight,
     double *adF,
-    unsigned long cLength
+    unsigned long cLength,
+	int cIdxOff
 )
 {
     unsigned long i=0;
@@ -97,7 +99,7 @@ double CQuantile::Deviance
     
     if(adOffset == NULL)
     {
-        for(i=0; i<cLength; i++)
+        for(i=cIdxOff; i<cLength+cIdxOff; i++)
         {
             if(adY[i] > adF[i])
             {
@@ -112,7 +114,7 @@ double CQuantile::Deviance
     }
     else
     {
-        for(i=0; i<cLength; i++)
+        for(i=cIdxOff; i<cLength+cIdxOff; i++)
         {
             if(adY[i] > adF[i] + adOffset[i])
             {
@@ -145,7 +147,8 @@ GBMRESULT CQuantile::FitBestConstant
     unsigned long cTermNodes,
     unsigned long cMinObsInNode,
     bool *afInBag,
-    double *adFadj
+    double *adFadj,
+	int cIdxOff
 )
 {
     GBMRESULT hr = GBM_OK;

@@ -24,8 +24,8 @@ This function is currently experimental. Used in conjunction with a gradient asc
   \item{objective}{The value of the loss function associated with the predicted values}
   \item{gradient}{A vector with length equal to the number of variables containing the derivative of the objective function with respect to beta, the logit transform of the shrinkage parameter for each variable}
 }
-\references{ Hastie, T. J., and Pregibon, D. "Shrinking Trees." AT&T Bell Laboratories Technical Report (March 1990). \url{http://www-stat.stanford.edu/~hastie/Papers/shrinktree.ps} }
-\author{ Greg Ridgeway \email{gregr@rand.org} }
+\references{ Hastie, T. J., and Pregibon, D. \href{http://www-stat.stanford.edu/~hastie/Papers/shrinktree.ps}{Shrinking Trees}. AT&T Bell Laboratories Technical Report (March 1990).}
+\author{ Greg Ridgeway \email{gregridgeway@gmail.com} }
 
 
 \section{Warning}{This function is experimental.}

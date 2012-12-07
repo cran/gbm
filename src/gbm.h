@@ -6,7 +6,7 @@
 //  License:    GNU GPL (version 2 or later)
 //
 //  Contents:   Entry point for gbm.dll
-//            
+//
 //  Owner:      gregr@rand.org
 //
 //  History:    2/14/2003   gregr created
@@ -25,7 +25,12 @@
 #include "coxph.h"
 #include "laplace.h"
 #include "quantile.h"
+#include "tdist.h"
+#include "multinomial.h"
+#include "pairwise.h"
 #include "gbm_engine.h"
+#include "locationm.h"
+#include "huberized.h"
 
 typedef vector<char> VEC_CATEGORIES;
 typedef vector<VEC_CATEGORIES> VEC_VEC_CATEGORIES;
@@ -46,11 +51,13 @@ GBMRESULT gbm_setup
     int cTrees,
     int cLeaves,
     int cMinObsInNode,
+    int cNumClasses,
     double dShrinkage,
     double dBagFraction,
     int cTrain,
     CDataset *pData,
-    PCDistribution &pDist
+    PCDistribution &pDist,
+    int& cGroups
 );
 
 

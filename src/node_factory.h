@@ -6,7 +6,7 @@
 //  License:    GNU GPL (version 2 or later)
 //
 //  Contents:   manager for allocation and destruction of all nodes 
-//        	  
+//            
 //  Owner:      gregr@rand.org
 //
 //  History:    3/26/2001   gregr created
@@ -23,7 +23,7 @@
 #include "node_continuous.h"
 #include "node_categorical.h"
 
-#define NODEFACTORY_NODGBM_RESERVE ((unsigned long)50)
+#define NODEFACTORY_NODGBM_RESERVE ((unsigned long)101)
 
 using namespace std;
 
@@ -56,6 +56,3 @@ private:
 };
 
 #endif // NODEFACTORY_H
-
-
-

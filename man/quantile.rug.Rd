@@ -11,8 +11,7 @@ quantile.rug(x,prob=(0:10)/10,...)
 \item{...}{additional graphics parameters currently ignored.}
 }
 \value{No return values}
-\references{\url{http://www.i-pensieri.com/gregr/gbm.shtml}}
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregridgeway@gmail.com}}
 \seealso{
 \code{\link[graphics]{plot}}, 
 \code{\link[stats]{quantile}}, 

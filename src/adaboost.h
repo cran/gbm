@@ -28,6 +28,14 @@ public:
 
     virtual ~CAdaBoost();
 
+    GBMRESULT UpdateParams(double *adF,
+	                       double *adOffset,
+						   double *adWeight,
+	                       unsigned long cLength)
+	{ 
+		return GBM_OK;
+	};
+
     GBMRESULT ComputeWorkingResponse(double *adY,
                                    double *adMisc,
                                    double *adOffset,
@@ -35,7 +43,8 @@ public:
                                    double *adF, 
                                    double *adZ,
                                    bool *afInBag,
-                                   unsigned long nTrain);
+                                   unsigned long nTrain,
+	                               int cIdxOff);
 
     GBMRESULT InitF(double *adY, 
                   double *adMisc,
@@ -56,14 +65,16 @@ public:
                             unsigned long cTermNodes,
                             unsigned long cMinObsInNode,
                             bool *afInBag,
-                            double *adFadj);
+                            double *adFadj,
+	                        int cIdxOff);
 
     double Deviance(double *adY,
                     double *adMisc,
                     double *adOffset,
                     double *adWeight,
                     double *adF,
-                    unsigned long cLength);
+                    unsigned long cLength,
+	                int cIdxOff);
 
     double BagImprovement(double *adY,
                           double *adMisc,

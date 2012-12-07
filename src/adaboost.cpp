@@ -20,7 +20,8 @@ GBMRESULT CAdaBoost::ComputeWorkingResponse
     double *adZ,
     double *adWeight,
     bool *afInBag,
-    unsigned long nTrain
+    unsigned long nTrain,
+	int cIdxOff
 )
 {
     unsigned long i = 0;
@@ -103,7 +104,8 @@ double CAdaBoost::Deviance
     double *adOffset,
     double *adWeight,
     double *adF,
-    unsigned long cLength
+    unsigned long cLength,
+	int cIdxOff
 )
 {
     unsigned long i=0;
@@ -112,7 +114,7 @@ double CAdaBoost::Deviance
 
     if(adOffset == NULL)
     {
-        for(i=0; i<cLength; i++)
+        for(i=cIdxOff; i<cLength+cIdxOff; i++)
         {
             dL += adWeight[i] * exp(-(2*adY[i]-1)*adF[i]);
             dW += adWeight[i];
@@ -120,7 +122,7 @@ double CAdaBoost::Deviance
     }
     else
     {
-        for(i=0; i<cLength; i++)
+        for(i=cIdxOff; i<cLength+cIdxOff; i++)
         {
             dL += adWeight[i] * exp(-(2*adY[i]-1)*(adOffset[i]+adF[i]));
             dW += adWeight[i];
@@ -145,7 +147,8 @@ GBMRESULT CAdaBoost::FitBestConstant
     unsigned long cTermNodes,
     unsigned long cMinObsInNode,
     bool *afInBag,
-    double *adFadj
+    double *adFadj,
+	int cIdxOff
 )
 {
     GBMRESULT hr = GBM_OK;

@@ -28,15 +28,15 @@ public:
     GBMRESULT ResetWeights();
 
     GBMRESULT SetData(double *adX,
-                    int *aiXOrder,
-                    double *adY,
-                    double *adOffset,
-                    double *adWeight,
-                    double *adMisc,
-                    int cRows,
-                    int cCols,
-                    int *acVarClasses,
-                    int *alMonotoneVar);
+                      int *aiXOrder,
+                      double *adY,
+                      double *adOffset,
+                      double *adWeight,
+                      double *adMisc,
+                      int cRows,
+                      int cCols,
+                      int *acVarClasses,
+                      int *alMonotoneVar);
 
     GBMRESULT Entry(int iRow,
                   int iCol,

@@ -34,12 +34,11 @@ sure that \code{newdata} is of the same format (order and number of variables)
 as the one originally used to fit the model.
 }
 \value{
-
 Returns a vector of predictions. By default the predictions are on the scale of f(x). For example, for the Bernoulli loss the returned value is on the log odds scale, poisson loss on the log scale, and coxph is on the log hazard scale.
 
 If \code{type="response"} then \code{gbm} converts back to the same scale as the outcome. Currently the only effect this will have is returning probabilities for bernoulli and expected counts for poisson. For the other distributions "response" and "link" return the same.
 }
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregridgeway@gmail.com}}
 \seealso{
 \code{\link{gbm}}, \code{\link{gbm.object}}
 }

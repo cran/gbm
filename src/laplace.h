@@ -5,7 +5,7 @@
 //  License:    GNU GPL (version 2 or later)
 //
 //  Contents:   laplace object
-//        	  
+// 
 //  Owner:      gregr@rand.org
 //
 //  History:    3/26/2001   gregr created
@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include "distribution.h"
+#include "locationm.h"
 
 
 class CLaplace : public CDistribution
@@ -29,6 +30,14 @@ public:
 
     virtual ~CLaplace();
 
+   GBMRESULT UpdateParams(double *adF,
+                          double *adOffset,
+                          double *adWeight,
+                          unsigned long cLength)
+   { 
+      return GBM_OK;
+   };
+
     GBMRESULT ComputeWorkingResponse(double *adY,
                                    double *adMisc,
                                    double *adOffset,
@@ -36,7 +45,8 @@ public:
                                    double *adZ, 
                                    double *adWeight,
                                    bool *afInBag,
-                                   unsigned long nTrain);
+                                   unsigned long nTrain,
+                                   int cIdxOff);
 
     GBMRESULT InitF(double *adY, 
                   double *adMisc,
@@ -46,25 +56,27 @@ public:
                   unsigned long cLength);
 
     GBMRESULT FitBestConstant(double *adY,
-                            double *adMisc,
-                            double *adOffset,
-                            double *adW,
-                            double *adF,
-                            double *adZ,
-                            unsigned long *aiNodeAssign,
-                            unsigned long nTrain,
-                            VEC_P_NODETERMINAL vecpTermNodes,
-                            unsigned long cTermNodes,
-                            unsigned long cMinObsInNode,
-                            bool *afInBag,
-                            double *adFadj);
+                              double *adMisc,
+                              double *adOffset,
+                              double *adW,
+                              double *adF,
+                              double *adZ,
+                              unsigned long *aiNodeAssign,
+                              unsigned long nTrain,
+                              VEC_P_NODETERMINAL vecpTermNodes,
+                              unsigned long cTermNodes,
+                              unsigned long cMinObsInNode,
+                              bool *afInBag,
+                              double *adFadj,
+                              int cIdxOff);
 
     double Deviance(double *adY,
                     double *adMisc,
                     double *adOffset,
                     double *adWeight,
                     double *adF,
-                    unsigned long cLength);
+                    unsigned long cLength,
+                    int cIdxOff);
 
     double BagImprovement(double *adY,
                           double *adMisc,
@@ -79,6 +91,7 @@ public:
 private:
     vector<double> vecd;
     vector<double>::iterator itMedian;
+    CLocationM *mpLocM;
 };
 
 #endif // LAPLACGBM_H

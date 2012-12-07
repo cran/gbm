@@ -58,14 +58,16 @@ probability score," Organisational Behaviour and Human Performance 30:132-156.
 D.J. Spiegelhalter (1986). "Probabilistic Prediction in Patient Management
 and Clinical Trials," Statistics in Medicine 5:421-433.
 }
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregridgeway@gmail.com}}
 \examples{
-library(rpart)
-data(kyphosis)
-y <- as.numeric(kyphosis$Kyphosis)-1
-x <- kyphosis$Age
-glm1 <- glm(y~poly(x,2),family=binomial)
-p <- predict(glm1,type="response")
-calibrate.plot(y, p, xlim=c(0,0.6), ylim=c(0,0.6))
+# Don't want R CMD check to think there is a dependency on rpart
+# so comment out the example
+#library(rpart)
+#data(kyphosis)
+#y <- as.numeric(kyphosis$Kyphosis)-1
+#x <- kyphosis$Age
+#glm1 <- glm(y~poly(x,2),family=binomial)
+#p <- predict(glm1,type="response")
+#calibrate.plot(y, p, xlim=c(0,0.6), ylim=c(0,0.6))
 }
 \keyword{ hplot }

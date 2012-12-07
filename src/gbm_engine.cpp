@@ -1,5 +1,5 @@
 //  GBM by Greg Ridgeway  Copyright (C) 2003
-
+//#define NOISY_DEBUG
 #include "gbm_engine.h"
 
 CGBM::CGBM()
@@ -9,7 +9,7 @@ CGBM::CGBM()
     afInBag = NULL;
     aiNodeAssign = NULL;
     aNodeSearch = NULL;
-    
+
     cDepth = 0;
     cMinObsInNode = 0;
     dBagFraction = 0.0;
@@ -75,7 +75,9 @@ GBMRESULT CGBM::Initialize
     unsigned long cTrain,
     double dBagFraction,
     unsigned long cDepth,
-    unsigned long cMinObsInNode
+    unsigned long cMinObsInNode,
+    unsigned long cNumClasses,
+    int cGroups
 )
 {
     GBMRESULT hr = GBM_OK;
@@ -99,6 +101,7 @@ GBMRESULT CGBM::Initialize
     this->dBagFraction = dBagFraction;
     this->cDepth = cDepth;
     this->cMinObsInNode = cMinObsInNode;
+    this->cGroups = cGroups;
 
     // allocate the tree structure
     ptreeTemp = new CCARTTree;
@@ -110,18 +113,23 @@ GBMRESULT CGBM::Initialize
 
     cValid = pData->cRows - cTrain;
     cTotalInBag = (unsigned long)(dBagFraction*cTrain);
+    adZ = new double[(pData->cRows) * cNumClasses];
 
-    adZ = new double[cTrain];
     if(adZ == NULL)
     {
         hr = GBM_OUTOFMEMORY;
         goto Error;
     }
-    adFadj = new double[pData->cRows];
+    adFadj = new double[(pData->cRows) * cNumClasses];
     if(adFadj == NULL)
     {
         hr = GBM_OUTOFMEMORY;
         goto Error;
+    }
+
+    for (i=0; i<(pData->cRows)*cNumClasses; i++)
+    {
+        adFadj[i] = 0.0;
     }
 
     pNodeFactory = new CNodeFactory();
@@ -240,21 +248,23 @@ Error:
 }
 
 
-
-
 GBMRESULT CGBM::iterate
 (
     double *adF,
     double &dTrainError,
     double &dValidError,
     double &dOOBagImprove,
-    int &cNodes
+    int &cNodes,
+    int cNumClasses,
+    int cClassIdx
 )
 {
     GBMRESULT hr = GBM_OK;
     unsigned long i = 0;
     unsigned long cBagged = 0;
+    int cIdxOff = cClassIdx * (cTrain + cValid);
 
+ //   for(i=0; i < cTrain + cIdxOff; i++){ adF[i] = 0;}
     if(!fInitialized)
     {
         hr = GBM_FAIL;
@@ -268,56 +278,125 @@ GBMRESULT CGBM::iterate
     vecpTermNodes.assign(2*cDepth+1,NULL);
 
     // randomly assign observations to the Bag
-    cBagged = 0;
-    for(i=0; i<cTrain; i++)
+
+    if (cClassIdx == 0)
     {
-        if(unif_rand()*(cTrain-i) < cTotalInBag-cBagged)
+        if (!IsPairwise())
         {
-            afInBag[i] = true;
-            cBagged++;
+            // regular instance based training
+            for(i=0; i<cTrain; i++)
+            {
+                if(unif_rand()*(cTrain-i) < cTotalInBag-cBagged)
+                {
+                    afInBag[i] = true;
+                    cBagged++;
+                }
+                else
+                {
+                    afInBag[i] = false;
+                }
+                if (cBagged >= cTotalInBag)
+                {
+                    break;
+                }
+            }
+            // the remainder is not in the bag
+            for( ; i<cTrain; i++)
+            {
+                afInBag[i] = false;
+            }
         }
         else
         {
-            afInBag[i] = false;
+            // for pairwise training, sampling is per group
+            // therefore, we will not have exactly cTotalInBag instances
+
+            double dLastGroup = -1;
+            bool chosen = false;
+            unsigned int cBaggedGroups = 0;
+            unsigned int cSeenGroups   = 0;
+            unsigned int cTotalGroupsInBag = (unsigned long)(dBagFraction * cGroups);
+            if (cTotalGroupsInBag <= 0)
+            {
+                cTotalGroupsInBag = 1;
+            }
+            for(i=0; i<cTrain; i++)
+            {
+                const double dGroup = pData->adMisc[i];
+                if (dGroup != dLastGroup)
+                {
+                    if (cBaggedGroups >= cTotalGroupsInBag)
+                    {
+                        break;
+                    }
+
+                    // Group changed, make a new decision
+                    chosen = (unif_rand()*(cGroups - cSeenGroups) < cTotalGroupsInBag - cBaggedGroups);
+                    if (chosen)
+                    {
+                        cBaggedGroups++;
+                    }
+                    dLastGroup = dGroup;
+                    cSeenGroups++;
+                }
+                if (chosen)
+                {
+                    afInBag[i] = true;
+                    cBagged++;
+                }
+                else
+                {
+                    afInBag[i] = false;
+                }
+            }
+            // the remainder is not in the bag
+            for( ; i<cTrain; i++)
+            {
+                afInBag[i] = false;
+            }
         }
     }
 
-    #ifdef NOISY_DEBUG
+#ifdef NOISY_DEBUG
     Rprintf("Compute working response\n");
-    #endif
-    hr = pDist->ComputeWorkingResponse(pData->adY, 
+#endif
+
+    hr = pDist->ComputeWorkingResponse(pData->adY,
                                        pData->adMisc,
                                        pData->adOffset,
-                                       adF, 
+                                       adF,
                                        adZ,
                                        pData->adWeight,
                                        afInBag,
-                                       cTrain);
+                                       cTrain,
+                                       cIdxOff);
+
     if(GBM_FAILED(hr))
     {
         goto Error;
     }
 
-    #ifdef NOISY_DEBUG
+#ifdef NOISY_DEBUG
     Rprintf("Reset tree\n");
-    #endif
+#endif
     hr = ptreeTemp->Reset();
-    #ifdef NOISY_DEBUG
+#ifdef NOISY_DEBUG
     Rprintf("grow tree\n");
-    #endif
-    hr = ptreeTemp->grow(adZ,pData,pData->adWeight,adFadj,
-                         cTrain,cTotalInBag,dLambda,cDepth,
-                         cMinObsInNode,
-                         afInBag,
-                         aiNodeAssign,aNodeSearch,vecpTermNodes);
+#endif
+
+    hr = ptreeTemp->grow(&(adZ[cIdxOff]), pData, &(pData->adWeight[cIdxOff]),
+                         &(adFadj[cIdxOff]), cTrain, cTotalInBag, dLambda, cDepth,
+                         cMinObsInNode, afInBag, aiNodeAssign, aNodeSearch,
+                         vecpTermNodes);
+
     if(GBM_FAILED(hr))
     {
         goto Error;
     }
 
-    #ifdef NOISY_DEBUG
+#ifdef NOISY_DEBUG
     Rprintf("get node count\n");
-    #endif
+#endif
     hr = ptreeTemp->GetNodeCount(cNodes);
     if(GBM_FAILED(hr))
     {
@@ -326,9 +405,10 @@ GBMRESULT CGBM::iterate
 
     // Now I have adF, adZ, and vecpTermNodes (new node assignments)
     // Fit the best constant within each terminal node
-    #ifdef NOISY_DEBUG
+#ifdef NOISY_DEBUG
     Rprintf("fit best constant\n");
-    #endif
+#endif
+
     hr = pDist->FitBestConstant(pData->adY,
                                 pData->adMisc,
                                 pData->adOffset,
@@ -341,7 +421,9 @@ GBMRESULT CGBM::iterate
                                 (2*cNodes+1)/3, // number of terminal nodes
                                 cMinObsInNode,
                                 afInBag,
-                                adFadj);
+                                adFadj,
+                                cIdxOff);
+
     if(GBM_FAILED(hr))
     {
         goto Error;
@@ -349,7 +431,7 @@ GBMRESULT CGBM::iterate
 
     // update training predictions
     // fill in missing nodes where N < cMinObsInNode
-    hr = ptreeTemp->Adjust(aiNodeAssign,adFadj,cTrain,
+    hr = ptreeTemp->Adjust(aiNodeAssign,&(adFadj[cIdxOff]),cTrain,
                            vecpTermNodes,cMinObsInNode);
     if(GBM_FAILED(hr))
     {
@@ -357,51 +439,62 @@ GBMRESULT CGBM::iterate
     }
     ptreeTemp->SetShrinkage(dLambda);
 
-    dOOBagImprove = pDist->BagImprovement(pData->adY,
-                                          pData->adMisc,
-                                          pData->adOffset,
-                                          pData->adWeight,
-                                          adF,
-                                          adFadj,
-                                          afInBag,
-                                          dLambda,
-                                          cTrain);
+    if (cClassIdx == (cNumClasses - 1))
+    {
+        dOOBagImprove = pDist->BagImprovement(pData->adY,
+                                              pData->adMisc,
+                                              pData->adOffset,
+                                              pData->adWeight,
+                                              adF,
+                                              adFadj,
+                                              afInBag,
+                                              dLambda,
+                                              cTrain);
+    }
 
     // update the training predictions
     for(i=0; i < cTrain; i++)
     {
-        adF[i] += dLambda*adFadj[i];
+        int iIdx = i + cIdxOff;
+        adF[iIdx] += dLambda * adFadj[iIdx];
     }
+
     dTrainError = pDist->Deviance(pData->adY,
                                   pData->adMisc,
                                   pData->adOffset,
                                   pData->adWeight,
                                   adF,
-                                  cTrain);
+                                  cTrain,
+                                  cIdxOff);
+
     // update the validation predictions
-    hr = ptreeTemp->PredictValid(pData,cValid,adFadj);
+    hr = ptreeTemp->PredictValid(pData,cValid,&(adFadj[cIdxOff]));
+
     for(i=cTrain; i < cTrain+cValid; i++)
     {
-        adF[i] += adFadj[i];
+        adF[i + cIdxOff] += adFadj[i + cIdxOff];
     }
+
     if(pData->fHasOffset)
     {
-        dValidError = 
-            pDist->Deviance(&(pData->adY[cTrain]),
-                            &(pData->adMisc[cTrain]),
-                            &(pData->adOffset[cTrain]),
-                            &(pData->adWeight[cTrain]),
-                            &(adF[cTrain]),
-                            cValid);
+        dValidError =
+            pDist->Deviance(pData->adY,
+                            pData->adMisc,
+                            pData->adOffset,
+                            pData->adWeight,
+                            adF,
+                            cValid,
+                            cIdxOff + cTrain);
     }
     else
     {
-        dValidError = pDist->Deviance(&(pData->adY[cTrain]),
-                                      &(pData->adMisc[cTrain]),
+        dValidError = pDist->Deviance(pData->adY,
+                                      pData->adMisc,
                                       NULL,
-                                      &(pData->adWeight[cTrain]),
-                                      &(adF[cTrain]),
-                                      cValid);
+                                      pData->adWeight,
+                                      adF,
+                                      cValid,
+                                      cIdxOff + cTrain);
     }
 
 Cleanup:
@@ -420,7 +513,7 @@ GBMRESULT CGBM::TransferTreeToRList
     int *aiMissingNode,
     double *adErrorReduction,
     double *adWeight,
-    double *adPred,    
+    double *adPred,
     VEC_VEC_CATEGORIES &vecSplitCodes,
     int cCatSplitsOld
 )

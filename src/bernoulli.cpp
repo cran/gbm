@@ -20,7 +20,8 @@ GBMRESULT CBernoulli::ComputeWorkingResponse
     double *adZ, 
     double *adWeight,
     bool *afInBag,
-    unsigned long nTrain
+    unsigned long nTrain,
+    int cIdxOff
 )
 {
     unsigned long i = 0;
@@ -37,7 +38,6 @@ GBMRESULT CBernoulli::ComputeWorkingResponse
 
     return GBM_OK;
 }
-
 
 
 GBMRESULT CBernoulli::InitF
@@ -95,12 +95,13 @@ GBMRESULT CBernoulli::InitF
 
 double CBernoulli::Deviance
 (
-   double *adY,
-   double *adMisc,
-   double *adOffset,
-   double *adWeight,
-   double *adF,
-   unsigned long cLength
+    double *adY,
+    double *adMisc,
+    double *adOffset,
+    double *adWeight,
+    double *adF,
+    unsigned long cLength,
+    int cIdxOff
 )
 {
    unsigned long i=0;
@@ -110,7 +111,7 @@ double CBernoulli::Deviance
 
    if(adOffset==NULL)
    {
-      for(i=0; i<cLength; i++)
+      for(i=cIdxOff; i<cLength+cIdxOff; i++)
       {
          dL += adWeight[i]*(adY[i]*adF[i] - log(1.0+exp(adF[i])));
          dW += adWeight[i];
@@ -118,7 +119,7 @@ double CBernoulli::Deviance
    }
    else
    {
-      for(i=0; i<cLength; i++)
+      for(i=cIdxOff; i<cLength+cIdxOff; i++)
       {
          dF = adF[i] + adOffset[i];
          dL += adWeight[i]*(adY[i]*dF - log(1.0+exp(dF)));
@@ -144,7 +145,8 @@ GBMRESULT CBernoulli::FitBestConstant
     unsigned long cTermNodes,
     unsigned long cMinObsInNode,
     bool *afInBag,
-    double *adFadj
+    double *adFadj,
+	int cIdxOff
 )
 {
     GBMRESULT hr = GBM_OK;

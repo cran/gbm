@@ -20,7 +20,8 @@ GBMRESULT CCoxPH::ComputeWorkingResponse
     double *adZ, 
     double *adWeight,
     bool *afInBag,
-    unsigned long nTrain
+    unsigned long nTrain,
+	int cIdxOff
 )
 {
     unsigned long i = 0;
@@ -82,7 +83,8 @@ double CCoxPH::Deviance
     double *adOffset, 
     double *adWeight,
     double *adF,
-    unsigned long cLength
+    unsigned long cLength,
+	int cIdxOff
 )
 {
     unsigned long i=0;
@@ -92,7 +94,7 @@ double CCoxPH::Deviance
     double dTotalAtRisk = 0.0;
 
     dTotalAtRisk = 0.0;
-    for(i=0; i<cLength; i++)
+    for(i=cIdxOff; i<cLength+cIdxOff; i++)
     {
         dF = adF[i] + ((adOffset==NULL) ? 0.0 : adOffset[i]);
         dTotalAtRisk += adWeight[i]*exp(dF);
@@ -121,7 +123,8 @@ GBMRESULT CCoxPH::FitBestConstant
     unsigned long cTermNodes,
     unsigned long cMinObsInNode,
     bool *afInBag,
-    double *adFadj
+    double *adFadj,
+	int cIdxOff
 )
 {
     GBMRESULT hr = GBM_OK;

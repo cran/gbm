@@ -34,7 +34,7 @@ described in Friedman (2001). The other current (and experimental) choice is
 variable at a time and computes the associated reduction in predictive
 performance. This is similar to the variable importance measures Breiman uses
 for random forests, but \code{gbm} currently computes using the entire training
-dataset (not the out-of-bag observations.}
+dataset (not the out-of-bag observations).}
 \item{normalize}{ if \code{FALSE} then \code{summary.gbm} returns the 
 unnormalized influence. }
 \item{...}{ other arguments passed to the plot function. }
@@ -55,10 +55,9 @@ second is the computed relative influence, normalized to sum to 100.
 J.H. Friedman (2001). "Greedy Function Approximation: A Gradient Boosting
 Machine," Annals of Statistics 29(5):1189-1232.
 
-L. Breiman (2001). "Random Forests," Available at \url{ftp://ftp.stat.berkeley.edu/pub/users/breiman/randomforest2001.pdf}.
-
+L. Breiman (2001).\href{http://oz.berkeley.edu/users/breiman/randomforest2001.pdf}{Random Forests}.
 }
-\author{Greg Ridgeway \email{gregr@rand.org}}
+\author{Greg Ridgeway \email{gregridgeway@gmail.com}}
 
 \seealso{ \code{\link{gbm}} }
 
