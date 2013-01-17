@@ -99,7 +99,7 @@ plot(gbm1,2:4,best.iter)
 plot(gbm1,3:5,best.iter)
 
 # check interactions
-interact.gbm(gbm1,data=data,i.var=1:2,n.trees=best.iter, verbose=FALSE)
+interact.gbm(gbm1,data=data,i.var=1:2,n.trees=best.iter)
 # get all two way interactions
 i.var <- subset(expand.grid(x1=1:6,x2=1:6), x1<x2)
 rownames(i.var) <- apply(i.var,1,paste,collapse=":",sep="")

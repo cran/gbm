@@ -251,7 +251,7 @@ void CNDCG::Init
     // Precompute rank weights
     for (unsigned int i = 1; i <= cMaxRank; i++)
     {
-        vecdRankWeight[i] = log(2) / log(i+1);
+        vecdRankWeight[i] = log((double)2) / log((double)(i+1));
     }
 
     // Allocate buffer
@@ -555,7 +555,7 @@ CPairwise::~CPairwise()
 }
 
 
-// Auxiliary function for additopm of optional offset parameter
+// Auxiliary function for addition of optional offset parameter
 inline const double* OffsetVector(const double* const adX, const double* const adOffset, unsigned int iStart, unsigned int iEnd, vector<double>& vecBuffer)
 {
     if (adOffset == NULL)
@@ -569,7 +569,7 @@ inline const double* OffsetVector(const double* const adX, const double* const a
         {
             vecBuffer[iOut] = adX[i] + adOffset[i];
         }
-        return vecBuffer.data();
+        return &vecBuffer[0];
     }
 }
 
@@ -635,7 +635,7 @@ GBMRESULT CPairwise::ComputeWorkingResponse
                 const double* adFPlusOffset = OffsetVector(adF, adOffset, iItemStart, iItemEnd, vecdFPlusOffset);
 
                 // Accumulate gradients
-                ComputeLambdas((int)dGroup, cNumItems, adY + iItemStart, adFPlusOffset, adWeight + iItemStart, adZ + iItemStart, vecdHessian.data() + iItemStart);
+                ComputeLambdas((int)dGroup, cNumItems, adY + iItemStart, adFPlusOffset, adWeight + iItemStart, adZ + iItemStart, &vecdHessian[iItemStart]);
             }
 
             // Next group
@@ -692,8 +692,8 @@ GBMRESULT CPairwise::ComputeWorkingResponse
 
 void CPairwise::ComputeLambdas(int iGroup, unsigned int cNumItems, const double* const adY, const double* const adF, const double* const adWeight, double* adZ, double* adDeriv)
 {
-    const double dW = adWeight[0]; // Assumption: weights are constant within group
-    if (dW <= 0)
+    // Assumption: Weights are constant within group
+    if (adWeight[0] <= 0)
     {
         return;
     }
@@ -783,7 +783,7 @@ void CPairwise::ComputeLambdas(int iGroup, unsigned int cNumItems, const double*
     if (cPairs > 0)
     {
         // Normalize for number of training pairs
-        const double dQNorm     = dW / (dMaxScore * cPairs);
+        const double dQNorm     = 1.0 / (dMaxScore * cPairs);
 
         for (unsigned int j = 0; j < cNumItems; j++)
         {

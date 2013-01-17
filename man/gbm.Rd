@@ -32,7 +32,8 @@ gbm.fit(x,y,
         n.minobsinnode = 10,
         shrinkage = 0.001,
         bag.fraction = 0.5,
-        nTrain,
+        nTrain = NULL,
+        train.fraction = NULL,
         keep.data = TRUE,
         verbose = TRUE,
         var.names = NULL,
@@ -106,7 +107,14 @@ For details and background on the algorithm, see e.g. Burges (2010).
 \item{n.minobsinnode}{minimum number of observations in the trees terminal nodes. Note that this is the actual number of observations not the total weight.}
 \item{shrinkage}{a shrinkage parameter applied to each tree in the expansion. Also known as the learning rate or step-size reduction.}
 \item{bag.fraction}{the fraction of the training set observations randomly selected to propose the next tree in the expansion. This introduces randomnesses into the model fit. If \code{bag.fraction}<1 then running the same model twice will result in similar but different fits. \code{gbm} uses the R random number generator so \code{set.seed} can ensure that the model can be reconstructed. Preferably, the user can save the returned \code{\link{gbm.object}} using \code{\link{save}}.}
-\item{train.fraction}{The first \code{train.fraction * nrows(data)} observations are used to fit the \code{gbm} and the remainder are used for computing out-of-sample estimates of the loss function.}
+\item{train.fraction}{The first \code{train.fraction * nrows(data)}
+  observations are used to fit the \code{gbm} and the remainder are used
+  for computing out-of-sample estimates of the loss function.}
+\item{nTrain}{An integer representing the number of cases on which to
+  train. This is the preferred way of specification for \code{gbm.fit};
+  The option \code{train.fraction} in \code{gbm.fit} is deprecated and
+  only maintained for backward compatibility. These two parameters are
+  mutually exclusive. If both are unspecified, all data is used for training.}
 \item{keep.data}{a logical variable indicating whether to keep the data and an index of the data stored with the object. Keeping the data and index makes subsequent calls to \code{\link{gbm.more}} faster at the cost of storing an extra copy of the dataset.}
 \item{object}{a \code{gbm} object created from an initial call to \code{\link{gbm}}.}
 \item{n.new.trees}{the number of additional trees to add to \code{object}.}
@@ -118,7 +126,6 @@ For details and background on the algorithm, see e.g. Burges (2010).
 \item{w}{For \code{gbm.fit}: \code{w} is a vector of weights of the same length as the \code{y}.}
 \item{var.names}{For \code{gbm.fit}: A vector of strings of length equal to the number of columns of \code{x} containing the names of the predictor variables.}
 \item{response.name}{For \code{gbm.fit}: A character string label for the response variable.}
-\item{nTrain}{An integer representing the number of cases on which to train.}
 \item{group}{\code{group} used when \code{distribution = 'pairwise'.}}
 }
 

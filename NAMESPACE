@@ -1,6 +1,8 @@
 # Export all names that don't start with "."
 exportPattern("^[^\\.]")
 
+useDynLib(gbm)
+
 importFrom(survival, Surv)
 
 # ns from splines is used in one of the examples
