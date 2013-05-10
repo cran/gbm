@@ -1,3 +1,29 @@
+Changes in version 2.1
+
+- The cross-validation loop is now parallelized. The functions attempt
+  to guess a sensible number of cores to use, or the user can specify
+  how many through new argument n.cores.
+- A fair amount of code refactoring.
+- Added type='response' for predict when distribution='adaboost'.
+- Fixed a bug that caused offset not to be used if the first element
+  of offset was 0.
+- Updated predict.gbm and plot.gbm to cope with objects created using
+  gbm version 1.6.
+- Changed default value of verbose to 'CV'. gbm now defaults to letting
+  the user know which block of CV folds it is running. If verbose=TRUE
+  is specified, the final run of the model also prints its progress
+  to screen as in earlier versions.
+- Fixed bug that caused predict to return wrong result when
+  distribution == 'multinomial' and length(n.trees) > 1.
+- Fixed bug that caused n.trees to be wrong in relative.influence
+  if no CV or validation set was used.
+- Relative influence was computed wrongly when distribution="multinomial". Fixed.
+- Cross-validation predictions now included in the output object.
+- Fixed bug in relative.influence that caused labels to be wrong when sort.=TRUE.
+- Modified interact.gbm to do additional sanity check, updated help file
+- Fixed bug in interact.gbm so that it now works for distribution="multinomial"
+- Modified predict.gbm to improve performance on large datasets
+
 Changes in version 2.0
 
 Lots of new features added so it warrants a change to the first digit

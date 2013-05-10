@@ -18,10 +18,11 @@ gbm(formula = formula(data),
     train.fraction = 1.0,
     cv.folds=0,
     keep.data = TRUE,
-    verbose = TRUE,
-    class.stratify.cv)
+    verbose = "CV",
+    class.stratify.cv=NULL,
+    n.cores = NULL)
 
-gbm.fit(x,y,
+gbm.fit(x, y,
         offset = NULL,
         misc = NULL,
         distribution = "bernoulli",
@@ -37,7 +38,7 @@ gbm.fit(x,y,
         keep.data = TRUE,
         verbose = TRUE,
         var.names = NULL,
-        response.name = NULL,
+        response.name = "y",
         group = NULL)
 
 gbm.more(object,
@@ -81,7 +82,7 @@ considered. \code{metric} is the IR measure to use, one of
 }
 
 \code{ndcg} and \code{conc} allow arbitrary target values, while binary
-targets \{0,1\} are expected for \code{conc} and \code{ndcg}. For
+targets \{0,1\} are expected for \code{map} and \code{mrr}. For
 \code{ndcg} and \code{mrr}, a cut-off can be chosen using a positive
 integer parameter \code{max.rank}. If left unspecified, all ranks are
 taken into account.
@@ -127,6 +128,12 @@ For details and background on the algorithm, see e.g. Burges (2010).
 \item{var.names}{For \code{gbm.fit}: A vector of strings of length equal to the number of columns of \code{x} containing the names of the predictor variables.}
 \item{response.name}{For \code{gbm.fit}: A character string label for the response variable.}
 \item{group}{\code{group} used when \code{distribution = 'pairwise'.}}
+\item{n.cores}{The number of CPU cores to use. The cross-validation loop
+  will attempt to send different CV folds off to different cores. If
+  \code{n.cores} is not specified by the user, it is guessed using the
+  \code{detectCores} function in the \code{parallel} package. Note that
+  the documentation for \code{detectCores} makes clear that it is not
+  failsave and could return a spurious number of available cores.}
 }
 
 \details{See the \href{../doc/gbm.pdf}{gbm vignette} for technical details.
@@ -166,7 +173,8 @@ t-distribution, and multinomial code developed by Harry Southworth and Daniel Ed
 
 Pairwise code developed by Stefan Schroedl \email{schroedl@a9.com}}
 
-\seealso{ \code{\link{gbm.object}}, \code{\link{gbm.perf}}, \code{\link{plot.gbm}}, \code{\link{predict.gbm}}, \code{\link{summary.gbm}}, \code{\link{pretty.gbm.tree}}. }
+\seealso{ \code{\link{gbm.object}}, \code{\link{gbm.perf}}, \code{\link{plot.gbm}},
+          \code{\link{predict.gbm}}, \code{\link{summary.gbm}}, \code{\link{pretty.gbm.tree}}. }
 
 \examples{ # A least squares regression example # create some data
 
@@ -208,7 +216,9 @@ gbm(Y~X1+X2+X3+X4+X5+X6,         # formula
     n.minobsinnode = 10,         # minimum total weight needed in each node
     cv.folds = 3,                # do 3-fold cross-validation
     keep.data=TRUE,              # keep a copy of the dataset with the object
-    verbose=FALSE)               # don't print out progress
+    verbose=FALSE,               # don't print out progress
+    n.cores=1)                   # use only a single core (detecting #cores is
+                                 # error-prone, so avoided here)
 
 # check performance using an out-of-bag estimator
 # OOB underestimates the optimal number of iterations
