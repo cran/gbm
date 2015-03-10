@@ -1,13 +1,13 @@
 Package: gbm
-Version: 2.1
-Date: 2013-05-10
+Version: 2.1.1
+Date: 2015-03-10
 Title: Generalized Boosted Regression Models
 Author: Greg Ridgeway <gregridgeway@gmail.com> with contributions from
         others
 Maintainer: Harry Southworth <harry.southworth@gmail.com>
 Depends: R (>= 2.9.0), survival, lattice, splines, parallel
 Suggests: RUnit
-Description: This package implements extensions to Freund and
+Description: An implementation of extensions to Freund and
         Schapire's AdaBoost algorithm and Friedman's gradient boosting
         machine. Includes regression methods for least squares,
         absolute loss, t-distribution loss, quantile regression,
@@ -17,7 +17,7 @@ Description: This package implements extensions to Freund and
         (LambdaMart).
 License: GPL (>= 2) | file LICENSE
 URL: http://code.google.com/p/gradientboostedmodels/
-Packaged: 2013-05-10 18:01:11 UTC; harry
+Packaged: 2015-03-11 07:56:18 UTC; ripley
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2013-05-10 20:13:19
+Date/Publication: 2015-03-11 09:02:32

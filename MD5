@@ -1,7 +1,7 @@
 108bdba2eb6f2ba6ce890f47224ef68f *CHANGES
-1b3ceeedb04f24b7a07b2a247e864688 *DESCRIPTION
+70dfc03181b3c9907de302f3fcb4cd27 *DESCRIPTION
 c2cae135a9c0d4ae15e14e89166ba841 *LICENSE
-bc5d59fd7c71bb320f9d3a0d3ca2ec30 *NAMESPACE
+39642476847d2c670a7b15464bc6c666 *NAMESPACE
 6a1293bc6f87d439da835b1b837f9c52 *R/basehaz.gbm.R
 cc5e4cd5f5d5e23382bae904e9ada152 *R/calibrate.plot.R
 5615ac799ce14603a692a2c29be9648f *R/checks.R
@@ -27,7 +27,7 @@ b9c2bb5000212628b390b81dfdd895c0 *R/predict.gbm.R
 792e2a5c7cdfeeee3e29c4e418f8af35 *R/relative.influence.R
 e8cf40a7c7efcd820e908a43252cfc2b *R/shrink.gbm.R
 eefc2a06d746e77ac2ba101d240640b8 *R/shrink.gbm.pred.R
-b74827c0b11ad8180998c3cd4eb41e3c *R/test.gbm.R
+5b47e86c97e9b464bd64e7ea647c65ae *R/test.gbm.R
 4e38ebb4d3578e523b7d94fc9ece3d65 *demo/00Index
 e3bd8606063f15ded6ab3261c13d22af *demo/OOB-reps.R
 354344b4f6e8a232508ef872ced5efa3 *demo/bernoulli.R

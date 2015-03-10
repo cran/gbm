@@ -71,8 +71,8 @@ test.gbm <- function(){
     f.predict <- predict(gbm1,data2,best.iter) # f.predict will be on the canonical scale (logit,log,etc.)
 
     # Base the validation tests on observed discrepancies
-    checkTrue(abs(mean(data2$Y-f.predict)) < 0.01, msg="Gaussian absolute error within tolerance")
-    checkTrue(sd(data2$Y-f.predict) < sigma , msg="Gaussian squared erroor within tolerance")
+    RUnit::checkTrue(abs(mean(data2$Y-f.predict)) < 0.01, msg="Gaussian absolute error within tolerance")
+    RUnit::checkTrue(sd(data2$Y-f.predict) < sigma , msg="Gaussian squared erroor within tolerance")
 
     ############################################################################
     ## test coxph distribution gbm model
@@ -142,7 +142,7 @@ test.gbm <- function(){
 
     #plot(data2$f,f.predict)
     # Use observed sd
-    checkTrue(sd(data2$f - f.predict) < 0.4, msg="Coxph: squared error within tolerance")
+    RUnit::checkTrue(sd(data2$f - f.predict) < 0.4, msg="Coxph: squared error within tolerance")
 
     ############################################################################
     ## Test bernoulli distribution gbm model
@@ -204,7 +204,7 @@ test.gbm <- function(){
     f.new = sin(3*X1) - 4*X2 + mu
 
     # Base the validation tests on observed discrepancies
-    checkTrue(sd(f.new - f.1.predict) < 1.0 )
+    RUnit::checkTrue(sd(f.new - f.1.predict) < 1.0 )
     
     invisible()
 }
@@ -227,7 +227,7 @@ test.relative.influence <- function(){
     ri <- rev(sort(relative.influence(mod)))
     wh <- names(ri)[1:5]
     res <- sum(wh %in% paste("V", 51:55, sep = ""))
-    checkEqualsNumeric(res, 5, msg="Testing relative.influence identifies true predictors")
+    RUnit::checkEqualsNumeric(res, 5, msg="Testing relative.influence identifies true predictors")
 }
 
 ################################################################################
@@ -235,13 +235,8 @@ test.relative.influence <- function(){
 ################################                ################################
 
 validate.gbm <- function () {
-   check <- "package:RUnit" %in% search()
-   if (!check) {
-       check <- try(library(RUnit))
-       if (class(check) == "try-error") {
-           stop("You need to attach the RUnit package to validate gbm")
-       }
-   }
+   if(!requireNamespace("RUnit", quietly = TRUE))
+       stop("You need to install the RUnit package to validate gbm")
 
    wh <- (1:length(search()))[search() == "package:gbm"]
    tests <- objects(wh)[substring(objects(wh), 1, 5) == "test."]
@@ -258,9 +253,9 @@ validate.gbm <- function () {
        str <- paste(dir, sep, tests[i], ".R", sep = "")
        dump(tests[i], file = str)
    }
-   res <- defineTestSuite("gbm", dirs = dir, testFuncRegexp = "^test.+", testFileRegexp = "*.R")
+   res <- RUnit::defineTestSuite("gbm", dirs = dir, testFuncRegexp = "^test.+", testFileRegexp = "*.R")
    cat("Running gbm test suite.\nThis will take some time...\n\n")
-   res <- runTestSuite(res)
+   res <- RUnit::runTestSuite(res)
    res
 }
 
