@@ -12,6 +12,7 @@
 
 #include "locationm.h"
 #include <algorithm>
+#include <Rmath.h> // for fmax2
 
 using namespace std;
 
@@ -189,7 +190,7 @@ double CLocationM::LocationM(int iN, double *adX, double *adW)
 	}
 
 	double dScale0 = 1.4826 * Median(iN, adDiff, adW);
-	dScale0 = fmax(dScale0, mdEps);
+	dScale0 = fmax2(dScale0, mdEps);
 
 	// Loop over until the error is low enough
 	double dErr = 1.0;
@@ -202,7 +203,7 @@ double CLocationM::LocationM(int iN, double *adX, double *adW)
 		for (ii = 0; ii < iN; ii++)
 		{
 			double dT = fabs(adX[ii] - dBeta0) / dScale0;
-			dT = fmax(dT, mdEps);
+			dT = fmax2(dT, mdEps);
 			double dWt = adW[ii] * PsiFun(dT) / dT;
 
 			dSumWX += dWt * adX[ii];

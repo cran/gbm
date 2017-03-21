@@ -1,10 +1,10 @@
 Package: gbm
-Version: 2.1.1
+Version: 2.1.2
 Date: 2015-03-10
 Title: Generalized Boosted Regression Models
 Author: Greg Ridgeway <gregridgeway@gmail.com> with contributions from
         others
-Maintainer: Harry Southworth <harry.southworth@gmail.com>
+Maintainer: ORPHANED
 Depends: R (>= 2.9.0), survival, lattice, splines, parallel
 Suggests: RUnit
 Description: An implementation of extensions to Freund and
@@ -17,7 +17,11 @@ Description: An implementation of extensions to Freund and
         (LambdaMart).
 License: GPL (>= 2) | file LICENSE
 URL: http://code.google.com/p/gradientboostedmodels/
-Packaged: 2015-03-11 07:56:18 UTC; ripley
+Packaged: 2017-03-16 07:49:57 UTC; ripley
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2015-03-11 09:02:32
+Date/Publication: 2017-03-21 06:07:00 UTC
+X-CRAN-Original-Maintainer: Harry Southworth
+        <harry.southworth@gmail.com>
+X-CRAN-Comment: Orphaned on 2017-03-21 as long-standing errors were not
+        corrected.  NMU by CRAN team.

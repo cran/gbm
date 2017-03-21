@@ -1,5 +1,5 @@
 108bdba2eb6f2ba6ce890f47224ef68f *CHANGES
-70dfc03181b3c9907de302f3fcb4cd27 *DESCRIPTION
+9883080ec1be277266d38c1d9e9a6e43 *DESCRIPTION
 c2cae135a9c0d4ae15e14e89166ba841 *LICENSE
 39642476847d2c670a7b15464bc6c666 *NAMESPACE
 6a1293bc6f87d439da835b1b837f9c52 *R/basehaz.gbm.R
@@ -91,7 +91,7 @@ f1da15864dab021cdac1617ffba4ff0f *src/gbmentry.cpp
 141e5b762944c14a0b6294e15046296f *src/huberized.h
 10dcf061e2807ca52f811ec6650f33ad *src/laplace.cpp
 53b4d97c482517fbbc97162da1adf891 *src/laplace.h
-d25bcfb8da3565604f902270b25eb470 *src/locationm.cpp
+e7958b4630de29d3848d057d2aebc6e2 *src/locationm.cpp
 932f3d98f158ebf6ae11ed47e873a7f3 *src/locationm.h
 39094967ceaabf7c744bc93d0b86d22f *src/matrix.h
 7242e54abea29c46990c4aabba7a65b6 *src/multinomial.cpp
