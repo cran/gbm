@@ -73,7 +73,7 @@ internally by \code{gbm}.}
 J.H. Friedman (2001). "Greedy Function Approximation: A Gradient Boosting
 Machine," Annals of Statistics 29(5):1189-1232.
 
-L. Breiman (2001). \href{http://oz.berkeley.edu/users/breiman/randomforest2001.pdf}{Random Forests}.
+L. Breiman (2001). \href{https://www.stat.berkeley.edu/~breiman/randomforest2001.pdf}{Random Forests}.
 
 }
 \author{Greg Ridgeway \email{gregridgeway@gmail.com}}

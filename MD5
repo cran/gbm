@@ -1,7 +1,7 @@
 108bdba2eb6f2ba6ce890f47224ef68f *CHANGES
-9883080ec1be277266d38c1d9e9a6e43 *DESCRIPTION
+cf8eedb04e0b7de4ba83cabfe278a328 *DESCRIPTION
 c2cae135a9c0d4ae15e14e89166ba841 *LICENSE
-39642476847d2c670a7b15464bc6c666 *NAMESPACE
+dcb19d54815086722ad172c662cb7d03 *NAMESPACE
 6a1293bc6f87d439da835b1b837f9c52 *R/basehaz.gbm.R
 cc5e4cd5f5d5e23382bae904e9ada152 *R/calibrate.plot.R
 5615ac799ce14603a692a2c29be9648f *R/checks.R
@@ -55,7 +55,7 @@ eac981fe86aac2cf2b76f2bcee97289f *man/gbm.Rd
 089cf48c905c3429ed63f69a0cd982b5 *man/gbm.object.Rd
 3ed5b048c81d016868ca2799e4504419 *man/gbm.perf.Rd
 7359f0a3b1f2d27cf29e497745c6ba59 *man/gbm.roc.area.Rd
-ea065b8eb338215054b29478af99e224 *man/gbmCrossVal.Rd
+9e8eb660baefa82bc008cbf7e12babf8 *man/gbmCrossVal.Rd
 8fca4f44be806cb17eb37affe8334618 *man/interact.gbm.Rd
 a8728abc1dc77b599c2aa7d1df6f982e *man/plot.gbm.Rd
 5896d84873dd1ed5d22005b5b37b17b6 *man/predict.gbm.Rd
@@ -63,10 +63,10 @@ a8728abc1dc77b599c2aa7d1df6f982e *man/plot.gbm.Rd
 894215a9e1e715f39a6cb79a6fe81baf *man/print.gbm.Rd
 0da8961be170c9a72df248d6f0fe985e *man/quantile.rug.Rd
 9fbb2bddffae7a639d4f702817eeecb3 *man/reconstructGBMdata.Rd
-8754bdc10a30057f74edf6037ce0cc71 *man/relative.influence.Rd
+e1dea92edf78383b17139d45c318294c *man/relative.influence.Rd
 b58470798d31cfceceeec40252ce833f *man/shrink.gbm.Rd
 ef52c476e46b4c64eee269064ea58b64 *man/shrink.gbm.pred.Rd
-c6b082b4bf980d66e355c056ceabe421 *man/summary.gbm.Rd
+b73e9273873b1178e9a116187105c022 *man/summary.gbm.Rd
 3e0b677bccf30388ec0fc96f77f5fb62 *man/validate.Rd
 0d32ce72a7b02fc57d602c60b9ba8305 *src/adaboost.cpp
 2f5d22dc3043e69628763cbe303e6b5f *src/adaboost.h
@@ -89,6 +89,7 @@ b3f1f49fa614ac6cfd52b28191bfdb70 *src/gbm_engine.h
 f1da15864dab021cdac1617ffba4ff0f *src/gbmentry.cpp
 1fba83f37e9f092d8b005e0c8f32a97b *src/huberized.cpp
 141e5b762944c14a0b6294e15046296f *src/huberized.h
+cd2cedbf213ddbc773ea20fe354a93ae *src/init.c
 10dcf061e2807ca52f811ec6650f33ad *src/laplace.cpp
 53b4d97c482517fbbc97162da1adf891 *src/laplace.h
 e7958b4630de29d3848d057d2aebc6e2 *src/locationm.cpp

@@ -14,6 +14,16 @@ import(lattice)
 
 import(parallel)
 
+importFrom("grDevices", "rainbow")
+importFrom("graphics", "abline", "axis", "barplot", "lines", "mtext",
+           "par", "plot", "polygon", "rug", "segments", "title")
+importFrom("stats", "approx", "binomial", "delete.response",
+           "gaussian", "glm", "loess", "model.extract", "model.frame",
+           "model.offset", "model.response", "model.weights",
+           "na.pass", "poisson", "predict", "quantile", "rbinom",
+           "reformulate", "rexp", "rnorm", "runif", "sd", "supsmu",
+           "terms", "var", "weighted.mean")
+
 S3method(plot, gbm)
 S3method(predict, gbm)
 S3method(print, gbm)
