@@ -1,5 +1,43 @@
 # evaluates the objective function and gradient with respect to beta
 # beta = log(lambda/(1-lambda))
+
+#' L1 shrinkage of the predictor variables in a GBM
+#' 
+#' Performs recursive shrinkage in each of the trees in a GBM fit using
+#' different shrinkage parameters for each variable.
+#' 
+#' This function is currently experimental. Used in conjunction with a gradient
+#' ascent search for inclusion of variables.
+#' 
+#' @param object A \code{\link{gbm.object}}.
+#' 
+#' @param n.trees Integer specifying the number of trees to use.
+#' 
+#' @param lambda Vector of length equal to the number of variables containing 
+#' the shrinkage parameter for each variable.
+#' 
+#' @param \dots Additional optional arguments. (Currently ignored.)
+#' 
+#' @return \item{predF}{Predicted values from the shrunken tree}
+#' \item{objective}{The value of the loss function associated with the
+#' predicted values} \item{gradient}{A vector with length equal to the number
+#' of variables containing the derivative of the objective function with
+#' respect to beta, the logit transform of the shrinkage parameter for each
+#' variable}
+#' 
+#' @note Warning: This function is experimental.
+#' 
+#' @author Greg Ridgeway \email{gregridgeway@@gmail.com}
+#' 
+#' @seealso \code{\link{shrink.gbm.pred}}, \code{\link{gbm}}
+#' 
+#' @references Hastie, T. J., and Pregibon, D.
+#' \url{https://web.stanford.edu/~hastie/Papers/shrink_tree.pdf}. AT&T Bell 
+#' Laboratories Technical Report (March 1990).
+#' 
+#' @keywords methods
+#' 
+#' @export
 shrink.gbm <- function(object,n.trees,
                        lambda=rep(10,length(object$var.names)),
                        ...)

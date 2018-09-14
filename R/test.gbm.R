@@ -1,3 +1,28 @@
+#' Test the \code{gbm} package.
+#' 
+#' Run tests on \code{gbm} functions to perform logical checks and
+#' reproducibility.
+#' 
+#' The function uses functionality in the \code{RUnit} package. A fairly small
+#' validation suite is executed that checks to see that relative influence
+#' identifies sensible variables from simulated data, and that predictions from
+#' GBMs with Gaussian, Cox or binomial distributions are sensible,
+#' 
+#' @aliases validate.gbm test.gbm test.relative.influence
+#' @return An object of class \code{RUnitTestData}. See the help for
+#' \code{RUnit} for details.
+#' @note The test suite is not comprehensive.
+#' @author Harry Southworth
+#' @seealso \code{\link{gbm}}
+#' @keywords models
+#' @examples
+#' 
+#' # Uncomment the following lines to run - commented out to make CRAN happy
+#' #library(RUnit)
+#' #val <- validate.texmex()
+#' #printHTMLProtocol(val, "texmexReport.html")
+
+#' @export
 test.gbm <- function(){
     # Based on example in R package
     # Gaussian example
@@ -103,7 +128,7 @@ test.gbm <- function(){
     data <- data.frame(tt=tt,delta=delta,X1=X1,X2=X2,X3=X3)
 
     # fit initial model
-    gbm1 <- gbm(Surv(tt,delta)~X1+X2+X3,       # formula
+    gbm1 <- gbm(Surv(tt,delta)~X1+X2+X3,   # formula
                 data=data,                 # dataset
                 weights=w,
                 var.monotone=c(0,0,0),     # -1: monotone decrease, +1: monotone increase, 0: no monotone restrictions
@@ -138,7 +163,7 @@ test.gbm <- function(){
 
     # predict on the new data using "best" number of trees
     # f.predict will be on the canonical scale (logit,log,etc.)
-    f.predict <- predict(gbm1,data2,best.iter)
+    f.predict <- predict(gbm1, newdata = data2, n.trees = best.iter)
 
     #plot(data2$f,f.predict)
     # Use observed sd
@@ -198,7 +223,7 @@ test.gbm <- function(){
 
     # predict on the new data using "best" number of trees
     # f.predict will be on the canonical scale (logit,log,etc.)
-    f.1.predict <- predict.gbm(gbm1,data2, n.trees=best.iter.test)
+    f.1.predict <- predict(gbm1,data2, n.trees=best.iter.test)
 
     # compute quantity prior to transformation
     f.new = sin(3*X1) - 4*X2 + mu
@@ -213,6 +238,8 @@ test.gbm <- function(){
 ########################### test.relative.influence() ##########################
 ###########################                           ##########################
 
+
+#' @export
 test.relative.influence <- function(){
     # Test that relative.influence really does pick out the true predictors
     set.seed(1234)
@@ -234,28 +261,26 @@ test.relative.influence <- function(){
 ################################ validate.gbm() ################################
 ################################                ################################
 
+
+#' @export
 validate.gbm <- function () {
-   if(!requireNamespace("RUnit", quietly = TRUE))
-       stop("You need to install the RUnit package to validate gbm")
-
-   wh <- (1:length(search()))[search() == "package:gbm"]
-   tests <- objects(wh)[substring(objects(wh), 1, 5) == "test."]
-
-   # Create temporary directory to put tests into
-   if (.Platform$OS.type == "windows"){ sep <- "\\" }
-   else { sep <- "/" }
-
-   dir <- file.path(tempdir(), "gbm.tests", fsep = sep)
-
-   dir.create(dir)
-
-   for (i in 1:length(tests)) {
-       str <- paste(dir, sep, tests[i], ".R", sep = "")
-       dump(tests[i], file = str)
-   }
-   res <- RUnit::defineTestSuite("gbm", dirs = dir, testFuncRegexp = "^test.+", testFileRegexp = "*.R")
-   cat("Running gbm test suite.\nThis will take some time...\n\n")
-   res <- RUnit::runTestSuite(res)
-   res
+    wh <- (1:length(search()))[search() == "package:gbm"]
+    tests <- objects(wh)[substring(objects(wh), 1, 5) == "test."]
+    
+    # Create temporary directory to put tests into
+    sep <- if (.Platform$OS.type == "windows") "\\" else "/"
+    
+    dir <- file.path(tempdir(), "gbm.tests", fsep = sep)
+    
+    dir.create(dir)
+    
+    for (i in 1:length(tests)) {
+        str <- paste(dir, sep, tests[i], ".R", sep = "")
+        dump(tests[i], file = str)
+    }
+    res <- RUnit::defineTestSuite("gbm", dirs = dir, testFuncRegexp = "^test.+", 
+                                  testFileRegexp = "*.R")
+    cat("Running gbm test suite.\nThis will take some time...\n\n")
+    RUnit::runTestSuite(res)
 }
 
