@@ -236,8 +236,8 @@
 #' Y <- X1 ^ 1.5 + 2 * (X2 ^ 0.5) + mu
 #' sigma <- sqrt(var(Y) / SNR)
 #' Y <- Y + rnorm(N, 0, sigma)
-#' X1[sample(1:N,size=500)] <- NA  # introduce some missing values
-#' X4[sample(1:N,size=300)] <- NA  # introduce some missing values
+#' X1[sample(1:N, size = 500)] <- NA  # introduce some missing values
+#' X4[sample(1:N, size = 300)] <- NA  # introduce some missing values
 #' data <- data.frame(Y, X1, X2, X3, X4, X5, X6)
 #' 
 #' # Fit a GBM
@@ -341,12 +341,14 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
   offset <- model.offset(mf)
   
   # Determine and check response distribution
-  distribution <- if (missing(distribution)) {
+  if (missing(distribution)) {
     y <- data[, all.vars(formula)[1L], drop = TRUE]
-    guessDist(y) 
-  } else if (is.character(distribution)) { 
-    list(name = distribution) 
+    distribution <- guessDist(y)
   }
+  if (is.character(distribution)) { 
+    distribution <- list(name = distribution) 
+  } 
+  
   if (!is.element(distribution$name, getAvailableDistributions())) {
     stop("Distribution ", distribution$name, " is not supported.")
   }

@@ -209,8 +209,8 @@ SNR <- 10  # signal-to-noise ratio
 Y <- X1 ^ 1.5 + 2 * (X2 ^ 0.5) + mu
 sigma <- sqrt(var(Y) / SNR)
 Y <- Y + rnorm(N, 0, sigma)
-X1[sample(1:N,size=500)] <- NA  # introduce some missing values
-X4[sample(1:N,size=300)] <- NA  # introduce some missing values
+X1[sample(1:N, size = 500)] <- NA  # introduce some missing values
+X4[sample(1:N, size = 300)] <- NA  # introduce some missing values
 data <- data.frame(Y, X1, X2, X3, X4, X5, X6)
 
 # Fit a GBM
