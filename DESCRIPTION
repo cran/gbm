@@ -1,5 +1,5 @@
 Package: gbm
-Version: 2.1.5
+Version: 2.1.8
 Title: Generalized Boosted Regression Models
 Authors@R: c(
   person("Brandon", "Greenwell",
@@ -18,8 +18,9 @@ Authors@R: c(
          comment = "https://github.com/gbm-developers")
   )
 Depends: R (>= 2.9.0)
-Imports: gridExtra, lattice, parallel, survival
-Suggests: knitr, pdp, RUnit, splines, viridis
+Imports: lattice, parallel, survival
+Suggests: covr, gridExtra, knitr, pdp, RUnit, splines, tinytest, vip,
+        viridis
 Description: An implementation of extensions to Freund and Schapire's AdaBoost 
   algorithm and Friedman's gradient boosting machine. Includes regression 
   methods for least squares, absolute loss, t-distribution loss, quantile 
@@ -29,14 +30,15 @@ Description: An implementation of extensions to Freund and Schapire's AdaBoost
 License: GPL (>= 2) | file LICENSE
 URL: https://github.com/gbm-developers/gbm
 BugReports: https://github.com/gbm-developers/gbm/issues
-RoxygenNote: 6.1.1
+Encoding: UTF-8
+RoxygenNote: 7.1.1
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2019-01-14 14:21:52 UTC; bgreenwell
+Packaged: 2020-07-13 15:15:55 UTC; b780620
 Author: Brandon Greenwell [aut, cre] (<https://orcid.org/0000-0002-8120-0084>),
   Bradley Boehmke [aut] (<https://orcid.org/0000-0002-3611-8516>),
   Jay Cunningham [aut],
   GBM Developers [aut] (https://github.com/gbm-developers)
 Maintainer: Brandon Greenwell <greenwell.brandon@gmail.com>
 Repository: CRAN
-Date/Publication: 2019-01-14 15:00:03 UTC
+Date/Publication: 2020-07-15 10:00:02 UTC

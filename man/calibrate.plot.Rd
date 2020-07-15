@@ -4,11 +4,23 @@
 \alias{calibrate.plot}
 \title{Calibration plot}
 \usage{
-calibrate.plot(y, p, distribution = "bernoulli", replace = TRUE,
-  line.par = list(col = "black"), shade.col = "lightyellow",
-  shade.density = NULL, rug.par = list(side = 1),
-  xlab = "Predicted value", ylab = "Observed average", xlim = NULL,
-  ylim = NULL, knots = NULL, df = 6, ...)
+calibrate.plot(
+  y,
+  p,
+  distribution = "bernoulli",
+  replace = TRUE,
+  line.par = list(col = "black"),
+  shade.col = "lightyellow",
+  shade.density = NULL,
+  rug.par = list(side = 1),
+  xlab = "Predicted value",
+  ylab = "Observed average",
+  xlim = NULL,
+  ylim = NULL,
+  knots = NULL,
+  df = 6,
+  ...
+)
 }
 \arguments{
 \item{y}{The outcome 0-1 variable.}
@@ -20,7 +32,7 @@ calibrate.plot(y, p, distribution = "bernoulli", replace = TRUE,
 All others default to squared error assuming \code{gaussian}.}
 
 \item{replace}{Determines whether this plot will replace or overlay the
-current plot.  \code{replace=FALSE} is useful for comparing the calibration
+current plot. \code{replace=FALSE} is useful for comparing the calibration
 of several methods.}
 
 \item{line.par}{Graphics parameters for the line.}
@@ -44,7 +56,7 @@ select limits.}
 calibration curve.}
 
 \item{...}{Additional optional arguments to be passed onto 
-\code{\link[graphics]{plot}}}
+\code{\link[graphics:plot.default]{plot}}}
 }
 \value{
 No return values.

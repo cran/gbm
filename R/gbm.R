@@ -236,8 +236,8 @@
 #' Y <- X1 ^ 1.5 + 2 * (X2 ^ 0.5) + mu
 #' sigma <- sqrt(var(Y) / SNR)
 #' Y <- Y + rnorm(N, 0, sigma)
-#' X1[sample(1:N, size = 500)] <- NA  # introduce some missing values
-#' X4[sample(1:N, size = 300)] <- NA  # introduce some missing values
+#' X1[sample(1:N,size=500)] <- NA  # introduce some missing values
+#' X4[sample(1:N,size=300)] <- NA  # introduce some missing values
 #' data <- data.frame(Y, X1, X2, X3, X4, X5, X6)
 #' 
 #' # Fit a GBM
@@ -291,10 +291,9 @@
 #' print(sum((data2$Y - Yhat)^2))
 #' 
 #' # Construct univariate partial dependence plots
-#' p1 <- plot(gbm1, i.var = 1, n.trees = best.iter)
-#' p2 <- plot(gbm1, i.var = 2, n.trees = best.iter)
-#' p3 <- plot(gbm1, i.var = "X3", n.trees = best.iter)  # can use index or name
-#' grid.arrange(p1, p2, p3, ncol = 3)
+#' plot(gbm1, i.var = 1, n.trees = best.iter)
+#' plot(gbm1, i.var = 2, n.trees = best.iter)
+#' plot(gbm1, i.var = "X3", n.trees = best.iter)  # can use index or name
 #' 
 #' # Construct bivariate partial dependence plots
 #' plot(gbm1, i.var = 1:2, n.trees = best.iter)
@@ -339,22 +338,24 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
   Terms <- attr(mf, "terms")
   w <- model.weights(mf)
   offset <- model.offset(mf)
+  y <- model.response(mf)  # extract response values
   
   # Determine and check response distribution
   if (missing(distribution)) {
-    y <- data[, all.vars(formula)[1L], drop = TRUE]
+    # y <- data[, all.vars(formula)[1L], drop = TRUE]
     distribution <- guessDist(y)
   }
   if (is.character(distribution)) { 
     distribution <- list(name = distribution) 
   } 
-  
   if (!is.element(distribution$name, getAvailableDistributions())) {
     stop("Distribution ", distribution$name, " is not supported.")
   }
-  
-  # Extract and check response values
-  y <- model.response(mf)
+  if (distribution$name == "multinomial") {
+    warning("Setting `distribution = \"multinomial\"` is ill-advised as it is ",
+            "currently broken. It exists only for backwards compatibility. ",
+            "Use at your own risk.", call. = FALSE)
+  }
   
   # Construct data frame of predictor values
   var.names <- attributes(Terms)$term.labels
@@ -431,9 +432,13 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
     Misc <- group
     
   }
-  
+
   # Set up for k-fold cross-validation
   cv.error <- NULL
+  # FIXME: Is there a better way to handle this?
+  if (cv.folds == 1) {
+    cv.folds <- 0  # o/w, an uninformative error is thrown
+  }
   if(cv.folds > 1) {
     cv.results <- gbmCrossVal(cv.folds = cv.folds, nTrain = nTrain, 
                               n.cores = n.cores, 
@@ -468,7 +473,7 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
   gbm.obj$cv.folds <- cv.folds
   gbm.obj$call <- mcall
   gbm.obj$m <- m
-  if (cv.folds > 0) { 
+  if (cv.folds > 1) {  # FIXME: Was previously `cv.folds > 0`?
     gbm.obj$cv.fitted <- p 
   }
   if (distribution$name == "pairwise") {

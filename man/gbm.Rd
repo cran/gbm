@@ -4,12 +4,24 @@
 \alias{gbm}
 \title{Generalized Boosted Regression Modeling (GBM)}
 \usage{
-gbm(formula = formula(data), distribution = "bernoulli",
-  data = list(), weights, var.monotone = NULL, n.trees = 100,
-  interaction.depth = 1, n.minobsinnode = 10, shrinkage = 0.1,
-  bag.fraction = 0.5, train.fraction = 1, cv.folds = 0,
-  keep.data = TRUE, verbose = FALSE, class.stratify.cv = NULL,
-  n.cores = NULL)
+gbm(
+  formula = formula(data),
+  distribution = "bernoulli",
+  data = list(),
+  weights,
+  var.monotone = NULL,
+  n.trees = 100,
+  interaction.depth = 1,
+  n.minobsinnode = 10,
+  shrinkage = 0.1,
+  bag.fraction = 0.5,
+  train.fraction = 1,
+  cv.folds = 0,
+  keep.data = TRUE,
+  verbose = FALSE,
+  class.stratify.cv = NULL,
+  n.cores = NULL
+)
 }
 \arguments{
 \item{formula}{A symbolic description of the model to be fit. The formula
@@ -209,8 +221,8 @@ SNR <- 10  # signal-to-noise ratio
 Y <- X1 ^ 1.5 + 2 * (X2 ^ 0.5) + mu
 sigma <- sqrt(var(Y) / SNR)
 Y <- Y + rnorm(N, 0, sigma)
-X1[sample(1:N, size = 500)] <- NA  # introduce some missing values
-X4[sample(1:N, size = 300)] <- NA  # introduce some missing values
+X1[sample(1:N,size=500)] <- NA  # introduce some missing values
+X4[sample(1:N,size=300)] <- NA  # introduce some missing values
 data <- data.frame(Y, X1, X2, X3, X4, X5, X6)
 
 # Fit a GBM
@@ -264,10 +276,9 @@ Yhat <- predict(gbm1, newdata = data2, n.trees = best.iter, type = "link")
 print(sum((data2$Y - Yhat)^2))
 
 # Construct univariate partial dependence plots
-p1 <- plot(gbm1, i.var = 1, n.trees = best.iter)
-p2 <- plot(gbm1, i.var = 2, n.trees = best.iter)
-p3 <- plot(gbm1, i.var = "X3", n.trees = best.iter)  # can use index or name
-grid.arrange(p1, p2, p3, ncol = 3)
+plot(gbm1, i.var = 1, n.trees = best.iter)
+plot(gbm1, i.var = 2, n.trees = best.iter)
+plot(gbm1, i.var = "X3", n.trees = best.iter)  # can use index or name
 
 # Construct bivariate partial dependence plots
 plot(gbm1, i.var = 1:2, n.trees = best.iter)
