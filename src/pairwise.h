@@ -55,6 +55,7 @@
 #ifndef PAIRWISE_H
 #define PAIRWISE_H
 
+#include <climits> // for UINT_MAX
 #include "distribution.h"
 #include "buildinfo.h"
 

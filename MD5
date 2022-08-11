@@ -1,5 +1,5 @@
 108bdba2eb6f2ba6ce890f47224ef68f *CHANGES
-47bb9e8da14440b3130f6b729e6278c5 *DESCRIPTION
+d541a026920305e360b05d02e5b8839e *DESCRIPTION
 67f2f9cc8297be2f12dfe86e05277383 *LICENSE
 f9637d4fba61a768283f21aa530054eb *NAMESPACE
 c4289aae976b259fc5cf46a2363ca209 *NEWS.md
@@ -68,7 +68,7 @@ ee3f3b8ed722adf5cd10da2975233987 *man/relative.influence.Rd
 c877a1d31fa93463ed5d3ccd2164aa80 *src/bernoulli.cpp
 323f73ab809cff64ad5b4f336157f295 *src/bernoulli.h
 088062cab2532d24fa3a9fc5affcf69a *src/buildinfo.h
-e15f767c646f66e54eb5bb20ccd7cebd *src/coxph.cpp
+08b94c4a4db39945ed245c6ff6912358 *src/coxph.cpp
 e110cbd0b715934c4e0257cf20e9c1da *src/coxph.h
 3616890b5d7af2b3edd52dc5f29544b0 *src/dataset.cpp
 d30f46362b1915f76e5a328ce95c7136 *src/dataset.h
@@ -101,12 +101,12 @@ af2b9dd107d657344891521829c52243 *src/node_factory.cpp
 3b80b8101a773a42a06eb41b5c6b01c9 *src/node_factory.h
 56dc9a7a6309294654e641c14a32023d *src/node_nonterminal.cpp
 062cbcf913ad61d33048c36ab0b76735 *src/node_nonterminal.h
-a99c0738f82cb857c87b45a65d4e8f25 *src/node_search.cpp
+54259a51d06fe3f0d064aab01595627d *src/node_search.cpp
 76b812a554f8ce9e7ea64c6f3c7631ee *src/node_search.h
 c6943942255ce8138259b6b47caa0c08 *src/node_terminal.cpp
 084bcc63d1b33ca200460b88ef36b8f6 *src/node_terminal.h
 b763976a9c68d9e975417a84b7e2b3c4 *src/pairwise.cpp
-8dc9c440afcb8d96f881c6d56ecae4d6 *src/pairwise.h
+db2871ae87c7d5d9366a4c6e03ee7a70 *src/pairwise.h
 756422dc1f3f394260fa4d77ec42d1ed *src/poisson.cpp
 0c901877981c1df8c4d82f6dd99c9231 *src/poisson.h
 64e10460138c1b67923020b58cf1a599 *src/quantile.cpp
