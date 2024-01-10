@@ -1,18 +1,38 @@
 Package: gbm
-Version: 2.1.8.1
+Version: 2.1.9
 Title: Generalized Boosted Regression Models
 Authors@R: c(
+  person("Ridgeway", "Greg",
+         email = "gridge@upenn.edu",
+         role = c("aut", "cre"),
+         comment = c(ORCID = "0000-0001-6911-0804")),
+  person("Daniel", "Edwards",
+         email = "unknown@unknown.com",
+         role = "ctb",
+         comment = c(ORCID = "0000-0002-8120-0084")),
+  person("Brian", "Kriegler",
+         email = "bkriegler@econone.com",
+         role = "ctb",
+         comment = c(ORCID = "0000-0002-8120-0084")),
+  person("Stefan", "Schroedl",
+         email = "stefan@atomwise.com",
+         role = "ctb",
+         comment = c(ORCID = "0000-0002-8120-0084")),
+  person("Harry", "Southworth",
+         email = "harry@dataclarityconsulting.co.uk",
+         role = "ctb",
+         comment = c(ORCID = "0000-0002-8120-0084")),
   person("Brandon", "Greenwell",
          email = "greenwell.brandon@gmail.com",
-         role = c("aut", "cre"),
+         role = "ctb",
          comment = c(ORCID = "0000-0002-8120-0084")),
   person("Bradley", "Boehmke",
          email = "bradleyboehmke@gmail.com",
-         role = "aut",
+         role = "ctb",
          comment = c(ORCID = "0000-0002-3611-8516")),
   person("Jay", "Cunningham",
          email = "james@notbadafterall.com",
-         role = "aut"),
+         role = "ctb"),
   person("GBM", "Developers", 
          role = "aut", 
          comment = "https://github.com/gbm-developers")
@@ -27,18 +47,24 @@ Description: An implementation of extensions to Freund and Schapire's AdaBoost
   regression, logistic, multinomial logistic, Poisson, Cox proportional hazards 
   partial likelihood, AdaBoost exponential loss, Huberized hinge loss, and 
   Learning to Rank measures (LambdaMart). Originally developed by Greg Ridgeway.
+  Newer version available at github.com/gbm-developers/gbm3.
 License: GPL (>= 2) | file LICENSE
 URL: https://github.com/gbm-developers/gbm
 BugReports: https://github.com/gbm-developers/gbm/issues
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2022-08-11 15:33:34 UTC; ripley
-Author: Brandon Greenwell [aut, cre] (<https://orcid.org/0000-0002-8120-0084>),
-  Bradley Boehmke [aut] (<https://orcid.org/0000-0002-3611-8516>),
-  Jay Cunningham [aut],
+Packaged: 2024-01-10 16:15:43 UTC; greg_
+Author: Ridgeway Greg [aut, cre] (<https://orcid.org/0000-0001-6911-0804>),
+  Daniel Edwards [ctb] (<https://orcid.org/0000-0002-8120-0084>),
+  Brian Kriegler [ctb] (<https://orcid.org/0000-0002-8120-0084>),
+  Stefan Schroedl [ctb] (<https://orcid.org/0000-0002-8120-0084>),
+  Harry Southworth [ctb] (<https://orcid.org/0000-0002-8120-0084>),
+  Brandon Greenwell [ctb] (<https://orcid.org/0000-0002-8120-0084>),
+  Bradley Boehmke [ctb] (<https://orcid.org/0000-0002-3611-8516>),
+  Jay Cunningham [ctb],
   GBM Developers [aut] (https://github.com/gbm-developers)
-Maintainer: Brandon Greenwell <greenwell.brandon@gmail.com>
+Maintainer: Ridgeway Greg <gridge@upenn.edu>
 Repository: CRAN
-Date/Publication: 2022-08-11 16:15:54 UTC
+Date/Publication: 2024-01-10 21:23:15 UTC

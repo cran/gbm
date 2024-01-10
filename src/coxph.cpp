@@ -1,7 +1,6 @@
 //  GBM by Greg Ridgeway  Copyright (C) 2003
 
 #include "coxph.h"
-#include <climits> // for ULONG_MAX
 
 CCoxPH::CCoxPH()
 {

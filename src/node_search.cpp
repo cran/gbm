@@ -6,7 +6,6 @@
 //------------------------------------------------------------------------------
 
 #include "node_search.h"
-#include <climits> // for UINT_MAX
 
 CNodeSearch::CNodeSearch()
     :k_cMaxClasses(1024)
