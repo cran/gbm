@@ -219,7 +219,7 @@ gbm.fit <- function(x, y, offset = NULL, misc = NULL, distribution = "bernoulli"
   cRows <- nrow(x)
   cCols <- ncol(x)
   
-  if(nrow(x) != ifelse("Surv" %in% class(y), nrow(y), length(y))) {
+  if(nrow(x) != ifelse(inherits(y, "Surv"), nrow(y), length(y))) {
     stop("The number of rows in x does not equal the length of y.")
   }
   
@@ -247,7 +247,7 @@ gbm.fit <- function(x, y, offset = NULL, misc = NULL, distribution = "bernoulli"
   # Check size of data
   if(nTrain * bag.fraction <= 2 * n.minobsinnode + 1) {
     stop("The data set is too small or the subsampling rate is too large: ",
-         "`nTrain * bag.fraction <= n.minobsinnode`")
+         "`nTrain * bag.fraction <= 2 * n.minobsinnode + 1`")
   }
   
   if (distribution$name != "pairwise") {
@@ -314,31 +314,23 @@ gbm.fit <- function(x, y, offset = NULL, misc = NULL, distribution = "bernoulli"
   if(!is.element(distribution$name, supported.distributions)) {
     stop("Distribution ",distribution$name," is not supported")
   }
-  if((distribution$name == "bernoulli") && !all(is.element(y, 0:1)) && 
-     !is.numeric(y)) {
-    # NOTE: Including `!is.numeric(y)` will catch cases where y is a 0/1 factor
-    stop("Bernoulli requires the response to be in {0,1}")
-    if (is.factor(y)) {
-      y <- as.integer(y) - 1
-    }
+  if((distribution$name == "bernoulli") && 
+     (!is.numeric(y) || !all(is.element(y, 0:1)))) {
+    stop("Bernoulli requires the response to be numeric in {0,1}")
   }
-  if((distribution$name == "huberized") && !all(is.element(y,0:1))) {
-    stop("Huberized square hinged loss requires the response to be in {0,1}")
-    if (is.factor(y)) {
-      y <- as.integer(y) - 1
-    }
+  if((distribution$name == "huberized") && 
+     (!is.numeric(y) || !all(is.element(y, 0:1)))) {
+    stop("Huberized square hinged loss requires the response to be numeric in {0,1}")
   }
   if((distribution$name == "poisson") && any(y<0)) {
-    stop("Poisson requires the response to be positive")
+    stop("Poisson requires the response to be non-negative")
   }
   if((distribution$name == "poisson") && any(y != trunc(y))) {
-    stop("Poisson requires the response to be a positive integer")
+    stop("Poisson requires the response to be non-negative")
   }
-  if((distribution$name == "adaboost") && !all(is.element(y,0:1))) {
-    stop("This version of AdaBoost requires the response to be in {0,1}")
-    if (is.factor(y)) {
-      y <- as.integer(y) - 1
-    }
+  if((distribution$name == "adaboost") && 
+     (!is.numeric(y) || !all(is.element(y, 0:1)))) {
+    stop("This version of AdaBoost requires the response to be numeric in {0,1}")
   }
   if(distribution$name == "quantile") {
     if(length(unique(w)) > 1) {
@@ -354,7 +346,7 @@ gbm.fit <- function(x, y, offset = NULL, misc = NULL, distribution = "bernoulli"
     Misc <- c(alpha=distribution$alpha)
   }
   if(distribution$name == "coxph") {
-    if(!("Surv" %in% class(y))) {
+    if(!inherits(y, "Surv")) {
       stop("Outcome must be a survival object Surv(time,failure)")
     }
     if(attr(y,"type")!="right") {

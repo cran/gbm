@@ -89,9 +89,12 @@ public:
                           unsigned long nTrain);
 
 private:
-    vector<double> vecd;
-    vector<double>::iterator itMedian;
+    std::vector<double> vecd;
+    std::vector<double>::iterator itMedian;
     CLocationM *mpLocM;
+    
+    double *adArr; // for temp calculations
+    double *adW2;
 };
 
 #endif // LAPLACGBM_H

@@ -1,27 +1,23 @@
 Package: gbm
-Version: 2.1.9
+Version: 2.2.2
 Title: Generalized Boosted Regression Models
 Authors@R: c(
-  person("Ridgeway", "Greg",
+  person("Greg", "Ridgeway",
          email = "gridge@upenn.edu",
          role = c("aut", "cre"),
          comment = c(ORCID = "0000-0001-6911-0804")),
   person("Daniel", "Edwards",
          email = "unknown@unknown.com",
-         role = "ctb",
-         comment = c(ORCID = "0000-0002-8120-0084")),
+         role = "ctb"),
   person("Brian", "Kriegler",
          email = "bkriegler@econone.com",
-         role = "ctb",
-         comment = c(ORCID = "0000-0002-8120-0084")),
+         role = "ctb"),
   person("Stefan", "Schroedl",
          email = "stefan@atomwise.com",
-         role = "ctb",
-         comment = c(ORCID = "0000-0002-8120-0084")),
+         role = "ctb"),
   person("Harry", "Southworth",
          email = "harry@dataclarityconsulting.co.uk",
-         role = "ctb",
-         comment = c(ORCID = "0000-0002-8120-0084")),
+         role = "ctb"),
   person("Brandon", "Greenwell",
          email = "greenwell.brandon@gmail.com",
          role = "ctb",
@@ -52,19 +48,19 @@ License: GPL (>= 2) | file LICENSE
 URL: https://github.com/gbm-developers/gbm
 BugReports: https://github.com/gbm-developers/gbm/issues
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2024-01-10 16:15:43 UTC; greg_
-Author: Ridgeway Greg [aut, cre] (<https://orcid.org/0000-0001-6911-0804>),
-  Daniel Edwards [ctb] (<https://orcid.org/0000-0002-8120-0084>),
-  Brian Kriegler [ctb] (<https://orcid.org/0000-0002-8120-0084>),
-  Stefan Schroedl [ctb] (<https://orcid.org/0000-0002-8120-0084>),
-  Harry Southworth [ctb] (<https://orcid.org/0000-0002-8120-0084>),
+Packaged: 2024-06-26 12:33:00 UTC; greg_
+Author: Greg Ridgeway [aut, cre] (<https://orcid.org/0000-0001-6911-0804>),
+  Daniel Edwards [ctb],
+  Brian Kriegler [ctb],
+  Stefan Schroedl [ctb],
+  Harry Southworth [ctb],
   Brandon Greenwell [ctb] (<https://orcid.org/0000-0002-8120-0084>),
   Bradley Boehmke [ctb] (<https://orcid.org/0000-0002-3611-8516>),
   Jay Cunningham [ctb],
   GBM Developers [aut] (https://github.com/gbm-developers)
-Maintainer: Ridgeway Greg <gridge@upenn.edu>
+Maintainer: Greg Ridgeway <gridge@upenn.edu>
 Repository: CRAN
-Date/Publication: 2024-01-10 21:23:15 UTC
+Date/Publication: 2024-06-28 06:20:02 UTC
