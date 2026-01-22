@@ -1,5 +1,5 @@
 13d645ea5a474dec3c644512353ee958 *CHANGES
-e8a38246290de8fe95c46ac1ebc38f2e *DESCRIPTION
+3a123b9ccc4215a069ef00251ed2c892 *DESCRIPTION
 73ed5410da67876bbccbc45fda025419 *LICENSE
 8a3be7d6e9633a3f4a89c866a98df466 *NAMESPACE
 7df0f18225094712a3d207c4486a7db7 *NEWS.md
@@ -15,7 +15,7 @@ f2310d9a5225ecacd1a28b13720646b6 *R/gbm.fit.R
 2dc03e69665e4599c7289f2993eb3250 *R/gbmCrossVal.R
 b6d4e6c4e10836d532d2d5cf4e8d692b *R/interact.gbm.R
 03f0e1b453cd47ce2da756d9c873627c *R/ir.measures.R
-ca11cea5656713e463f95791318b498f *R/plot.gbm.R
+90f6da840ae9bfd1e39dcc1bfb70f578 *R/plot.gbm.R
 b3400b409ef852a38f2c93eca941c42d *R/predict.gbm.R
 5aea47b751e58bde1cd3e07623e68d1b *R/pretty.gbm.tree.R
 30f9776164937c618296bf4bf32bb9cc *R/print.gbm.R
@@ -24,8 +24,8 @@ b3400b409ef852a38f2c93eca941c42d *R/predict.gbm.R
 08f46c17919f160031d6a2f18cd6ef19 *R/test.gbm.R
 8d5424719baba6f979cc347268487581 *R/utils.R
 b7c53e14f289dc6caa147cb80b381355 *R/zzz.R
-9d96211a993278ccaa571850bf8e4209 *README.md
-2a555c7321f4ebc815961fd106c7c578 *build/vignette.rds
+22d45eb54a0239439b49064c02f3c5db *README.md
+209cdce69cfa27ec1c0ccc7fb5d2ecb9 *build/vignette.rds
 34473f8b2b3d89242031c1af2af38155 *demo/00Index
 c8111e88c09d7a1b3729b41f67b871d1 *demo/OOB-reps.R
 0b6bf4e6c515ffea8a137067f03724d7 *demo/bernoulli.R
@@ -36,7 +36,8 @@ ee94468e32b128e2b7689a61853a998b *demo/coxph.R
 fe8f5f9946ae5cd80cf18c033488d5c5 *demo/printExamples.R
 ac91cb39bbb7b8072ba65cf5933bcf68 *demo/robustReg.R
 94b9c4c04c246fd60085115c9f5a7cf8 *inst/doc/gbm.Rnw
-b0ff78e02298d83412611177b001f844 *inst/doc/gbm.pdf
+c600092d2d1286350cf5a52f97afcade *inst/doc/gbm.pdf
+9c29d4fac5749c2f3bf42e586af99d59 *inst/tinytest/desktop.ini
 d7dfb5eccdb0251ad7b9bda805040cdf *inst/tinytest/test_bernoulli.R
 0ecf23a69c73dc027f34b243a9476eae *inst/tinytest/test_coxph.R
 08794176cae150c50cc7bd8e36dbdd23 *inst/tinytest/test_least_squares.R
@@ -53,7 +54,7 @@ e40368d2c5bd45e17f520c6bf465b878 *man/gbm.object.Rd
 bd538d953cfba416e0a48e02f61fed5d *man/gbm.roc.area.Rd
 82696b8c5305ac18217c9f1509bef563 *man/gbmCrossVal.Rd
 8fde31aedb860ce6b49e1f807d5e5d04 *man/interact.gbm.Rd
-3492ad829f6d213cd83ef0f396746c92 *man/plot.gbm.Rd
+f77607d017ca03e1cdcab00b67f23ee4 *man/plot.gbm.Rd
 2c025c91a0ad58280a6dda58a76ae9fe *man/predict.gbm.Rd
 0cc9c5bc1a0cfc0c7194b548bfff1238 *man/pretty.gbm.tree.Rd
 8e0d84bc42a9be3c623fda10ec7e7eb2 *man/print.gbm.Rd
