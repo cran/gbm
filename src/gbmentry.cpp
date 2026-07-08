@@ -167,20 +167,21 @@ SEXP gbm_fit
       goto Error;
     }
     
+    // InitF also lets distributions allocate iteration-specific work buffers.
+    hr = pDist->InitF(pData->adY,
+                      pData->adMisc,
+                      pData->adOffset,
+                      pData->adWeight,
+                      REAL(rdInitF)[0],
+                      cTrain);
+    if(GBM_FAILED(hr))
+    {
+      goto Error;
+    }
+
     if(ISNA(REAL(radFOld)[0])) // check for old predictions
     {
         // set the initial value of F as a constant
-        hr = pDist->InitF(pData->adY,
-                          pData->adMisc,
-                          pData->adOffset,
-                          pData->adWeight,
-                          REAL(rdInitF)[0], 
-                          cTrain);
-        if(GBM_FAILED(hr))
-        {
-          goto Error;
-        }
-      
         for(i=0; i < (pData->cRows) * cNumClasses; i++)
         {
             REAL(radF)[i] = REAL(rdInitF)[0];
@@ -531,8 +532,11 @@ SEXP gbm_plot
     int iCatSplitIndicator = 0;
 
     SEXP radPredF = NULL;
-    int aiNodeStack[40];
-    double adWeightStack[40];
+    // Sized dynamically (grown below) rather than fixed, since stack depth
+    // scales with tree depth and a fixed bound can be exceeded by deep,
+    // single-branch-chain trees.
+    std::vector<int> aiNodeStack(64);
+    std::vector<double> adWeightStack(64);
     int cStackNodes = 0;
     int iPredVar = 0;
 
@@ -566,6 +570,13 @@ SEXP gbm_plot
                 {
                     cStackNodes--;
                     iCurrentNode = aiNodeStack[cStackNodes];
+
+                    // at most 2 pushes happen below per iteration; grow if needed
+                    if(cStackNodes + 2 > (int)aiNodeStack.size())
+                    {
+                        aiNodeStack.resize(aiNodeStack.size()*2);
+                        adWeightStack.resize(adWeightStack.size()*2);
+                    }
 
                     if(aiSplitVar[iCurrentNode] == -1) // terminal node
                     {

@@ -1,5 +1,5 @@
 Package: gbm
-Version: 2.2.3
+Version: 2.3.0
 Title: Generalized Boosted Regression Models
 Authors@R: c(
   person("Greg", "Ridgeway",
@@ -33,25 +33,27 @@ Authors@R: c(
          role = "aut", 
          comment = "https://github.com/gbm-developers")
   )
-Depends: R (>= 2.9.0)
+Depends: R (>= 3.5.0)
 Imports: lattice, parallel, survival
-Suggests: covr, gridExtra, knitr, pdp, RUnit, splines, tinytest, vip,
-        viridis, MASS
+Suggests: bookdown, gridExtra, knitr, pdp, rmarkdown, RUnit, splines,
+        testthat (>= 3.0.0), viridis, MASS
 Description: An implementation of extensions to Freund and Schapire's AdaBoost 
   algorithm and Friedman's gradient boosting machine. Includes regression 
   methods for least squares, absolute loss, t-distribution loss, quantile 
   regression, logistic, multinomial logistic, Poisson, Cox proportional hazards 
   partial likelihood, AdaBoost exponential loss, Huberized hinge loss, and 
   Learning to Rank measures (LambdaMart). Originally developed by Greg Ridgeway.
-  Newer version available at github.com/gbm-developers/gbm3.
+  Newer version available at <https://github.com/gbm-developers/gbm3>.
 License: GPL (>= 2) | file LICENSE
-URL: https://github.com/gbm-developers/gbm
+URL: https://gbm-developers.github.io/gbm/,
+        https://github.com/gbm-developers/gbm
 BugReports: https://github.com/gbm-developers/gbm/issues
 Encoding: UTF-8
-RoxygenNote: 7.3.3
+RoxygenNote: 8.0.0
 VignetteBuilder: knitr
+Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2026-01-22 16:42:41 UTC; greg_
+Packaged: 2026-07-08 00:39:35 UTC; greg_
 Author: Greg Ridgeway [aut, cre] (ORCID:
     <https://orcid.org/0000-0001-6911-0804>),
   Daniel Edwards [ctb],
@@ -65,4 +67,4 @@ Author: Greg Ridgeway [aut, cre] (ORCID:
   GBM Developers [aut] (https://github.com/gbm-developers)
 Maintainer: Greg Ridgeway <gridge@upenn.edu>
 Repository: CRAN
-Date/Publication: 2026-01-22 17:40:02 UTC
+Date/Publication: 2026-07-08 18:10:02 UTC

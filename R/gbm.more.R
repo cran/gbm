@@ -132,6 +132,11 @@ gbm.more <- function(object,
                      verbose = NULL) {
    theCall <- match.call()
    nTrain  <- object$nTrain
+   fit.old <- object$fit
+   num.classes <- object$num.classes
+   if (is.null(num.classes)) {
+      num.classes <- 1
+   }
 
    if (object$distribution$name != "pairwise")
    {
@@ -171,11 +176,10 @@ gbm.more <- function(object,
          w <- w*length(w)/sum(w) # normalize to N
       }
 
-      if(is.null(offset) || (offset==0))
-      {
-         offset <- NA
-      }
+      offset <- checkOffset(offset, y)
       Misc <- NA
+      cRows <- nrow(x)
+      cCols <- ncol(x)
 
       if(object$distribution$name == "coxph")
       {
@@ -184,18 +188,50 @@ gbm.more <- function(object,
 
          # reverse sort the failure times to compute risk sets on the fly
          i.train <- order(-y[1:nTrain])
-         i.test <- order(-y[(nTrain+1):cRows]) + nTrain
+         n.test <- cRows - nTrain
+         if(n.test > 0) {
+            i.test <- order(-y[(nTrain+1):cRows]) + nTrain
+         }
+         else {
+            i.test <- NULL
+         }
          i.timeorder <- c(i.train,i.test)
 
          y <- y[i.timeorder]
          Misc <- Misc[i.timeorder]
          x <- x[i.timeorder,,drop=FALSE]
          w <- w[i.timeorder]
-         if(!is.na(offset)) offset <- offset[i.timeorder]
+         if(!is.na(offset[1])) offset <- offset[i.timeorder]
          object$fit <- object$fit[i.timeorder]
+         fit.old <- object$fit
       }
       else if(object$distribution$name == "tdist" ){
          Misc <- object$distribution$df
+      }
+      else if(object$distribution$name == "multinomial")
+      {
+         classes <- object$classes
+         nClass <- num.classes
+
+         new.idx <- as.vector(sapply(classes, function(a, x) {
+            min((1:length(x))[x == a])
+         }, y))
+
+         all.idx <- 1:length(y)
+         new.idx <- c(new.idx, all.idx[!(all.idx %in% new.idx)])
+
+         y <- y[new.idx]
+         x <- x[new.idx, , drop = FALSE]
+         w <- w[new.idx]
+         if (!is.null(offset) && !is.na(offset[1])) {
+            offset <- offset[new.idx]
+         }
+
+         y <- as.numeric(as.vector(outer(y, classes, "==")))
+         w <- rep(w, nClass)
+         if (!is.null(offset) && !is.na(offset[1])) {
+            offset <- rep(offset, nClass)
+         }
       }
       else if (object$distribution$name == "pairwise"){
 
@@ -236,8 +272,9 @@ gbm.more <- function(object,
          group        <- group[ord.group]
          y            <- y[ord.group]
          x            <- x[ord.group,,drop=FALSE]
-         w            <- x[ord.group]
+         w            <- w[ord.group]
          object$fit   <- object$fit[ord.group] # object$fit is stored in the original order
+         fit.old      <- object$fit
 
          # Split into train and validation set, at group boundary
          num.groups.train <- max(1, round(object$train.fraction * nlevels(group)))
@@ -276,8 +313,6 @@ gbm.more <- function(object,
       # create index upfront... subtract one for 0 based order
       x.order <- apply(x[1:nTrain,,drop=FALSE],2,order,na.last=FALSE)-1
       x <- data.matrix(x)
-      cRows <- nrow(x)
-      cCols <- ncol(x)
    }
    else
    {
@@ -290,14 +325,42 @@ gbm.more <- function(object,
       nTrain  <- object$nTrain
       cRows   <- length(y)
       cCols   <- length(x)/cRows
+      if(object$distribution$name == "multinomial")
+      {
+         classes <- object$classes
+         nClass <- num.classes
+         cRows <- length(y) / nClass
+         cCols <- length(x) / cRows
+
+         y <- matrix(y, ncol = nClass, byrow = FALSE)
+         y.class <- classes[max.col(y)]
+
+         new.idx <- as.vector(sapply(classes, function(a, x) {
+            min((1:length(x))[x == a])
+         }, y.class))
+
+         all.idx <- 1:length(y.class)
+         new.idx <- c(new.idx, all.idx[!(all.idx %in% new.idx)])
+
+         x <- matrix(x, ncol = cCols, byrow = FALSE)[new.idx, , drop = FALSE]
+         y <- as.vector(y[new.idx, , drop = FALSE])
+         w <- rep(w[new.idx], nClass)
+         if (!is.null(offset) && !is.na(offset[1])) {
+            offset <- rep(offset[new.idx], nClass)
+         }
+         x.order <- apply(x[1:nTrain, , drop = FALSE], 2, order,
+                          na.last = FALSE) - 1
+      }
       if(object$distribution$name == "coxph")
       {
          i.timeorder <- object$data$i.timeorder
          object$fit  <- object$fit[i.timeorder]
+         fit.old <- object$fit
       }
       if (object$distribution$name == "pairwise") 
       {
          object$fit   <- object$fit[object$ord.group] # object$fit is stored in the original order
+         fit.old <- object$fit
       }
    }
 
@@ -322,11 +385,11 @@ gbm.more <- function(object,
                     n.trees = as.integer(n.new.trees),
                     interaction.depth = as.integer(object$interaction.depth),
                     n.minobsinnode = as.integer(object$n.minobsinnode),
-                    n.classes = as.integer(object$num.classes),
+                    n.classes = as.integer(num.classes),
                     shrinkage = as.double(object$shrinkage),
                     bag.fraction = as.double(object$bag.fraction),
                     train.fraction = as.integer(nTrain),
-                    fit.old = as.double(object$fit),
+                    fit.old = as.double(fit.old),
                     n.cat.splits.old = as.integer(length(object$c.splits)),
                     n.trees.old = as.integer(object$n.trees),
                     verbose = as.integer(verbose),
@@ -345,7 +408,7 @@ gbm.more <- function(object,
    gbm.obj$cv.error      <- object$cv.error
    gbm.obj$cv.folds      <- object$cv.folds
 
-   gbm.obj$n.trees        <- length(gbm.obj$trees)
+   gbm.obj$n.trees        <- length(gbm.obj$trees) / num.classes
    gbm.obj$distribution   <- object$distribution
    gbm.obj$train.fraction <- object$train.fraction
    gbm.obj$shrinkage      <- object$shrinkage
@@ -355,7 +418,7 @@ gbm.more <- function(object,
    gbm.obj$var.names      <- object$var.names
    gbm.obj$interaction.depth <- object$interaction.depth
    gbm.obj$n.minobsinnode    <- object$n.minobsinnode
-   gbm.obj$num.classes       <- object$num.classes
+   gbm.obj$num.classes       <- num.classes
    gbm.obj$nTrain            <- object$nTrain
    gbm.obj$response.name     <- object$response.name
    gbm.obj$Terms             <- object$Terms
@@ -365,6 +428,18 @@ gbm.more <- function(object,
    if(object$distribution$name == "coxph")
    {
       gbm.obj$fit[i.timeorder] <- gbm.obj$fit
+   }
+
+   if (object$distribution$name == "multinomial")
+   {
+      gbm.obj$fit <- matrix(gbm.obj$fit, ncol = num.classes)
+      dimnames(gbm.obj$fit)[[2]] <- object$classes
+      gbm.obj$classes <- object$classes
+
+      exp.f <- exp(gbm.obj$fit)
+      denom <- matrix(rep(rowSums(exp.f), num.classes),
+                      ncol = num.classes)
+      gbm.obj$estimator <- exp.f / denom
    }
 
    if (object$distribution$name == "pairwise")

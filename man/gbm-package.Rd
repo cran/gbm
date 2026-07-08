@@ -34,12 +34,11 @@ Boosting Machine,} \emph{Annals of Statistics} 29(5):1189-1232.
 
 J.H. Friedman (2002). \dQuote{Stochastic Gradient Boosting,}
 \emph{Computational Statistics and Data Analysis} 38(4):367-378.
-
-The \href{https://jerryfriedman.su.domains/R-MART.html}{MART} website.
 }
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://gbm-developers.github.io/gbm/}
   \item \url{https://github.com/gbm-developers/gbm}
   \item Report bugs at \url{https://github.com/gbm-developers/gbm/issues}
 }

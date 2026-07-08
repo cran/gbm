@@ -33,8 +33,7 @@
 #' 
 #' If quantile regression is specified, \code{distribution} must be a list of
 #' the form \code{list(name = "quantile", alpha = 0.25)} where \code{alpha} is 
-#' the quantile to estimate. The current version's quantile regression method 
-#' does not handle non-constant weights and will stop.
+#' the quantile to estimate.
 #' 
 #' If \code{"tdist"} is specified, the default degrees of freedom is 4 and 
 #' this can be controlled by specifying 
@@ -131,7 +130,8 @@
 #' @param cv.folds Number of cross-validation folds to perform. If
 #' \code{cv.folds}>1 then \code{gbm}, in addition to the usual fit, will
 #' perform a cross-validation, calculate an estimate of generalization error
-#' returned in \code{cv.error}.
+#' returned in \code{cv.error}. If \code{cv.folds=1}, \code{gbm} warns and
+#' proceeds without cross-validation.
 #' 
 #' @param keep.data a logical variable indicating whether to keep the data and
 #' an index of the data stored with the object. Keeping the data and index
@@ -226,7 +226,7 @@
 #' 
 #' # Simulate data
 #' set.seed(101)  # for reproducibility
-#' N <- 1000
+#' N <- 200
 #' X1 <- runif(N)
 #' X2 <- 2 * runif(N)
 #' X3 <- ordered(sample(letters[1:4], N, replace = TRUE), levels = letters[4:1])
@@ -238,16 +238,16 @@
 #' Y <- X1 ^ 1.5 + 2 * (X2 ^ 0.5) + mu
 #' sigma <- sqrt(var(Y) / SNR)
 #' Y <- Y + rnorm(N, 0, sigma)
-#' X1[sample(1:N,size=500)] <- NA  # introduce some missing values
-#' X4[sample(1:N,size=300)] <- NA  # introduce some missing values
+#' X1[sample(1:N, size = 100)] <- NA  # introduce some missing values
+#' X4[sample(1:N, size = 60)] <- NA  # introduce some missing values
 #' data <- data.frame(Y, X1, X2, X3, X4, X5, X6)
 #' 
 #' # Fit a GBM
 #' set.seed(102)  # for reproducibility
 #' gbm1 <- gbm(Y ~ ., data = data, var.monotone = c(0, 0, 0, 0, 0, 0),
-#'             distribution = "gaussian", n.trees = 100, shrinkage = 0.1,             
+#'             distribution = "gaussian", n.trees = 50, shrinkage = 0.1,             
 #'             interaction.depth = 3, bag.fraction = 0.5, train.fraction = 0.5,  
-#'             n.minobsinnode = 10, cv.folds = 5, keep.data = TRUE, 
+#'             n.minobsinnode = 5, cv.folds = 2, keep.data = TRUE, 
 #'             verbose = FALSE, n.cores = 1)  
 #' 
 #' # Check performance using the out-of-bag (OOB) error; the OOB error typically
@@ -259,7 +259,7 @@
 #' best.iter <- gbm.perf(gbm1, method = "test")
 #' print(best.iter)
 #' 
-#' # Check performance using 5-fold cross-validation
+#' # Check performance using 2-fold cross-validation
 #' best.iter <- gbm.perf(gbm1, method = "cv")
 #' print(best.iter)
 #' 
@@ -274,7 +274,7 @@
 #' 
 #' # Simulate new data
 #' set.seed(103)  # for reproducibility
-#' N <- 1000
+#' N <- 200
 #' X1 <- runif(N)
 #' X2 <- 2 * runif(N)
 #' X3 <- ordered(sample(letters[1:4], N, replace = TRUE))
@@ -353,12 +353,6 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
   if (!is.element(distribution$name, getAvailableDistributions())) {
     stop("Distribution ", distribution$name, " is not supported.")
   }
-  if (distribution$name == "multinomial") {
-    warning("Setting `distribution = \"multinomial\"` is ill-advised as it is ",
-            "currently broken. It exists only for backwards compatibility. ",
-            "Use at your own risk.", call. = FALSE)
-  }
-  
   # Construct data frame of predictor values
   var.names <- attributes(Terms)$term.labels
   x <- model.frame(terms(reformulate(var.names)), data = data, 
@@ -425,6 +419,7 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
     y <- y[ord.group]
     x <- x[ord.group, , drop = FALSE]
     w <- w[ord.group]
+    if (!is.null(offset)) offset <- offset[ord.group]
     
     # Split into train and validation sets at group boundary
     num.groups.train <- max(1, round(train.fraction * nlevels(group)))
@@ -437,15 +432,21 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
 
   # Set up for k-fold cross-validation
   cv.error <- NULL
-  # FIXME: Is there a better way to handle this?
   if (cv.folds == 1) {
-    cv.folds <- 0  # o/w, an uninformative error is thrown
+    warning("cv.folds = 1 is not meaningful; no cross-validation will be run.")
+    cv.folds <- 0
   }
-  if(cv.folds > 1) {
+  has.cross.validation <- cv.folds > 1
+  if(has.cross.validation) {
+    cv.data <- if (distribution$name == "pairwise") {
+      data[ord.group, , drop = FALSE]
+    } else {
+      data
+    }
     cv.results <- gbmCrossVal(cv.folds = cv.folds, nTrain = nTrain, 
                               n.cores = n.cores, 
                               class.stratify.cv = class.stratify.cv, 
-                              data = data, x = x, y = y, offset = offset, 
+                              data = cv.data, x = x, y = y, offset = offset, 
                               distribution = distribution, w = w, 
                               var.monotone = var.monotone, n.trees = n.trees, 
                               interaction.depth = interaction.depth, 
@@ -456,6 +457,9 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
                               response.name = response.name, group = group)
     cv.error <- cv.results$error
     p <- cv.results$predictions
+    if (distribution$name == "pairwise") {
+      p <- p[order(ord.group[seq_len(nTrain)])]
+    }
   }
   
   # Fit a GBM
@@ -475,7 +479,7 @@ gbm <- function(formula = formula(data), distribution = "bernoulli",
   gbm.obj$cv.folds <- cv.folds
   gbm.obj$call <- mcall
   gbm.obj$m <- m
-  if (cv.folds > 1) {  # FIXME: Was previously `cv.folds > 0`?
+  if (has.cross.validation) {
     gbm.obj$cv.fitted <- p 
   }
   if (distribution$name == "pairwise") {
