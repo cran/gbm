@@ -1,8 +1,8 @@
 13d645ea5a474dec3c644512353ee958 *CHANGES
-8994ef7eac3de20d6b4df0cd989973d8 *DESCRIPTION
+80db36c23990eece6bc5afa11b6db62a *DESCRIPTION
 73ed5410da67876bbccbc45fda025419 *LICENSE
 8a3be7d6e9633a3f4a89c866a98df466 *NAMESPACE
-1f332777d6a1b0b2411f6936ca5658e2 *NEWS.md
+8edcec08af17e3eec80f785f510f716b *NEWS.md
 30015ca11f94eab451fcfa77bf7283b6 *R/basehaz.gbm.R
 3f6808cb2e1ed79239d9c2b6722399ca *R/calibrate.plot.R
 9c3034774487d6ed909c4115f0875534 *R/gbm-internals.R
@@ -24,7 +24,7 @@ b3400b409ef852a38f2c93eca941c42d *R/predict.gbm.R
 08f46c17919f160031d6a2f18cd6ef19 *R/test.gbm.R
 a83dfdb85f0e2d1c186e97ddb4d0cdb1 *R/utils.R
 b7c53e14f289dc6caa147cb80b381355 *R/zzz.R
-01552b9dea58af69659e6935d6615543 *README.md
+549266e8fe81e820926d9a738667aae0 *README.md
 f69c1536bf058453db689bbb28a56bfb *build/vignette.rds
 34473f8b2b3d89242031c1af2af38155 *demo/00Index
 c8111e88c09d7a1b3729b41f67b871d1 *demo/OOB-reps.R
@@ -87,13 +87,13 @@ cb6921d0e6cb440828a878981a7ff72a *src/locationm.h
 5ce6e2bb396ca0b45b97270abae1bb36 *src/matrix.h
 5ebc11f063c99f2d57e12d2ee0e4cb28 *src/multinomial.cpp
 2ea82018296bb369e77f96ac9c31c483 *src/multinomial.h
-75737afcbdd3162c62fcdd82b027e1d2 *src/node.cpp
+e991ebcc1b5a3d83eb7c6cd9e49218ad *src/node.cpp
 456cade6f45558c0be20593e8f7354ed *src/node.h
 2e99439ebd925c2fe54e609ad93affea *src/node_categorical.cpp
 98afbdcf5bb70211102e58ed262fcec1 *src/node_categorical.h
 a04d827631d157efd47de6ef63633858 *src/node_continuous.cpp
 f09bd89f861430f58cb80ccf0de77c6a *src/node_continuous.h
-af2b9dd107d657344891521829c52243 *src/node_factory.cpp
+d9c6a97c82e06ea1903efbd355d38f77 *src/node_factory.cpp
 b39d639f336508ce5b86a4539b754366 *src/node_factory.h
 56dc9a7a6309294654e641c14a32023d *src/node_nonterminal.cpp
 062cbcf913ad61d33048c36ab0b76735 *src/node_nonterminal.h
@@ -109,7 +109,7 @@ f59ea02f9d947cbba7e37fdba58384b4 *src/poisson.h
 d4b83b85d0d8bcb4753d6d59036aab7f *src/quantile.h
 519b30584e7e752480750e86027aea7e *src/tdist.cpp
 9ab15eb81fc9a18ee7d14a76f7aefd2a *src/tdist.h
-b39929868074c1f00d0469a9f81d84a7 *src/tree.cpp
+c314808bc98c2634f46ed560480717f0 *src/tree.cpp
 6b2f1cd60e5d67638e110e1ac9552b27 *src/tree.h
 60614463c300f15d132f2f0d26e8d881 *tests/testthat.R
 60c9fa555eeea9103254aa81a78dbd24 *tests/testthat/test-bernoulli.R

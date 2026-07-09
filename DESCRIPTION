@@ -1,5 +1,5 @@
 Package: gbm
-Version: 2.3.0
+Version: 2.3.1
 Title: Generalized Boosted Regression Models
 Authors@R: c(
   person("Greg", "Ridgeway",
@@ -53,7 +53,7 @@ RoxygenNote: 8.0.0
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2026-07-08 00:39:35 UTC; greg_
+Packaged: 2026-07-09 19:53:58 UTC; greg_
 Author: Greg Ridgeway [aut, cre] (ORCID:
     <https://orcid.org/0000-0001-6911-0804>),
   Daniel Edwards [ctb],
@@ -67,4 +67,4 @@ Author: Greg Ridgeway [aut, cre] (ORCID:
   GBM Developers [aut] (https://github.com/gbm-developers)
 Maintainer: Greg Ridgeway <gridge@upenn.edu>
 Repository: CRAN
-Date/Publication: 2026-07-08 18:10:02 UTC
+Date/Publication: 2026-07-09 23:00:02 UTC
